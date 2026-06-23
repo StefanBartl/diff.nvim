@@ -1,0 +1,279 @@
+*diff.txt*  Flexible diffing for Neovim                              *diff.nvim*
+
+Author:   Stefan Bartl
+License:  MIT
+Version:  0.1.0
+
+==============================================================================
+CONTENTS                                                       *diff-contents*
+
+  1. Introduction .............. |diff-intro|
+  2. Requirements .............. |diff-requirements|
+  3. Installation .............. |diff-installation|
+  4. Configuration ............. |diff-config|
+     4.1 Exit scope ............ |diff-exit-scope|
+  5. Commands .................. |diff-commands|
+     5.1 :Diff ................. |:Diff|
+     5.2 :DiffClear ............ |:DiffClear|
+     5.3 :DiffOrig ............. |:DiffOrig|
+     5.4 :DiffExit ............. |:DiffExit|
+  6. Tab completion ............ |diff-completion|
+  7. Lua API ................... |diff-api|
+  8. Health check .............. |diff-health|
+  9. Architecture .............. |diff-architecture|
+
+==============================================================================
+1. INTRODUCTION                                                   *diff-intro*
+
+diff.nvim provides a single flexible `:Diff` command that compares arbitrary
+sources — the current buffer, a file, a buffer number, or the system
+clipboard — and delivers the result in several ways: a side-by-side split, an
+inline unified buffer, the message prompt, a temp file, or the clipboard.
+
+Standalone plugin (no lib.nvim dependency), cross-platform (Windows + Unix).
+All diffing goes through `vim.diff` (libvim) — no shell commands.
+
+==============================================================================
+2. REQUIREMENTS                                            *diff-requirements*
+
+  - Neovim 0.9 or later
+  - No external plugins required
+
+==============================================================================
+3. INSTALLATION                                            *diff-installation*
+
+lazy.nvim (local checkout): >lua
+  {
+    dir  = vim.env.REPOS_DIR .. "/diff.nvim",
+    cmd  = { "Diff", "DiffClear", "DiffOrig", "DiffExit" },
+    opts = {},
+  }
+<
+
+==============================================================================
+4. CONFIGURATION                                                 *diff-config*
+
+>lua
+  require("diff_nvim").setup({
+    features = {
+      diff        = true,   -- register :Diff / :DiffClear
+      diff_origin = true,   -- register :DiffOrig
+      diff_exit   = true,   -- register :DiffExit + exit keymap
+    },
+    diff = {
+      default_view   = "vsplit",    -- "vsplit"|"split"|"inline"
+      default_output = "buffer",    -- "buffer"|"prompt"|"file"|"clipboard"
+      default_source = "current",   -- "current"|"clipboard"|path|bufnr
+      algorithm      = "histogram", -- vim.diff algorithm
+      ctxlen         = 3,           -- context lines per hunk
+    },
+    exit = {
+      key   = "<Esc><Esc>",         -- exit mapping
+      scope = "buffer",             -- "buffer"|"global"|false
+    },
+    commands = {
+      diff       = "Diff",
+      diff_clear = "DiffClear",
+      diff_orig  = "DiffOrig",
+      diff_exit  = "DiffExit",
+    },
+    select_fn = nil,                -- optional vim.ui.select replacement
+  })
+<
+
+features.diff ~
+  Register the |:Diff| and |:DiffClear| commands. Default: `true`.
+
+features.diff_origin ~
+  Register the |:DiffOrig| command. Default: `true`.
+
+features.diff_exit ~
+  Register |:DiffExit| and the exit keymap. Default: `true`.
+
+diff.default_view ~
+  Layout used when `view=` is omitted. Default: `"vsplit"`.
+
+diff.default_output ~
+  Delivery used when `output=` is omitted. Default: `"buffer"`.
+
+diff.default_source ~
+  Left-hand source used when `source=` is omitted. Default: `"current"`.
+
+diff.algorithm ~
+  Algorithm passed to `vim.diff`: `"myers"`, `"minimal"`, `"patience"`, or
+  `"histogram"`. Default: `"histogram"`.
+
+diff.ctxlen ~
+  Number of context lines around each hunk in unified output. Default: `3`.
+
+select_fn ~
+  Optional replacement for `vim.ui.select`, injected for the target picker.
+  Useful to wire a custom UI. Default: `nil` (uses `vim.ui.select`).
+
+------------------------------------------------------------------------------
+4.1 Exit scope                                               *diff-exit-scope*
+
+The original global `<Esc><Esc>` mapping noticeably delayed a plain <Esc>
+because Neovim had to wait for a possible second key everywhere. diff.nvim
+fixes this:
+
+exit.scope = "buffer"  (default) ~
+  The exit key is bound buffer-locally, only on buffers diff.nvim itself puts
+  into diffmode. No global delay. Press it inside the diff (scratch) window to
+  leave; |:DiffExit| works from anywhere.
+
+exit.scope = "global" ~
+  Legacy behaviour: a global normal-mode mapping.
+
+exit.scope = false ~
+  No mapping at all; rely on |:DiffExit|.
+
+==============================================================================
+5. COMMANDS                                                    *diff-commands*
+
+------------------------------------------------------------------------------
+5.1 :Diff                                                             *:Diff*
+
+>
+  :Diff [target=…] [source=…] [view=…] [output=…]
+<
+
+Compare a source (left) with a target (right). Arguments use a `key=value`
+grammar in any order. Unknown keys are ignored.
+
+target= ~
+  The "other" material to compare against.
+    clipboard   Content from the system clipboard register (+)
+    {path}      A file (tab-completed)
+    {number}    An already-open buffer number
+  When omitted, an interactive picker (`vim.ui.select`) is shown.
+
+source= ~
+  The left-hand side. Default: `current`.
+    current     The buffer active when :Diff was invoked
+    clipboard   System clipboard
+    {path}      A file
+    {number}    A buffer number
+
+view= ~
+  Layout for `output=buffer`. Default: `vsplit`.
+    vsplit      Vertical split + native diffmode (side-by-side)
+    split       Horizontal split + native diffmode
+    inline      Single scratch buffer holding the unified diff (ft=diff)
+
+output= ~
+  Where the result goes. Default: `buffer`.
+    buffer      Interactive diff in a split (see view=)
+    prompt      Unified diff echoed to the message area
+    file        Unified diff written to a temp file
+    clipboard   Unified diff copied to the clipboard register (+)
+
+Examples: >
+  :Diff
+  :Diff target=clipboard
+  :Diff target=42
+  :Diff target=src/old.lua
+  :Diff target=clipboard output=prompt
+  :Diff target=clipboard view=inline
+  :Diff target=a.lua source=b.lua
+  :Diff target=clipboard output=clipboard
+<
+
+------------------------------------------------------------------------------
+5.2 :DiffClear                                                   *:DiffClear*
+
+Close every scratch buffer diff.nvim created and disable diffmode in all
+windows.
+
+------------------------------------------------------------------------------
+5.3 :DiffOrig                                                     *:DiffOrig*
+
+Diff the current buffer against its last-saved version on disk — "what changed
+since the last save". The snapshot buffer is tracked and cleaned up by
+|:DiffClear|.
+
+------------------------------------------------------------------------------
+5.4 :DiffExit                                                     *:DiffExit*
+
+Leave diff mode from anywhere (`diffoff!`). Works regardless of the configured
+|diff-exit-scope|.
+
+==============================================================================
+6. TAB COMPLETION                                            *diff-completion*
+
+`:Diff` completes the `key=value` grammar context-sensitively: >
+
+  :Diff <Tab>            target=  source=  view=  output=
+  :Diff view=<Tab>       view=vsplit  view=split  view=inline
+  :Diff output=<Tab>     output=buffer  output=prompt  output=file  output=clipboard
+  :Diff source=<Tab>     source=current  source=clipboard
+  :Diff target=<Tab>     target=clipboard  (+ file paths)
+<
+
+==============================================================================
+7. LUA API                                                          *diff-api*
+
+>lua
+  local diff = require("diff_nvim")
+<
+
+setup({opts})                                                *diff_nvim.setup()*
+  Configure and activate. Idempotent.
+
+enable({opts})                                              *diff_nvim.enable()*
+  Alias for setup() — matches the legacy `custom.diff` signature.
+
+run({raw_args})                                                *diff_nvim.run()*
+  Run a diff. {raw_args} uses the same grammar as |:Diff|.
+
+clear()                                                      *diff_nvim.clear()*
+  Close all diff windows and disable diffmode.
+
+diff_origin()                                          *diff_nvim.diff_origin()*
+  Diff the current buffer against its on-disk saved version.
+
+exit()                                                        *diff_nvim.exit()*
+  Leave diff mode from anywhere.
+
+==============================================================================
+8. HEALTH CHECK                                                  *diff-health*
+
+>
+  :checkhealth diff_nvim
+<
+
+Checks:
+  - Neovim >= 0.9
+  - `vim.diff` available
+  - `vim.ui.select` available
+  - clipboard provider present
+  - plugin loaded (guard flag set)
+
+==============================================================================
+9. ARCHITECTURE                                            *diff-architecture*
+
+  plugin/diff_nvim.lua        Load guard
+  lua/diff_nvim/
+    init.lua                  Public API, setup()/enable()
+    @types.lua                LuaLS type definitions
+    config/
+      DEFAULTS.lua            Immutable default configuration
+      init.lua                Merge + access to active config
+    util/
+      notify.lua              "[diff] " prefixed vim.notify wrapper
+      validate.lua            Pure validation helpers
+    core/
+      init.lua                Orchestration: run(), execute(), target picker
+      resolve.lua             Specifier → lines, argument parsing
+      scratch.lua             Scratch-buffer lifecycle + cleanup_all()
+      render.lua              Output renderers (buffer/prompt/file/clipboard)
+    features/
+      origin.lua              :DiffOrig
+      exit.lua                :DiffExit + exit keymap
+    commands.lua              Command registration + tab completion
+    health.lua                checkhealth provider
+
+Load order: util -> config -> core -> features -> commands -> init
+
+==============================================================================
+vim:tw=78:ts=8:noet:ft=help:norl:
