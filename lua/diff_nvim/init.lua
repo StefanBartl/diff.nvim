@@ -17,9 +17,6 @@
 
 local M = {}
 
----@type string  Augroup name for cleanup autocmds
-local AUGROUP = "diff_nvim_cleanup"
-
 ---@type boolean
 local _setup_done = false
 
@@ -35,20 +32,7 @@ function M.setup(user_opts)
   local config = require("diff_nvim.config")
   local cfg = config.setup(user_opts)
 
-  require("diff_nvim.commands").register(cfg)
-
-  if cfg.features.diff_exit then
-    require("diff_nvim.features.exit").setup(cfg.exit)
-  end
-
-  local aug = vim.api.nvim_create_augroup(AUGROUP, { clear = true })
-  vim.api.nvim_create_autocmd("VimLeavePre", {
-    group = aug,
-    callback = function()
-      require("diff_nvim.core.scratch").wipe_on_exit()
-    end,
-    desc = "[diff] Wipe scratch buffers on exit",
-  })
+  require("diff_nvim.bindings").register(cfg)
 
   vim.g.loaded_diff_nvim = 1
 end

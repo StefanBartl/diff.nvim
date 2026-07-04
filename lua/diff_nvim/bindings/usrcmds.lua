@@ -1,4 +1,4 @@
----@module 'diff_nvim.commands'
+---@module 'diff_nvim.bindings.usrcmds'
 ---@brief User-command registration + context-aware tab completion for :Diff.
 ---@description
 --- Registers :Diff, :DiffClear, :DiffOrig and :DiffExit using the configured
@@ -7,8 +7,7 @@
 
 local api = vim.api
 
-local core   = require("diff_nvim.core")
-local config = require("diff_nvim.config")
+local core = require("diff_nvim.core")
 
 local M = {}
 

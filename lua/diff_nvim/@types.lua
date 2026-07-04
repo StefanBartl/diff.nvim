@@ -58,11 +58,12 @@
 ---@field diff_exit   boolean  Register the :DiffExit command + exit keymap
 
 ---@class DiffNvim.Config.Diff
----@field default_view   DiffNvim.View    Default layout when none is given
----@field default_output DiffNvim.Output  Default delivery when none is given
----@field default_source DiffNvim.Source  Default source when none is given
----@field algorithm "myers"|"minimal"|"patience"|"histogram"  vim.diff algorithm
----@field ctxlen integer  Context lines around each hunk in unified output
+---@field default_view      DiffNvim.View    Default layout when none is given
+---@field default_output    DiffNvim.Output  Default delivery when none is given
+---@field default_source    DiffNvim.Source  Default source when none is given
+---@field default_orig_view "vsplit"|"split" Split direction used by :DiffOrig
+---@field algorithm         "myers"|"minimal"|"patience"|"histogram"  vim.diff algorithm
+---@field ctxlen            integer  Context lines around each hunk in unified output
 
 ---@alias DiffNvim.Config.ExitScope
 ---| '"buffer"'  # Buffer-local mapping on plugin-created diff buffers (default)

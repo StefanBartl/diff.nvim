@@ -1,7 +1,6 @@
 *diff.txt*  Flexible diffing for Neovim                              *diff.nvim*
 
 Author:   Stefan Bartl
-License:  MIT
 Version:  0.1.0
 
 ==============================================================================
@@ -42,12 +41,29 @@ All diffing goes through `vim.diff` (libvim) — no shell commands.
 ==============================================================================
 3. INSTALLATION                                            *diff-installation*
 
-lazy.nvim (local checkout): >lua
+lazy.nvim: >lua
   {
-    dir  = vim.env.REPOS_DIR .. "/diff.nvim",
+    "StefanBartl/diff.nvim",
     cmd  = { "Diff", "DiffClear", "DiffOrig", "DiffExit" },
     opts = {},
   }
+<
+
+packer.nvim: >lua
+  use {
+    "StefanBartl/diff.nvim",
+    cmd = { "Diff", "DiffClear", "DiffOrig", "DiffExit" },
+    config = function()
+      require("diff_nvim").setup({})
+    end,
+  }
+<
+
+vim-plug: >vim
+  Plug 'StefanBartl/diff.nvim'
+<
+  Then, in an `init.lua` sourced later: >lua
+  require("diff_nvim").setup({})
 <
 
 ==============================================================================
@@ -61,11 +77,12 @@ lazy.nvim (local checkout): >lua
       diff_exit   = true,   -- register :DiffExit + exit keymap
     },
     diff = {
-      default_view   = "vsplit",    -- "vsplit"|"split"|"inline"
-      default_output = "buffer",    -- "buffer"|"prompt"|"file"|"clipboard"
-      default_source = "current",   -- "current"|"clipboard"|path|bufnr
-      algorithm      = "histogram", -- vim.diff algorithm
-      ctxlen         = 3,           -- context lines per hunk
+      default_view      = "vsplit",    -- "vsplit"|"split"|"inline"
+      default_output    = "buffer",    -- "buffer"|"prompt"|"file"|"clipboard"
+      default_source    = "current",   -- "current"|"clipboard"|path|bufnr
+      default_orig_view = "vsplit",    -- "vsplit"|"split" — :DiffOrig split direction
+      algorithm         = "histogram", -- vim.diff algorithm
+      ctxlen            = 3,           -- context lines per hunk
     },
     exit = {
       key   = "<Esc><Esc>",         -- exit mapping
@@ -98,6 +115,12 @@ diff.default_output ~
 
 diff.default_source ~
   Left-hand source used when `source=` is omitted. Default: `"current"`.
+
+diff.default_orig_view ~
+  Split direction used by |:DiffOrig| (`"vsplit"` for side-by-side, `"split"`
+  for stacked). Kept separate from `default_view` because |:DiffOrig| always
+  opens a native diffmode split — it never supports `"inline"`.
+  Default: `"vsplit"`.
 
 diff.algorithm ~
   Algorithm passed to `vim.diff`: `"myers"`, `"minimal"`, `"patience"`, or
@@ -268,12 +291,19 @@ Checks:
       scratch.lua             Scratch-buffer lifecycle + cleanup_all()
       render.lua              Output renderers (buffer/prompt/file/clipboard)
     features/
-      origin.lua              :DiffOrig
-      exit.lua                :DiffExit + exit keymap
-    commands.lua              Command registration + tab completion
+      origin.lua              :DiffOrig logic
+      exit.lua                :DiffExit logic + exit-behaviour config
+    bindings/
+      usrcmds.lua             :Diff/:DiffClear/:DiffOrig/:DiffExit + completion
+      keymaps.lua             Exit-keymap wiring (global + buffer-local)
+      autocmds.lua            VimLeavePre cleanup
+      init.lua                Orchestrates the three above
     health.lua                checkhealth provider
 
-Load order: util -> config -> core -> features -> commands -> init
+Load order: util -> config -> core -> features -> bindings -> init
+
+Every keymap, user command, and autocmd is also cataloged in
+docs/BINDINGS.md.
 
 ==============================================================================
 vim:tw=78:ts=8:noet:ft=help:norl:

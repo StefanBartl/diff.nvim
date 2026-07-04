@@ -11,6 +11,7 @@ local fn  = vim.fn
 local notify   = require("diff_nvim.util.notify")
 local validate = require("diff_nvim.util.validate")
 local scratch  = require("diff_nvim.core.scratch")
+local config   = require("diff_nvim.config")
 
 local M = {}
 
@@ -48,8 +49,14 @@ function M.run()
     return
   end
 
+  -- Split direction is user-configurable via diff.default_orig_view; falls
+  -- back to "vsplit" for any value other than "split" so a typo in the user
+  -- config never breaks :DiffOrig.
+  local orig_view = config.get().diff.default_orig_view
+  local split_cmd = (orig_view == "split") and "split" or "vsplit"
+
   api.nvim_set_current_win(origin_win)
-  vim.cmd(string.format("silent! vsplit | buffer %d", snap))
+  vim.cmd(string.format("silent! %s | buffer %d", split_cmd, snap))
 
   local snap_win = api.nvim_get_current_win()
   if validate.win_valid(snap_win) then
