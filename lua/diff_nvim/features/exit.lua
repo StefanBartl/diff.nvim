@@ -1,12 +1,14 @@
 ---@module 'diff_nvim.features.exit'
----@brief :DiffExit and the context-aware "leave diffmode" keymap.
+---@brief :DiffExit logic and the context-aware "leave diffmode" behaviour.
 ---@description
 --- The original global `<Esc><Esc>` mapping noticeably delayed a normal <Esc>
 --- because Neovim had to wait for a possible second key everywhere. This module
 --- fixes that: by default the exit key is bound *buffer-locally* only on buffers
 --- that diff.nvim itself puts into diffmode (scope="buffer"). A "global" scope is
 --- still available for users who want the legacy behaviour, and `:DiffExit`
---- always works regardless of scope.
+--- always works regardless of scope. Actual `vim.keymap.set` calls live in
+--- `bindings/keymaps.lua`; this module only owns the exit behaviour and the
+--- active `exit` config.
 
 local api = vim.api
 
@@ -40,31 +42,19 @@ end
 ---@param bufnr integer
 ---@return nil
 function M.attach_buffer(bufnr)
-  if not _cfg or _cfg.scope ~= "buffer" then
+  if not _cfg then
     return
   end
-  if not validate.buf_valid(bufnr) then
-    return
-  end
-  vim.keymap.set("n", _cfg.key, M.exit, {
-    buffer = bufnr,
-    silent = true,
-    desc = "[diff] Exit diff mode",
-  })
+  require("diff_nvim.bindings.keymaps").attach_buffer(_cfg, bufnr)
 end
 
----Register the exit feature according to config.
+---Register the exit feature according to config (keymap wiring only; see
+---`bindings/keymaps.lua`).
 ---@param cfg DiffNvim.Config.Exit
 ---@return nil
 function M.setup(cfg)
   _cfg = cfg
-
-  if cfg.scope == "global" and type(cfg.key) == "string" and cfg.key ~= "" then
-    vim.keymap.set("n", cfg.key, M.exit, {
-      silent = true,
-      desc = "[diff] Exit diff mode when active",
-    })
-  end
+  require("diff_nvim.bindings.keymaps").register_global(cfg)
 end
 
 return M

@@ -13,11 +13,15 @@ local DEFAULTS = {
     diff_exit   = true,
   },
   diff = {
-    default_view   = "vsplit",
-    default_output = "buffer",
-    default_source = "current",
-    algorithm      = "histogram",
-    ctxlen         = 3,
+    default_view      = "vsplit",
+    default_output     = "buffer",
+    default_source     = "current",
+    -- Split direction used by :DiffOrig ("vsplit" for side-by-side, "split"
+    -- for stacked). Kept separate from `default_view` because :DiffOrig is
+    -- always a native diffmode split, never "inline".
+    default_orig_view  = "vsplit",
+    algorithm           = "histogram",
+    ctxlen              = 3,
   },
   exit = {
     key   = "<Esc><Esc>",
