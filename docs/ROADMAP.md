@@ -78,6 +78,53 @@
 
 ---
 
+## Implementierungsplan
+
+Priorisierte Reihenfolge für die "Geplante Features"-Liste oben, nach
+Aufwand/Abhängigkeit sortiert (nicht nach Nutzen — alle High-Priority-Punkte
+sind gleich wichtig, aber manche sind Voraussetzung für andere):
+
+1. **Diff-Statistik** (`+N -M, K hunks`) zuerst — reine Ableitung aus dem
+   bereits vorhandenen `render.compute_unified()`-Output (Zeilen zählen, die
+   mit `^+`/`^-` beginnen, Header ausschließen). Kein neues Modul nötig,
+   kleinste Änderung mit sofortigem Nutzen; guter Einstieg, um die
+   `render.lua`-Schnittstelle nicht später um einen zusätzlichen Rückgabewert
+   erweitern zu müssen.
+2. **Git als Quelle/Ziel** (`target=git:HEAD` etc.) — größter Einzelposten,
+   braucht ein neues `core/git.lua` (Repo-Root-Erkennung via Aufwärtssuche
+   nach `.git`, `vim.system({"git","show",...})`, async). Blockiert nichts
+   anderes hier, sollte aber vor der Telescope-/Picker-Integration kommen,
+   da ein Git-Target dieselbe `resolve_lines`-Schnittstelle braucht wie
+   Datei/Buffer/Clipboard heute — die Schnittstelle jetzt schon so zu bauen
+   erspart einen zweiten Umbau später.
+3. **Visual-Range als Quelle** (`:'<,'>Diff`) — braucht `range = true` in
+   `bindings/usrcmds.lua` und die Durchreichung von `line1`/`line2` bis zu
+   `core/resolve.lua`. Unabhängig von Git-Support, aber ähnlich klein wie die
+   Diff-Statistik; danach einordnen, weil beide Command-Signatur-Änderungen
+   sind und sich ein gemeinsamer Test-Durchlauf lohnt.
+4. **`target=ask` / `source=ask`** — trivial (ein zusätzlicher Wert in
+   `VALUE_LISTS`/`KEYS` in `bindings/usrcmds.lua`, der den bestehenden
+   `pick_target`-Pfad erzwingt); danach, weil es von den Zielen aus (2) und
+   (3) unabhängig ist und keine Präzedenz hat.
+5. **Wort-Level-Highlighting im Inline-View** und **`view=tab`/`view=float`**
+   — reine `render.lua`-Erweiterungen, aber mit UI-Detailarbeit (Extmarks,
+   Highlight-Gruppen); nach den funktionalen Punkten oben, weil sie am
+   isoliertesten sind und am wenigsten von den anderen Punkten profitieren.
+6. **Telescope-/Picker-Integration** — baut auf dem bereits vorhandenen
+   `select_fn`-DI-Hook auf (siehe [README.md](../README.md#configuration),
+   Nutzung in `core/init.lua`s `pick_target()`); zuletzt, weil sie am meisten
+   von den inzwischen stabilisierten Target-Typen (Git, Range) profitiert.
+7. **Drei-Wege-Diff** und **URL als Quelle** — größte architektonische
+   Änderungen (dritter Layout-Renderer bzw. Async-HTTP-Handling); bewusst
+   zuletzt, da beide eigene Design-Entscheidungen brauchen, die von den
+   vorherigen Punkten unabhängig sind.
+
+Aus der "Robustheit"-Gruppe ist **konfigurierbarer Exit-Key auch bei
+`scope="buffer"` für natives `:diffthis`** unabhängig vom Rest und kann
+parallel zu jedem der obigen Punkte angegangen werden, sobald Bedarf besteht.
+
+---
+
 ## Nicht geplant
 
 - **Eigene Diff-Engine** — `vim.diff` (libvim/xdiff) ist schnell und korrekt;
