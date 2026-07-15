@@ -18,7 +18,7 @@ function M.register(cfg)
     require("diff_nvim.features.exit").setup(cfg.exit)
   end
 
-  require("diff_nvim.bindings.autocmds").register()
+  require("diff_nvim.bindings.autocmds").register(cfg)
 end
 
 return M

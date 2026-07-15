@@ -53,9 +53,11 @@
 -- #####################################################################
 
 ---@class DiffNvim.Config.Features
----@field diff        boolean  Register the :Diff / :DiffClear commands
----@field diff_origin boolean  Register the :DiffOrig command
----@field diff_exit   boolean  Register the :DiffExit command + exit keymap
+---@field diff           boolean  Register the :Diff / :DiffClear commands
+---@field diff_origin    boolean  Register the :DiffOrig command
+---@field diff_exit      boolean  Register the :DiffExit command + exit keymap
+---@field diff_on_hold   boolean  Enable the ambient CursorHold line-diff preview
+---@field conflict_marks boolean  Enable conflict-marker (<<<<<<< etc.) highlighting
 
 ---@class DiffNvim.Config.Diff
 ---@field default_view      DiffNvim.View    Default layout when none is given
@@ -80,11 +82,48 @@
 ---@field diff_orig  string  Name of the origin command
 ---@field diff_exit  string  Name of the exit command
 
+-- #####################################################################
+-- on_hold / conflict_marks (ambient autocmd features)
+-- #####################################################################
+
+---@alias DiffNvim.OnHoldMode
+---| '"n"'  # Normal mode
+---| '"v"'  # Visual mode
+---| '"i"'  # Insert mode
+
+---@class DiffNvim.Config.OnHold
+--- Ambient, mode-aware line-diff preview on CursorHold/CursorHoldI. Prefers
+--- gitsigns' `preview_hunk_inline()`; falls back to rendering the previous
+--- committed content of the current line as EOL/right-aligned virtual text.
+---@field modes? (DiffNvim.OnHoldMode|string)[]|string|nil  Mode filter (any combination, e.g. "nv") or array. Default: nil (Normal+Visual).
+---@field events_override? string[]|nil  Fully replace the auto-mapped events, e.g. { "CursorHold", "CursorHoldI" }.
+---@field delay? integer|nil  Extra debounce (ms) beyond 'updatetime'. Default: 3000.
+---@field throttle_ms? integer|nil  Min time (ms) between triggers per window. Default: 1200.
+---@field git_cmd? string|nil  Git executable to use. Default: "git".
+---@field ignore_buftypes? string[]|nil  Skip these buftypes. Default: { "nofile", "prompt", "terminal" }.
+---@field only_tracked? boolean|nil  Skip files not tracked by git. Default: true.
+---@field require_clean_buffer? boolean|nil  Skip if buffer has unsaved changes. Default: false.
+---@field prefix? string|nil  Prefix before the fallback EOL preview. Default: "previous: ".
+---@field right_align? boolean|nil  Place virt_text right-aligned instead of eol. Default: false.
+---@field max_len? integer|nil  Truncate fallback preview to this many characters. Default: 160.
+---@field hl_prev? string|nil  Highlight group for fallback preview text. Default: "Comment".
+---@field virt_priority? integer|nil  Extmark virt_text priority. Default: 1000.
+---@field prefer_inline? boolean|nil  Prefer gitsigns.preview_hunk_inline() when available. Default: true.
+---@field restore_view? boolean|nil  Save/restore winsaveview()+cursor around the inline preview. Default: true.
+
+---@class DiffNvim.Config.ConflictMarks
+--- Highlight Git conflict markers (<<<<<<< / ======= / >>>>>>>) per-window.
+---@field hl_a? string|nil  Highlight group for "<<<<<<<" lines. Default: "DiffDelete".
+---@field hl_b? string|nil  Highlight group for "=======" separator. Default: "DiffChange".
+---@field hl_c? string|nil  Highlight group for ">>>>>>>" lines. Default: "DiffAdd".
+
 ---@class DiffNvim.Config
 ---@field features  DiffNvim.Config.Features
 ---@field diff      DiffNvim.Config.Diff
 ---@field exit      DiffNvim.Config.Exit
 ---@field commands  DiffNvim.Config.Commands
+---@field on_hold        DiffNvim.Config.OnHold
+---@field conflict_marks DiffNvim.Config.ConflictMarks
 ---@field select_fn (fun(items: any[], opts: table, on_choice: fun(item: any, idx: integer|nil)): nil)|nil  Optional vim.ui.select replacement (dependency injection)
 
 return {}

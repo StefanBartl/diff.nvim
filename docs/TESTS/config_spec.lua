@@ -19,6 +19,16 @@ return function(H)
   ok(d.features.diff, "diff feature on by default")
   ok(d.features.diff_origin, "diff_origin feature on by default")
   ok(d.features.diff_exit, "diff_exit feature on by default")
+  ok(d.features.diff_on_hold, "diff_on_hold feature on by default")
+  ok(d.features.conflict_marks, "conflict_marks feature on by default")
+  eq(d.on_hold.throttle_ms, 1200, "default on_hold.throttle_ms")
+  eq(d.conflict_marks.hl_a, "DiffDelete", "default conflict_marks.hl_a")
+
+  -- toggling off via features
+  config.setup({ features = { diff_on_hold = false, conflict_marks = false } })
+  local f = config.get()
+  eq(f.features.diff_on_hold, false, "diff_on_hold can be disabled")
+  eq(f.features.conflict_marks, false, "conflict_marks can be disabled")
 
   -- shallow override
   config.setup({ exit = { scope = "global" } })

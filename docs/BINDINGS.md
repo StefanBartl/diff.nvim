@@ -34,9 +34,14 @@ Note: the command name column shows the default; every command is renameable via
 
 ## Autocommands
 
-| event | group | desc |
-| --- | --- | --- |
-| `VimLeavePre` | `diff_nvim_cleanup` | Wipe tracked scratch buffers on exit without touching diffmode |
+| event | group | desc | feature flag |
+| --- | --- | --- | --- |
+| `VimLeavePre` | `diff_nvim_cleanup` | Wipe tracked scratch buffers on exit without touching diffmode | always on |
+| `CursorHold`/`CursorHoldI` | `diff_nvim_on_hold_preview` | Preview what changed on the current line (gitsigns inline preview, or previous-content fallback) | `features.diff_on_hold` |
+| `ModeChanged` | `diff_nvim_on_hold_modeclear` | Clear/abort the line-diff preview when leaving an allowed mode | `features.diff_on_hold` |
+| `CursorMoved`/`BufHidden`/`InsertEnter` (once, buffer-local) | `diff_nvim_on_hold_cleanup` | Clear the line-diff preview on next move | `features.diff_on_hold` |
+| `BufWinEnter` | `diff_nvim_conflict_marks_on` | Highlight Git conflict markers (`<<<<<<<`/`=======`/`>>>>>>>`) | `features.conflict_marks` |
+| `BufWinLeave` | `diff_nvim_conflict_marks_off` | Clear conflict marker highlights | `features.conflict_marks` |
 
 ---
 
