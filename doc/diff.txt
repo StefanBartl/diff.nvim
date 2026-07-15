@@ -16,10 +16,13 @@ CONTENTS                                                       *diff-contents*
      5.2 :DiffClear ............ |:DiffClear|
      5.3 :DiffOrig ............. |:DiffOrig|
      5.4 :DiffExit ............. |:DiffExit|
-  6. Tab completion ............ |diff-completion|
-  7. Lua API ................... |diff-api|
-  8. Health check .............. |diff-health|
-  9. Architecture .............. |diff-architecture|
+  6. Autocommands .............. |diff-autocmds|
+     6.1 diff_on_hold .......... |diff-on-hold|
+     6.2 conflict_marks ........ |diff-conflict-marks|
+  7. Tab completion ............ |diff-completion|
+  8. Lua API ................... |diff-api|
+  9. Health check .............. |diff-health|
+  10. Architecture ............. |diff-architecture|
 
 ==============================================================================
 1. INTRODUCTION                                                   *diff-intro*
@@ -72,9 +75,11 @@ vim-plug: >vim
 >lua
   require("diff_nvim").setup({
     features = {
-      diff        = true,   -- register :Diff / :DiffClear
-      diff_origin = true,   -- register :DiffOrig
-      diff_exit   = true,   -- register :DiffExit + exit keymap
+      diff           = true,   -- register :Diff / :DiffClear
+      diff_origin    = true,   -- register :DiffOrig
+      diff_exit      = true,   -- register :DiffExit + exit keymap
+      diff_on_hold   = true,   -- ambient CursorHold line-diff preview
+      conflict_marks = true,   -- highlight <<<<<<< / ======= / >>>>>>> markers
     },
     diff = {
       default_view      = "vsplit",    -- "vsplit"|"split"|"inline"
@@ -94,6 +99,28 @@ vim-plug: >vim
       diff_orig  = "DiffOrig",
       diff_exit  = "DiffExit",
     },
+    on_hold = {
+      modes                 = "n",             -- "n"|"v"|"i" (any combination) or array; nil = n+v
+      delay                 = 3000,             -- extra debounce (ms) beyond 'updatetime'
+      throttle_ms           = 1200,             -- min time (ms) between triggers per window
+      git_cmd               = "git",
+      ignore_buftypes       = { "nofile", "prompt", "terminal" },
+      only_tracked          = true,             -- skip files not tracked by git
+      require_clean_buffer  = false,            -- skip if buffer has unsaved changes
+      prefix                = "previous: ",     -- prefix before fallback EOL preview text
+      right_align           = false,            -- place virt_text right-aligned instead of eol
+      max_len               = 160,              -- truncate fallback preview to this many chars
+      hl_prev               = "Comment",
+      virt_priority         = 1000,
+      prefer_inline         = true,             -- prefer gitsigns.preview_hunk_inline()
+      restore_view          = true,             -- save/restore winsaveview()+cursor
+      events_override       = nil,              -- fully override auto-mapped events
+    },
+    conflict_marks = {
+      hl_a = "DiffDelete",  -- "<<<<<<<" lines
+      hl_b = "DiffChange",  -- "=======" separator
+      hl_c = "DiffAdd",     -- ">>>>>>>" lines
+    },
     select_fn = nil,                -- optional vim.ui.select replacement
   })
 <
@@ -106,6 +133,14 @@ features.diff_origin ~
 
 features.diff_exit ~
   Register |:DiffExit| and the exit keymap. Default: `true`.
+
+features.diff_on_hold ~
+  Enable the ambient CursorHold line-diff preview. Default: `true`.
+  See |diff-on-hold|.
+
+features.conflict_marks ~
+  Enable conflict-marker highlighting. Default: `true`.
+  See |diff-conflict-marks|.
 
 diff.default_view ~
   Layout used when `view=` is omitted. Default: `"vsplit"`.
@@ -128,6 +163,64 @@ diff.algorithm ~
 
 diff.ctxlen ~
   Number of context lines around each hunk in unified output. Default: `3`.
+
+on_hold.modes ~
+  Mode filter for the preview: `"n"`, `"v"`, `"i"` (any combination as a
+  string, e.g. `"nv"`) or an array. Default: `nil` (Normal+Visual).
+
+on_hold.events_override ~
+  If set, fully replaces the auto-mapped events, e.g.
+  `{ "CursorHold", "CursorHoldI" }`.
+
+on_hold.delay ~
+  Extra debounce (ms) beyond `'updatetime'` before running. Default: `3000`.
+
+on_hold.throttle_ms ~
+  Minimum time (ms) between triggers per window. Default: `1200`.
+
+on_hold.git_cmd ~
+  Git executable to use. Default: `"git"`.
+
+on_hold.ignore_buftypes ~
+  Skip these buftypes. Default: `{ "nofile", "prompt", "terminal" }`.
+
+on_hold.only_tracked ~
+  Skip files not tracked by git. Default: `true`.
+
+on_hold.require_clean_buffer ~
+  Skip the preview if the buffer has unsaved changes. Default: `false`.
+
+on_hold.prefix ~
+  Prefix before the fallback EOL preview text. Default: `"previous: "`.
+
+on_hold.right_align ~
+  Place the fallback preview's virt_text right-aligned instead of at EOL.
+  Default: `false`.
+
+on_hold.max_len ~
+  Truncate the fallback preview to this many characters. Default: `160`.
+
+on_hold.hl_prev ~
+  Highlight group for the fallback preview text. Default: `"Comment"`.
+
+on_hold.virt_priority ~
+  Extmark virt_text priority for the fallback preview. Default: `1000`.
+
+on_hold.prefer_inline ~
+  Prefer `gitsigns.preview_hunk_inline()` when available. Default: `true`.
+
+on_hold.restore_view ~
+  Save/restore `winsaveview()` + cursor around the inline preview to avoid
+  scroll jumps. Default: `true`.
+
+conflict_marks.hl_a ~
+  Highlight group for `<<<<<<<` lines. Default: `"DiffDelete"`.
+
+conflict_marks.hl_b ~
+  Highlight group for `=======` separator lines. Default: `"DiffChange"`.
+
+conflict_marks.hl_c ~
+  Highlight group for `>>>>>>>` lines. Default: `"DiffAdd"`.
 
 select_fn ~
   Optional replacement for `vim.ui.select`, injected for the target picker.
@@ -222,7 +315,41 @@ Leave diff mode from anywhere (`diffoff!`). Works regardless of the configured
 |diff-exit-scope|.
 
 ==============================================================================
-6. TAB COMPLETION                                            *diff-completion*
+6. AUTOCOMMANDS                                                *diff-autocmds*
+
+Both features below are ambient — no command to run, they just work in the
+background once enabled (default: both `true`).
+
+------------------------------------------------------------------------------
+6.1 diff_on_hold                                                *diff-on-hold*
+
+On `CursorHold`/`CursorHoldI`, previews what changed on the current line:
+prefers gitsigns' `preview_hunk_inline()` when available, otherwise falls back
+to showing the previous committed content of the line as EOL/right-aligned
+virtual text (via `git blame`/`git show`, argv-only — no shell).
+Per-window throttled (`on_hold.throttle_ms`), mode-aware (`on_hold.modes`),
+and cleared on the next cursor move. Sets `vim.o.updatetime = 100` when
+enabled, matching the responsiveness the fallback preview needs.
+
+Disable with: >lua
+  require("diff_nvim").setup({ features = { diff_on_hold = false } })
+<
+See |diff-config| for the full `on_hold.*` option list.
+
+------------------------------------------------------------------------------
+6.2 conflict_marks                                        *diff-conflict-marks*
+
+On `BufWinEnter`/`BufWinLeave`, highlights unresolved Git conflict markers
+(`<<<<<<<`, `=======`, `>>>>>>>`) using `matchadd`/`matchdelete`, scoped
+per-window.
+
+Disable with: >lua
+  require("diff_nvim").setup({ features = { conflict_marks = false } })
+<
+See |diff-config| for the `conflict_marks.*` option list.
+
+==============================================================================
+7. TAB COMPLETION                                            *diff-completion*
 
 `:Diff` completes the `key=value` grammar context-sensitively: >
 
@@ -234,7 +361,7 @@ Leave diff mode from anywhere (`diffoff!`). Works regardless of the configured
 <
 
 ==============================================================================
-7. LUA API                                                          *diff-api*
+8. LUA API                                                          *diff-api*
 
 >lua
   local diff = require("diff_nvim")
@@ -270,10 +397,12 @@ Checks:
   - `vim.diff` available
   - `vim.ui.select` available
   - clipboard provider present
+  - `git` executable found (required for |diff-on-hold|)
+  - gitsigns.nvim found (optional; |diff-on-hold| prefers its inline preview)
   - plugin loaded (guard flag set)
 
 ==============================================================================
-9. ARCHITECTURE                                            *diff-architecture*
+10. ARCHITECTURE                                           *diff-architecture*
 
   plugin/diff_nvim.lua        Load guard
   lua/diff_nvim/
@@ -293,10 +422,12 @@ Checks:
     features/
       origin.lua              :DiffOrig logic
       exit.lua                :DiffExit logic + exit-behaviour config
+      on_hold.lua              Ambient CursorHold line-diff preview
+      conflict_marks.lua      Conflict-marker highlighting
     bindings/
       usrcmds.lua             :Diff/:DiffClear/:DiffOrig/:DiffExit + completion
       keymaps.lua             Exit-keymap wiring (global + buffer-local)
-      autocmds.lua            VimLeavePre cleanup
+      autocmds.lua            VimLeavePre cleanup + on_hold/conflict_marks setup
       init.lua                Orchestrates the three above
     health.lua                checkhealth provider
 

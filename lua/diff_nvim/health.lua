@@ -31,6 +31,18 @@ function M.check()
     vim.health.warn("no clipboard provider — clipboard source/output unavailable")
   end
 
+  if vim.fn.executable("git") == 1 then
+    vim.health.ok("git executable found (required for diff_on_hold)")
+  else
+    vim.health.warn("git executable not found — diff_on_hold will be a silent no-op")
+  end
+
+  if pcall(require, "gitsigns") then
+    vim.health.ok("gitsigns.nvim found (diff_on_hold prefers its inline hunk preview)")
+  else
+    vim.health.info("gitsigns.nvim not found — diff_on_hold falls back to previous-content preview")
+  end
+
   if vim.g.loaded_diff_nvim then
     vim.health.ok("plugin loaded (vim.g.loaded_diff_nvim = " .. tostring(vim.g.loaded_diff_nvim) .. ")")
   else
