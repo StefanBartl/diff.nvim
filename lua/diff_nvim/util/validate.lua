@@ -2,38 +2,23 @@
 ---@brief Small, pure validation helpers shared across the core.
 ---@description
 --- Pure functions only — no side effects, no notifications. Safe to call in
---- any layer and trivial to unit-test.
+--- any layer and trivial to unit-test. Delegates to lib.nvim.normalize
+--- (this module's own versions were exact reimplementations).
 
-local api = vim.api
+local normalize = require("lib.nvim.normalize")
 
 local M = {}
 
----Return true when `value` is contained in `allowed`.
----Linear scan; `allowed` is always a tiny fixed list here.
----@param value any
----@param allowed any[]
----@return boolean
-function M.is_one_of(value, allowed)
-  for i = 1, #allowed do
-    if allowed[i] == value then
-      return true
-    end
-  end
-  return false
-end
+---Return true when a value is contained in an allowed-values list.
+---@type fun(value: any, allowed: any[]): boolean
+M.is_one_of = normalize.is_one_of
 
 ---Validate a buffer handle.
----@param bufnr any
----@return boolean
-function M.buf_valid(bufnr)
-  return type(bufnr) == "number" and api.nvim_buf_is_valid(bufnr)
-end
+---@type fun(bufnr: any): boolean
+M.buf_valid = normalize.buf_valid
 
 ---Validate a window handle.
----@param win any
----@return boolean
-function M.win_valid(win)
-  return type(win) == "number" and api.nvim_win_is_valid(win)
-end
+---@type fun(win: any): boolean
+M.win_valid = normalize.win_valid
 
 return M
