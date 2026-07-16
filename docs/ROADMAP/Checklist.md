@@ -25,12 +25,13 @@ all comparison work is delegated to `vim.diff` (libvim).
 
 ### Bonuspunkt: Custom `lib`-Modul nutzen
 
-`[ ]` **Not adopted, deliberately.** diff.nvim's README states "standalone
-plugin, no `lib.nvim` dependency" as an explicit design goal — the plugin is
-~500 lines total and self-contained. Pulling in `lib.notify`/`lib.map`/
-`lib.hover_select` here would add a runtime dependency purely to satisfy the
-convention, not to solve an actual problem the plugin has. Recorded as an
-accepted deviation, not a TODO.
+`[x]` **Adopted.** The earlier "standalone plugin, no `lib.nvim` dependency"
+design goal was reversed deliberately: `util/notify.lua` had reimplemented
+`lib.nvim.notify`'s prefixing and level dispatch, and keeping a private copy
+of a helper that already exists in the shared library was the larger cost.
+`util/notify.lua` now delegates to `require("lib.nvim.notify").create("[diff]")`
+and keeps its `info`/`warn`/`error` surface, so call sites are unchanged.
+`lib.map`/`lib.hover_select` remain unused — diff.nvim has no need for them.
 
 ## PR-Review-Checkliste (Detail)
 

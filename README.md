@@ -22,8 +22,9 @@ sources (the current buffer, a file, a buffer number, the clipboard) against
 each other and delivers the result however you like (side-by-side, inline,
 message prompt, file, or clipboard).
 
-Standalone plugin (no `lib.nvim` dependency), cross-platform (Windows + Unix).
-All diffing goes through `vim.diff` (libvim) — no shell commands.
+Cross-platform (Windows + Unix). All diffing goes through `vim.diff` (libvim)
+— no shell commands. Notifications go through
+[`lib.nvim`](https://github.com/StefanBartl/lib.nvim), the only dependency.
 
 ---
 
@@ -72,6 +73,7 @@ Omitting `target=` opens an interactive picker (`vim.ui.select`).
 ```lua
 {
   "StefanBartl/diff.nvim",
+  dependencies = { "StefanBartl/lib.nvim" },
   cmd = { "Diff", "DiffClear", "DiffOrig", "DiffExit" },
   opts = {},
 }
@@ -96,6 +98,7 @@ Or via `config`:
 ```lua
 use {
   "StefanBartl/diff.nvim",
+  requires = { "StefanBartl/lib.nvim" },
   cmd = { "Diff", "DiffClear", "DiffOrig", "DiffExit" },
   config = function()
     require("diff_nvim").setup({})

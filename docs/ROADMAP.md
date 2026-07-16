@@ -15,7 +15,7 @@
 - Config system with `config/DEFAULTS.lua`, idempotent `setup()`/`enable()`
 - `:checkhealth diff_nvim`
 - All diffing via `vim.diff` — no shell, cross-platform
-- No lib.nvim dependency
+- Notifications via `lib.nvim.notify` (lib.nvim is the only dependency)
 
 ---
 

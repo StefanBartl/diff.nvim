@@ -89,12 +89,16 @@ keymaps live in `bindings/keymaps.lua`, which is imported last, from
 - **Cross-platform**: ✅ — no shell calls; `vim.diff`, `vim.fn.tempname()`,
   `vim.fn.readfile()`/`writefile()` are all platform-agnostic. Documented in
   the README.
-- **`lib.nvim`**: intentionally **not** a dependency. diff.nvim's own README
-  states this as a design goal ("Eigenständiges Plugin ohne `lib.nvim`-
-  Abhängigkeit"). Adopting `lib.notify`/`lib.map`/`lib.hover_select` now would
-  reverse that goal and add a runtime dependency for a plugin that is
-  otherwise self-contained in ~500 lines. Left as a conscious deviation from
-  the general guideline, not an oversight.
+- **`lib.nvim`**: now a dependency, used for notifications only. The former
+  "Eigenständiges Plugin ohne `lib.nvim`-Abhängigkeit" goal was reversed
+  deliberately: `util/notify.lua` was a hand-rolled copy of what
+  `lib.nvim.notify` already provides (prefixing + level dispatch), and
+  maintaining a private duplicate of a shared helper outweighed the value of
+  staying dependency-free. It now delegates to
+  `require("lib.nvim.notify").create("[diff]")` while keeping its own
+  `info`/`warn`/`error` surface, so no call site changed. Everything else
+  stays self-contained: diffing still goes through `vim.diff`, with no shell
+  and no `lib.map`/`lib.hover_select`.
 
 ## Referenzen
 
