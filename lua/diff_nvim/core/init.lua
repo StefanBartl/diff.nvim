@@ -20,7 +20,7 @@ local M = {}
 local VALID_VIEWS = { "vsplit", "split", "inline" }
 
 ---@type string[]
-local VALID_OUTPUTS = { "buffer", "prompt", "file", "clipboard" }
+local VALID_OUTPUTS = { "buffer", "prompt", "file", "clipboard", "stat" }
 
 ---@type string[]  Labels for the interactive target picker
 local TARGET_CHOICES = { "clipboard", "file path …", "buffer number …" }
@@ -72,6 +72,10 @@ function M.execute(opts, ctx)
   end
   if opts.output == "clipboard" then
     render.clipboard(src_lines, tgt_lines, src_label, tgt_label, cfg.algorithm, cfg.ctxlen)
+    return
+  end
+  if opts.output == "stat" then
+    render.stat(src_lines, tgt_lines, src_label, tgt_label, cfg.algorithm, cfg.ctxlen)
     return
   end
 
