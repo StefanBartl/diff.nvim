@@ -14,7 +14,7 @@ local M = {}
 ---@type table<string, string[]>  Static value lists per completion key
 local VALUE_LISTS = {
   view   = { "vsplit", "split", "inline" },
-  output = { "buffer", "prompt", "file", "clipboard" },
+  output = { "buffer", "prompt", "file", "clipboard", "stat" },
   source = { "current", "clipboard" },
   target = { "clipboard" },
 }

@@ -39,6 +39,7 @@ When `target=` is omitted, an interactive picker is shown.
 | `prompt` | Unified diff echoed to the message area |
 | `file` | Unified diff written to a temp file |
 | `clipboard` | Unified diff copied to the clipboard (`+`) |
+| `stat` | Report `+N -M, K hunks` as a notification only (no window) |
 
 **Examples**
 
@@ -51,6 +52,7 @@ When `target=` is omitted, an interactive picker is shown.
 :Diff target=clipboard view=inline     " unified diff in a single buffer
 :Diff target=a.lua source=b.lua        " compare two files
 :Diff target=clipboard output=clipboard " diff to the clipboard
+:Diff target=src/old.lua output=stat   " just the +N -M, K hunks summary
 ```
 
 ## `:DiffClear`
@@ -75,7 +77,7 @@ Leaves diff mode from anywhere (`diffoff!`).
 ```
 :Diff <Tab>            → target=  source=  view=  output=
 :Diff view=<Tab>       → view=vsplit  view=split  view=inline
-:Diff output=<Tab>     → output=buffer  output=prompt  output=file  output=clipboard
+:Diff output=<Tab>     → output=buffer  output=prompt  output=file  output=clipboard  output=stat
 :Diff source=<Tab>     → source=current  source=clipboard
 :Diff target=<Tab>     → target=clipboard  (+ file paths)
 ```

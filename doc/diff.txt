@@ -190,6 +190,7 @@ output= ~
     prompt      Unified diff echoed to the message area
     file        Unified diff written to a temp file
     clipboard   Unified diff copied to the clipboard register (+)
+    stat        Report `+N -M, K hunks` as a notification only (no window)
 
 Examples: >
   :Diff
@@ -200,6 +201,7 @@ Examples: >
   :Diff target=clipboard view=inline
   :Diff target=a.lua source=b.lua
   :Diff target=clipboard output=clipboard
+  :Diff target=src/old.lua output=stat
 <
 
 ------------------------------------------------------------------------------
@@ -228,7 +230,7 @@ Leave diff mode from anywhere (`diffoff!`). Works regardless of the configured
 
   :Diff <Tab>            target=  source=  view=  output=
   :Diff view=<Tab>       view=vsplit  view=split  view=inline
-  :Diff output=<Tab>     output=buffer  output=prompt  output=file  output=clipboard
+  :Diff output=<Tab>     output=buffer  output=prompt  output=file  output=clipboard  output=stat
   :Diff source=<Tab>     source=current  source=clipboard
   :Diff target=<Tab>     target=clipboard  (+ file paths)
 <

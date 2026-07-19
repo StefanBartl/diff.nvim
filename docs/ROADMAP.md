@@ -5,7 +5,7 @@
 - `:Diff [target= source= view= output=]` — flexible source/target diffing
 - Sources/targets: `current`, `clipboard`, file path, buffer number
 - Views: `vsplit`, `split`, `inline` (single unified `ft=diff` buffer)
-- Outputs: `buffer`, `prompt`, `file`, `clipboard`
+- Outputs: `buffer`, `prompt`, `file`, `clipboard`, `stat` (`+N -M, K hunks` summary)
 - `:DiffClear` — tear down all scratch buffers + diffmode
 - `:DiffOrig` — diff buffer vs. on-disk saved version (core-integrated)
 - `:DiffExit` — leave diffmode from anywhere
@@ -31,10 +31,6 @@
 - **Visual-Range als Quelle** — `:'<,'>Diff target=clipboard` vergleicht nur die
   selektierten Zeilen statt des ganzen Buffers. Benötigt `range = true` am
   User-Command und Übergabe von `line1`/`line2` an die Resolver-Schicht.
-
-- **Diff-Statistik** — kurze Zusammenfassung (`+N -M, K hunks`) als `notify.info`
-  nach jedem Diff bzw. als eigener `output=stat`. Aus dem Unified-Diff ableitbar
-  durch Zählen von `^+`/`^-`-Zeilen (ohne Header).
 
 ### Anzeige / UX
 

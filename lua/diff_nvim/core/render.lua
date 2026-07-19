@@ -32,6 +32,68 @@ function M.compute_unified(a_lines, b_lines, algorithm, ctxlen)
   return result, nil
 end
 
+---@class DiffNvim.Stats
+---@field added   integer  Number of added lines (`^+`, excluding the `+++` header)
+---@field removed integer  Number of removed lines (`^-`, excluding the `---` header)
+---@field hunks   integer  Number of hunks (`^@@` markers)
+
+---Derive `+N -M, K hunks` statistics from two line arrays.
+---Pure: computes the unified diff internally and counts, never notifies.
+---@param a_lines string[]
+---@param b_lines string[]
+---@param algorithm string
+---@param ctxlen integer
+---@return DiffNvim.Stats|nil stats, string|nil err
+function M.compute_stats(a_lines, b_lines, algorithm, ctxlen)
+  local unified, err = M.compute_unified(a_lines, b_lines, algorithm, ctxlen)
+  if not unified then
+    return nil, err
+  end
+
+  local added, removed, hunks = 0, 0, 0
+  for _, line in ipairs(vim.split(unified, "\n", { plain = true })) do
+    local first = line:sub(1, 1)
+    if first == "@" and line:sub(1, 2) == "@@" then
+      hunks = hunks + 1
+    elseif first == "+" and line:sub(1, 3) ~= "+++" then
+      added = added + 1
+    elseif first == "-" and line:sub(1, 3) ~= "---" then
+      removed = removed + 1
+    end
+  end
+
+  return { added = added, removed = removed, hunks = hunks }, nil
+end
+
+---Format a stats table as a compact human-readable summary.
+---@param stats DiffNvim.Stats
+---@return string
+function M.format_stats(stats)
+  return string.format("+%d -%d, %d hunk%s",
+    stats.added, stats.removed, stats.hunks, (stats.hunks == 1) and "" or "s")
+end
+
+---Report `+N -M, K hunks` for the diff as a notification.
+---@param a_lines string[]
+---@param b_lines string[]
+---@param a_label string
+---@param b_label string
+---@param algorithm string
+---@param ctxlen integer
+---@return nil
+function M.stat(a_lines, b_lines, a_label, b_label, algorithm, ctxlen)
+  local stats, err = M.compute_stats(a_lines, b_lines, algorithm, ctxlen)
+  if not stats then
+    notify.error(err or "could not compute diff")
+    return
+  end
+  if stats.added == 0 and stats.removed == 0 then
+    notify.info("No differences found")
+    return
+  end
+  notify.info(string.format("%s -> %s  %s", a_label, b_label, M.format_stats(stats)))
+end
+
 ---Build the unified-diff header lines + body as a flat list.
 ---@param unified string
 ---@param a_label string

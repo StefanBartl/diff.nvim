@@ -34,6 +34,7 @@
 ---| '"prompt"'     # Unified-diff text echoed to the message area
 ---| '"file"'       # Write unified diff to a temp file on disk
 ---| '"clipboard"'  # Copy unified diff to the system clipboard register (+)
+---| '"stat"'       # Report `+N -M, K hunks` as a notification only
 
 ---@class DiffNvim.ResolvedOpts
 --- Fully-resolved options handed to the core executor.
