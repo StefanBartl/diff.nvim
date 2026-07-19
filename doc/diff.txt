@@ -167,6 +167,7 @@ grammar in any order. Unknown keys are ignored.
 target= ~
   The "other" material to compare against.
     clipboard   Content from the system clipboard register (+)
+    ask         Force the interactive picker (same as omitting target=)
     {path}      A file (tab-completed)
     {number}    An already-open buffer number
   When omitted, an interactive picker (`vim.ui.select`) is shown.
@@ -175,6 +176,7 @@ source= ~
   The left-hand side. Default: `current`.
     current     The buffer active when :Diff was invoked
     clipboard   System clipboard
+    ask         Force the interactive picker (offers "current buffer" too)
     {path}      A file
     {number}    A buffer number
 
@@ -231,8 +233,8 @@ Leave diff mode from anywhere (`diffoff!`). Works regardless of the configured
   :Diff <Tab>            target=  source=  view=  output=
   :Diff view=<Tab>       view=vsplit  view=split  view=inline
   :Diff output=<Tab>     output=buffer  output=prompt  output=file  output=clipboard  output=stat
-  :Diff source=<Tab>     source=current  source=clipboard
-  :Diff target=<Tab>     target=clipboard  (+ file paths)
+  :Diff source=<Tab>     source=current  source=clipboard  source=ask
+  :Diff target=<Tab>     target=clipboard  target=ask  (+ file paths)
 <
 
 ==============================================================================

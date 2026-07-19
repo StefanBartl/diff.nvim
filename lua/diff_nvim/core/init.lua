@@ -22,8 +22,11 @@ local VALID_VIEWS = { "vsplit", "split", "inline" }
 ---@type string[]
 local VALID_OUTPUTS = { "buffer", "prompt", "file", "clipboard", "stat" }
 
----@type string[]  Labels for the interactive target picker
-local TARGET_CHOICES = { "clipboard", "file path …", "buffer number …" }
+-- Picker choice labels (see pick_specifier).
+local CHOICE_CURRENT   = "current buffer"
+local CHOICE_CLIPBOARD = "clipboard"
+local CHOICE_FILE      = "file path …"
+local CHOICE_BUFFER    = "buffer number …"
 
 ---Resolve a side to its lines, treating "current" as the snapshotted buffer.
 ---@param spec DiffNvim.Source|DiffNvim.Target
@@ -95,38 +98,64 @@ function M.execute(opts, ctx)
   exit.attach_buffer(buf)
 end
 
----Show the interactive target picker; calls `callback` with the chosen
----specifier string, or nil on cancel.
----@param callback fun(target: string|nil): nil
+---Prompt for a file path and hand it back (nil on empty/cancel).
+---@param callback fun(spec: string|nil): nil
+local function prompt_file(callback)
+  vim.ui.input({ prompt = "File path: ", completion = "file" }, function(path)
+    callback((type(path) == "string" and path ~= "") and path or nil)
+  end)
+end
+
+---Prompt for a buffer number and hand it back (nil on invalid/cancel).
+---@param callback fun(spec: string|nil): nil
+local function prompt_buffer(callback)
+  vim.ui.input({ prompt = "Buffer number: " }, function(raw)
+    local n = tonumber(raw)
+    if n then
+      callback(tostring(n))
+    else
+      notify.warn("Invalid buffer number")
+      callback(nil)
+    end
+  end)
+end
+
+---Show the interactive picker for a side; calls `callback` with the chosen
+---specifier string, or nil on cancel. The source picker additionally offers
+---"current buffer"; the target picker does not.
+---@param kind "target"|"source"
+---@param callback fun(spec: string|nil): nil
 ---@return nil
-local function pick_target(callback)
+local function pick_specifier(kind, callback)
   local select_fn = config.get().select_fn
   if type(select_fn) ~= "function" then
     select_fn = vim.ui.select
   end
 
-  select_fn(TARGET_CHOICES, { prompt = "Diff target:" }, function(choice, idx)
-    if not choice then
+  local choices, handlers
+  if kind == "source" then
+    choices  = { CHOICE_CURRENT, CHOICE_CLIPBOARD, CHOICE_FILE, CHOICE_BUFFER }
+    handlers = {
+      function(cb) cb("current") end,
+      function(cb) cb("clipboard") end,
+      prompt_file,
+      prompt_buffer,
+    }
+  else
+    choices  = { CHOICE_CLIPBOARD, CHOICE_FILE, CHOICE_BUFFER }
+    handlers = {
+      function(cb) cb("clipboard") end,
+      prompt_file,
+      prompt_buffer,
+    }
+  end
+
+  select_fn(choices, { prompt = "Diff " .. kind .. ":" }, function(choice, idx)
+    if not choice or not idx or not handlers[idx] then
       callback(nil)
       return
     end
-    if idx == 1 then
-      callback("clipboard")
-    elseif idx == 2 then
-      vim.ui.input({ prompt = "File path: ", completion = "file" }, function(path)
-        callback((type(path) == "string" and path ~= "") and path or nil)
-      end)
-    elseif idx == 3 then
-      vim.ui.input({ prompt = "Buffer number: " }, function(raw)
-        local n = tonumber(raw)
-        if n then
-          callback(tostring(n))
-        else
-          notify.warn("Invalid buffer number")
-          callback(nil)
-        end
-      end)
-    end
+    handlers[idx](callback)
   end)
 end
 
@@ -164,8 +193,17 @@ function M.run(raw_args)
     output = output --[[@as DiffNvim.Output]],
   }
 
-  if not kv.target or kv.target == "" then
-    pick_target(function(chosen)
+  -- A missing target, or an explicit "ask", forces the interactive picker.
+  local need_target = (not kv.target) or kv.target == "" or kv.target == "ask"
+  local need_source = kv.source == "ask"
+
+  local function pick_target_then_run()
+    if not need_target then
+      opts.target = kv.target
+      M.execute(opts, ctx)
+      return
+    end
+    pick_specifier("target", function(chosen)
       if not chosen then
         notify.info("Diff cancelled")
         return
@@ -173,11 +211,21 @@ function M.run(raw_args)
       opts.target = chosen
       M.execute(opts, ctx)
     end)
+  end
+
+  if need_source then
+    pick_specifier("source", function(chosen)
+      if not chosen then
+        notify.info("Diff cancelled")
+        return
+      end
+      opts.source = chosen
+      pick_target_then_run()
+    end)
     return
   end
 
-  opts.target = kv.target
-  M.execute(opts, ctx)
+  pick_target_then_run()
 end
 
 ---Close all diff.nvim scratch buffers and disable diffmode.
