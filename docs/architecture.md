@@ -18,7 +18,7 @@ lua/diff_nvim/
     url.lua                    http(s):// async fetch via curl + timeout timer
     pickers_bridge.lua         Optional select_fn adapter for pickers.nvim
     scratch.lua                Scratch-buffer lifecycle + cleanup_all() + active_count()
-    render.lua                 Output renderers (buffer/prompt/file/clipboard/stat) + tab/float layouts
+    render.lua                 Output renderers (buffer/prompt/file/clipboard/stat) + tab/float/three-way layouts
   features/
     origin.lua                :DiffOrig logic
     exit.lua                    :DiffExit logic + exit-behaviour config

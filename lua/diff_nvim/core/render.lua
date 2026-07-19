@@ -156,6 +156,61 @@ function M.side_by_side(origin_win, scratch_buf, view)
   end
 end
 
+---Open a three-way native diffmode: the origin window's live buffer (left,
+---still editable — this is the point of a merge workflow: :diffget/:diffput
+---write straight into the file you'll save) alongside `base_buf` (middle)
+---and `target_buf` (right), or stacked/tabbed per `view`. Neovim's diffmode
+---automatically diffs 3+ windows against each other; no extra logic is
+---needed beyond opening the windows and setting 'diff' on each.
+---@see docs/three-way-diff.md
+---@param origin_win integer
+---@param base_buf integer
+---@param target_buf integer
+---@param view "vsplit"|"split"|"tab"
+---@return nil
+function M.three_way(origin_win, base_buf, target_buf, view)
+  if not validate.win_valid(origin_win) then
+    notify.error("origin window is no longer valid")
+    return
+  end
+
+  local split_cmd = (view == "split") and "split" or "vsplit"
+
+  if view == "tab" then
+    local origin_buf = api.nvim_win_get_buf(origin_win)
+    vim.cmd("tabnew")
+    vim.cmd(string.format("silent! buffer %d", origin_buf))
+    local left = api.nvim_get_current_win()
+    vim.cmd(string.format("silent! vsplit | buffer %d", base_buf))
+    local mid = api.nvim_get_current_win()
+    vim.cmd(string.format("silent! vsplit | buffer %d", target_buf))
+    local right = api.nvim_get_current_win()
+    for _, w in ipairs({ left, mid, right }) do
+      if validate.win_valid(w) then
+        vim.wo[w].diff = true
+      end
+    end
+    return
+  end
+
+  api.nvim_set_current_win(origin_win)
+  vim.cmd(string.format("silent! %s | buffer %d", split_cmd, base_buf))
+  local mid_win = api.nvim_get_current_win()
+
+  vim.cmd(string.format("silent! %s | buffer %d", split_cmd, target_buf))
+  local right_win = api.nvim_get_current_win()
+
+  for _, w in ipairs({ origin_win, mid_win, right_win }) do
+    if validate.win_valid(w) then
+      vim.wo[w].diff = true
+    end
+  end
+
+  if validate.win_valid(origin_win) then
+    api.nvim_set_current_win(origin_win)
+  end
+end
+
 ---Open the given scratch buffer in a centered floating window and map `q`
 ---(plus <Esc>) to close it.
 ---@param buf integer
