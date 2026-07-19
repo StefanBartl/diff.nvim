@@ -13,6 +13,7 @@ local config   = require("diff_nvim.config")
 local resolve  = require("diff_nvim.core.resolve")
 local render   = require("diff_nvim.core.render")
 local scratch  = require("diff_nvim.core.scratch")
+local url      = require("diff_nvim.core.url")
 
 local M = {}
 
@@ -30,7 +31,8 @@ local CHOICE_BUFFER    = "buffer number …"
 
 ---Resolve a side to its lines, treating "current" as the snapshotted buffer.
 ---When `range` is given (only meaningful for "current"), just the selected
----line span is returned instead of the whole buffer.
+---line span is returned instead of the whole buffer. Synchronous — url:// (@see
+---`resolve_side_async`) specifiers never reach this function.
 ---@param spec DiffNvim.Source|DiffNvim.Target
 ---@param label string
 ---@param source_bufnr integer
@@ -55,6 +57,24 @@ local function resolve_side(spec, label, source_bufnr, range)
   return resolve.resolve_lines(spec, label)
 end
 
+---Resolve a side to its lines and hand `(lines, err)` to `callback`. Async
+---only for `http(s)://` specifiers (@see docs/url-sources.md); every other
+---specifier resolves synchronously and calls back immediately, so callers
+---never need to know which path was taken.
+---@param spec DiffNvim.Source|DiffNvim.Target
+---@param label string
+---@param source_bufnr integer
+---@param range DiffNvim.Range|nil
+---@param callback fun(lines: string[]|nil, err: string|nil): nil
+---@return nil
+local function resolve_side_async(spec, label, source_bufnr, range, callback)
+  if url.is_url_spec(spec) then
+    url.fetch(spec, label, { timeout_ms = config.get().diff.url_timeout_ms }, callback)
+    return
+  end
+  callback(resolve_side(spec, label, source_bufnr, range))
+end
+
 ---Run the diff with fully-resolved options.
 ---@param opts DiffNvim.ResolvedOpts
 ---@param ctx DiffNvim.Context
@@ -63,65 +83,69 @@ function M.execute(opts, ctx)
   local cfg = config.get().diff
 
   -- The visual range applies to the source side only (the selection lives in
-  -- the buffer that was current when :Diff was invoked).
-  local src_lines, src_err = resolve_side(opts.source, "source", ctx.source_bufnr, ctx.range)
-  if not src_lines then
-    notify.error(src_err or "could not resolve source")
-    return
-  end
-
-  local tgt_lines, tgt_err = resolve_side(opts.target, "target", ctx.source_bufnr, nil)
-  if not tgt_lines then
-    notify.error(tgt_err or "could not resolve target")
-    return
-  end
-
-  local src_label
-  if opts.source == "current" then
-    src_label = "buf:" .. ctx.source_bufnr
-    if ctx.range then
-      src_label = src_label .. string.format("@%d-%d", ctx.range.line1, ctx.range.line2)
+  -- the buffer that was current when :Diff was invoked). Nested rather than
+  -- parallel because a URL fetch is the one path that's genuinely async; every
+  -- other specifier's callback fires synchronously within the same tick.
+  resolve_side_async(opts.source, "source", ctx.source_bufnr, ctx.range, function(src_lines, src_err)
+    if not src_lines then
+      notify.error(src_err or "could not resolve source")
+      return
     end
-  else
-    src_label = tostring(opts.source)
-  end
-  local tgt_label = tostring(opts.target)
 
-  if opts.output == "prompt" then
-    render.prompt(src_lines, tgt_lines, src_label, tgt_label, cfg.algorithm, cfg.ctxlen)
-    return
-  end
-  if opts.output == "file" then
-    render.file(src_lines, tgt_lines, src_label, tgt_label, cfg.algorithm, cfg.ctxlen)
-    return
-  end
-  if opts.output == "clipboard" then
-    render.clipboard(src_lines, tgt_lines, src_label, tgt_label, cfg.algorithm, cfg.ctxlen)
-    return
-  end
-  if opts.output == "stat" then
-    render.stat(src_lines, tgt_lines, src_label, tgt_label, cfg.algorithm, cfg.ctxlen)
-    return
-  end
+    resolve_side_async(opts.target, "target", ctx.source_bufnr, nil, function(tgt_lines, tgt_err)
+      if not tgt_lines then
+        notify.error(tgt_err or "could not resolve target")
+        return
+      end
 
-  -- output == "buffer"
-  local exit = require("diff_nvim.features.exit")
+      local src_label
+      if opts.source == "current" then
+        src_label = "buf:" .. ctx.source_bufnr
+        if ctx.range then
+          src_label = src_label .. string.format("@%d-%d", ctx.range.line1, ctx.range.line2)
+        end
+      else
+        src_label = tostring(opts.source)
+      end
+      local tgt_label = tostring(opts.target)
 
-  if opts.view == "inline" or opts.view == "float" then
-    local buf = render.inline(ctx.origin_win, src_lines, tgt_lines, src_label, tgt_label, cfg.algorithm, cfg.ctxlen, {
-      layout    = (opts.view == "float") and "float" or "split",
-      word_diff = cfg.word_diff,
-    })
-    if buf then
+      if opts.output == "prompt" then
+        render.prompt(src_lines, tgt_lines, src_label, tgt_label, cfg.algorithm, cfg.ctxlen)
+        return
+      end
+      if opts.output == "file" then
+        render.file(src_lines, tgt_lines, src_label, tgt_label, cfg.algorithm, cfg.ctxlen)
+        return
+      end
+      if opts.output == "clipboard" then
+        render.clipboard(src_lines, tgt_lines, src_label, tgt_label, cfg.algorithm, cfg.ctxlen)
+        return
+      end
+      if opts.output == "stat" then
+        render.stat(src_lines, tgt_lines, src_label, tgt_label, cfg.algorithm, cfg.ctxlen)
+        return
+      end
+
+      -- output == "buffer"
+      local exit = require("diff_nvim.features.exit")
+
+      if opts.view == "inline" or opts.view == "float" then
+        local buf = render.inline(ctx.origin_win, src_lines, tgt_lines, src_label, tgt_label, cfg.algorithm, cfg.ctxlen, {
+          layout    = (opts.view == "float") and "float" or "split",
+          word_diff = cfg.word_diff,
+        })
+        if buf then
+          exit.attach_buffer(buf)
+        end
+        return
+      end
+
+      -- view == "vsplit" | "split" | "tab"
+      local buf = scratch.create(tgt_lines, string.format("[Diff] %s", tgt_label))
+      render.side_by_side(ctx.origin_win, buf, opts.view)
       exit.attach_buffer(buf)
-    end
-    return
-  end
-
-  -- view == "vsplit" | "split" | "tab"
-  local buf = scratch.create(tgt_lines, string.format("[Diff] %s", tgt_label))
-  render.side_by_side(ctx.origin_win, buf, opts.view)
-  exit.attach_buffer(buf)
+    end)
+  end)
 end
 
 ---Prompt for a file path and hand it back (nil on empty/cancel).
@@ -146,12 +170,6 @@ local function prompt_buffer(callback)
   end)
 end
 
----Show the interactive picker for a side; calls `callback` with the chosen
----specifier string, or nil on cancel. The source picker additionally offers
----"current buffer"; the target picker does not.
----@param kind "target"|"source"
----@param callback fun(spec: string|nil): nil
----@return nil
 ---Resolve the effective picker function: an explicit select_fn always wins,
 ---otherwise pickers.nvim (if installed and not opted out), else vim.ui.select.
 ---@return fun(items: any[], opts: table, on_choice: fun(item: any, idx: integer|nil)): nil
@@ -167,6 +185,12 @@ local function resolve_select_fn()
   return select_fn
 end
 
+---Show the interactive picker for a side; calls `callback` with the chosen
+---specifier string, or nil on cancel. The source picker additionally offers
+---"current buffer"; the target picker does not.
+---@param kind "target"|"source"
+---@param callback fun(spec: string|nil): nil
+---@return nil
 local function pick_specifier(kind, callback)
   local select_fn = resolve_select_fn()
 

@@ -59,6 +59,7 @@ Omitting `target=` opens an interactive picker (`vim.ui.select`).
 :Diff target=git:HEAD                  " current file vs. its last commit
 :Diff target=clipboard output=stat     " just the +N -M, K hunks summary
 :'<,'>Diff target=clipboard            " compare only the visual selection
+:Diff target=https://example.com/f.lua " current buffer vs. a URL (async)
 ```
 
 ---
@@ -68,8 +69,9 @@ Omitting `target=` opens an interactive picker (`vim.ui.select`).
 - [Installation](docs/installation.md) — requirements and setup for lazy.nvim, packer.nvim, and vim-plug.
 - [Configuration](docs/configuration.md) — full defaults, every option explained, and exit-key scope behaviour.
 - [Commands](docs/commands.md) — full `:Diff` argument grammar, examples, and tab completion.
+- [URL sources](docs/url-sources.md) — diffing against `http(s)://` URLs, async fetch, timeout, and examples.
 - [Lua API](docs/api.md) — the `require("diff_nvim")` module surface.
 - [Architecture](docs/architecture.md) — module layout and load order.
 - [Testing & health check](docs/testing.md) — `:checkhealth diff_nvim` and the headless spec suite.
 - [Bindings cheatsheet](docs/BINDINGS.md) — every keymap, user command, and autocommand.
-- [Roadmap](docs/ROADMAP.md) — shipped (git revisions, visual-range diffing, diff statistics, `view=tab`/`float`, statusline component) and what's next (word-level inline highlighting, picker integration, three-way diff).
+- [Roadmap](docs/ROADMAP.md) — what's next (three-way diff).

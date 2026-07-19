@@ -16,6 +16,7 @@ diff-installation	diff.txt	/*diff-installation*
 diff-intro	diff.txt	/*diff-intro*
 diff-picker-resolution	diff.txt	/*diff-picker-resolution*
 diff-requirements	diff.txt	/*diff-requirements*
+diff-url-sources	diff.txt	/*diff-url-sources*
 diff.nvim	diff.txt	/*diff.nvim*
 diff.txt	diff.txt	/*diff.txt*
 diff_nvim.clear()	diff.txt	/*diff_nvim.clear()*

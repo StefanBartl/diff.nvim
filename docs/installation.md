@@ -2,9 +2,10 @@
 
 ## Requirements
 
-- Neovim 0.9+ (0.10+ for `git:<rev>` sources/targets, which use `vim.system`)
+- Neovim 0.9+ (0.10+ for `git:<rev>` and `http(s)://` sources/targets, which use `vim.system`)
 - [lib.nvim](https://github.com/StefanBartl/lib.nvim) (used for notifications)
 - Optional: a `git` executable on `PATH` for `git:<rev>` sources/targets
+- Optional: a `curl` executable on `PATH` for `http(s)://` sources/targets — see [URL sources](url-sources.md)
 
 ## Package managers
 

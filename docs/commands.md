@@ -17,6 +17,7 @@ only — the target is always taken in full.
 | `clipboard` | Content from the system clipboard (`+`) |
 | `ask` | Force the interactive picker (same as omitting `target=`) |
 | `git:{rev}` | The current file at a git revision (see below) |
+| `http(s)://{url}` | Content fetched from a URL, async (see below) |
 | `{path}` | A file (tab-completed) |
 | `{number}` | An already-open buffer number |
 
@@ -30,6 +31,7 @@ When `target=` is omitted, an interactive picker is shown.
 | `clipboard` | System clipboard |
 | `ask` | Force the interactive picker (also offers "current buffer") |
 | `git:{rev}` | The current file at a git revision (see below) |
+| `http(s)://{url}` | Content fetched from a URL, async (see below) |
 | `{path}` / `{number}` | A file or buffer |
 
 **`git:{rev}`** — resolves the **current file** at a git revision, e.g.
@@ -37,6 +39,12 @@ When `target=` is omitted, an interactive picker is shown.
 0.10+ (`vim.system`), a `git` executable on PATH, and a file-backed buffer
 inside a git repository. Runs `git show <rev>:<relpath>` synchronously — no
 shell is spawned.
+
+**`http(s)://{url}`** — fetches the URL's content asynchronously via `curl`
+(the editor stays responsive while it's in flight) and diffs against it.
+Requires Neovim 0.10+ (`vim.system`) and a `curl` executable on PATH. See
+[URL sources](url-sources.md) for the timeout setting, requirements, and
+usage examples.
 
 **`view=`** (only for `output=buffer`, default: `vsplit`)
 
@@ -75,6 +83,7 @@ shell is spawned.
 :Diff target=a.lua view=tab            " side-by-side diff in a new tab
 :Diff target=git:HEAD                   " current file vs. its last commit
 :Diff target=git:HEAD~1 output=stat     " summary vs. two commits back
+:Diff target=https://raw.githubusercontent.com/user/repo/main/f.lua  " current buffer vs. a URL
 ```
 
 ## `:DiffClear`

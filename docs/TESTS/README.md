@@ -27,6 +27,7 @@ The runner prints one line per spec and exits non-zero on the first failure
 | `status_spec.lua`  | `scratch.active_count` + `diff_nvim.status` statusline string.    |
 | `pickers_bridge_spec.lua` | `pickers_bridge.resolve()` nil-fallback (absent / no engine).|
 | `native_diffthis_spec.lua` | `native_diffthis.sync()` attach/detach logic + `register()` gating. |
+| `url_spec.lua`     | `is_url_spec` + `fetch()` guard clauses; best-effort live round-trip (skipped, not failed, without network). |
 | `run.lua`          | Runner: loads every spec, reports results, sets the exit code.   |
 
 ## Adding a spec

@@ -25,6 +25,8 @@ local DEFAULTS = {
     -- Word/char-level highlighting of changed spans in view=inline/float
     -- (DiffText extmarks over paired -/+ line runs). Set false to disable.
     word_diff           = true,
+    -- Timeout (ms) for http(s):// sources/targets — see docs/url-sources.md.
+    url_timeout_ms       = 10000,
   },
   exit = {
     key   = "<Esc><Esc>",
