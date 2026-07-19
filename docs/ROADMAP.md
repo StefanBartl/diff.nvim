@@ -13,6 +13,8 @@
 - `:[range]Diff` — visual-range selection as the source (e.g. `:'<,'>Diff`)
 - `view=tab` — side-by-side native diffmode in a new tab
 - `view=float` — unified diff in a floating window
+- `target=git:<rev>` / `source=git:<rev>` — current file at a git revision
+  (`git:HEAD`, `git:HEAD~1`, `git:<sha>`, `git:<branch>`), via `core/git.lua`
 - Buffer-local exit keymap (fixes the global `<Esc><Esc>` delay)
 - Interactive target picker via `vim.ui.select`
 - Context-aware `key=value` tab completion
@@ -24,13 +26,6 @@
 ---
 
 ## Geplante Features
-
-### High Priority
-
-- **Git als Quelle/Ziel** — `:Diff target=git:HEAD` / `git:HEAD~1` / `git:<sha>`
-  Vergleich gegen eine Git-Revision der aktuellen Datei. Cross-platform via
-  `vim.system({ "git", "show", rev .. ":" .. relpath })`. Erfordert Repo-Root-
-  Erkennung (Aufwärtssuche nach `.git`); deshalb als eigenes `core/git.lua`.
 
 
 ### Anzeige / UX

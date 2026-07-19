@@ -45,6 +45,13 @@ local function resolve_side(spec, label, source_bufnr, range)
     local last  = range and range.line2 or -1
     return api.nvim_buf_get_lines(source_bufnr, first, last, false), nil
   end
+  -- `git:<rev>` resolves the current file at a git revision; it needs the name
+  -- of the buffer :Diff was invoked from, which resolve.resolve_lines lacks.
+  local git = require("diff_nvim.core.git")
+  if git.is_git_spec(spec) then
+    local bufname = validate.buf_valid(source_bufnr) and api.nvim_buf_get_name(source_bufnr) or ""
+    return git.resolve(spec, bufname, label)
+  end
   return resolve.resolve_lines(spec, label)
 end
 
