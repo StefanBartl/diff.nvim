@@ -29,6 +29,11 @@ local DEFAULTS = {
   exit = {
     key   = "<Esc><Esc>",
     scope = "buffer",
+    -- Also mirror the exit key onto buffers a *native* :diffthis puts into
+    -- diffmode (scope="buffer" only), not just diff.nvim's own diffs. Off
+    -- by default: it changes buffer-local keymaps outside diff.nvim's own
+    -- workflow, which could surprise users invoking :diffthis directly.
+    native_diffthis = false,
   },
   commands = {
     diff       = "Diff",

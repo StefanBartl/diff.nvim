@@ -85,6 +85,7 @@
 ---@class DiffNvim.Config.Exit
 ---@field key   string                   Left-hand side of the exit mapping
 ---@field scope DiffNvim.Config.ExitScope How aggressively the mapping is set
+---@field native_diffthis boolean  Also mirror the key onto buffers a native :diffthis puts into diffmode (scope="buffer" only). Off by default — see config/DEFAULTS.lua for the rationale.
 
 ---@class DiffNvim.Config.Commands
 ---@field diff       string  Name of the main diff command

@@ -38,6 +38,7 @@ Note: the command name column shows the default; every command is renameable via
 | event | group | desc |
 | --- | --- | --- |
 | `VimLeavePre` | `diff_nvim_cleanup` | Wipe tracked scratch buffers on exit without touching diffmode |
+| `OptionSet diff` | `diff_nvim_native_diffthis` | Opt-in (`exit.native_diffthis = true`, `exit.scope = "buffer"`): mirror the buffer-local exit key onto any buffer entering/leaving diffmode, including native `:diffthis`/`:diffoff!` |
 
 ---
 
