@@ -43,7 +43,7 @@ Aufwand/Abhängigkeit sortiert:
    `vim.diff` mit `result_type = "indices"`). Isoliert, gut testbar.
 2. **Telescope-/Picker-Integration** — baut auf dem `select_fn`-DI-Hook auf
    (siehe [Configuration](configuration.md), Nutzung in `core/init.lua`s
-   `pick_specifier()`); optionale, lazy geladene Dependency.
+   `pick_specifier()`); optionale, lazy geladene Dependency. -> wenn möglic pickers.nvim verewnden (c:\repos\pickers.nvim), den dort wird schon abgeklärt, ob telescope oder fuf-lua am system verwendet wird und es wir mein plugin verwendet
 3. **Konfigurierbarer Exit-Key auch bei `scope="buffer"` für natives
    `:diffthis`** — optionaler `OptionSet`-Autocmd, unabhängig vom Rest.
 4. **`:DiffBuffers`-Convenience-Command** — Buffer-Picker-Wrapper um die
@@ -54,13 +54,3 @@ Aufwand/Abhängigkeit sortiert:
 
 ---
 
-## Nicht geplant
-
-- **Eigene Diff-Engine** — `vim.diff` (libvim/xdiff) ist schnell und korrekt;
-  keine Notwendigkeit für eine Lua-Reimplementierung.
-
-- **Patch-Anwendung** (`:Diff` → `patch -p1`) — gehört in ein separates
-  `patch.nvim`-Plugin; Diffing und Patching sind verschiedene Domänen.
-
-- **Zeilenweises Inline-Merging im selben Buffer** — Konfliktlösung deckt
-  bereits `diffget`/`diffput` aus Neovim-Core ab.
