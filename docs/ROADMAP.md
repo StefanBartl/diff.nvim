@@ -11,6 +11,8 @@
 - `:DiffExit` — leave diffmode from anywhere
 - `target=ask` / `source=ask` — force the interactive picker even with a default
 - `:[range]Diff` — visual-range selection as the source (e.g. `:'<,'>Diff`)
+- `view=tab` — side-by-side native diffmode in a new tab
+- `view=float` — unified diff in a floating window
 - Buffer-local exit keymap (fixes the global `<Esc><Esc>` delay)
 - Interactive target picker via `vim.ui.select`
 - Context-aware `key=value` tab completion
@@ -36,11 +38,6 @@
 - **Wort-Level-Highlighting im Inline-View** — innerhalb geänderter Zeilen die
   konkreten Wort-/Zeichen-Unterschiede hervorheben (`vim.diff` mit
   `result_type = "indices"` + Extmarks). Nur im `view=inline`-Pfad.
-
-- **`view=tab`** — Side-by-Side-Diff in einem neuen Tab statt Split; nützlich für
-  große Dateien. Kleiner Zusatz in `render.side_by_side`.
-
-- **`view=float`** — Inline-Unified-Diff in einem Floating-Window statt Split.
 
 - **Persistenter Diff-Status in der Statuszeile** — kleine Komponente, die
   anzeigt, dass aktuell ein `diff.nvim`-Diff aktiv ist (Anzahl Scratch-Buffer).

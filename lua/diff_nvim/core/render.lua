@@ -104,14 +104,33 @@ local function with_header(unified, a_label, b_label)
   return vim.split(header, "\n", { plain = true })
 end
 
----Open a split, load the scratch buffer, enable native diffmode in both windows.
+---Open a split (or a new tab), load the scratch buffer, enable native
+---diffmode in both windows.
 ---@param origin_win integer
 ---@param scratch_buf integer
----@param view DiffNvim.View  "vsplit"|"split"
+---@param view DiffNvim.View  "vsplit"|"split"|"tab"
 ---@return nil
 function M.side_by_side(origin_win, scratch_buf, view)
   if not validate.win_valid(origin_win) then
     notify.error("origin window is no longer valid")
+    return
+  end
+
+  -- "tab" opens a fresh tab showing the origin buffer beside the scratch, so
+  -- the diff never disturbs the existing window layout.
+  if view == "tab" then
+    local origin_buf = api.nvim_win_get_buf(origin_win)
+    vim.cmd("tabnew")
+    vim.cmd(string.format("silent! buffer %d", origin_buf))
+    local left = api.nvim_get_current_win()
+    vim.cmd(string.format("silent! vsplit | buffer %d", scratch_buf))
+    local right = api.nvim_get_current_win()
+    if validate.win_valid(left) then
+      vim.wo[left].diff = true
+    end
+    if validate.win_valid(right) then
+      vim.wo[right].diff = true
+    end
     return
   end
 
@@ -132,7 +151,39 @@ function M.side_by_side(origin_win, scratch_buf, view)
   end
 end
 
----Show the unified diff inside a single scratch buffer (ft=diff) in a split.
+---Open the given scratch buffer in a centered floating window and map `q`
+---(plus <Esc>) to close it.
+---@param buf integer
+---@param line_count integer  Number of lines in the buffer (for sizing)
+---@return nil
+local function open_float(buf, line_count)
+  local width  = math.min(math.max(vim.o.columns - 8, 20), 120)
+  local height = math.min(math.max(line_count, 1), math.max(vim.o.lines - 6, 3))
+  local win = api.nvim_open_win(buf, true, {
+    relative = "editor",
+    width    = width,
+    height   = height,
+    row      = math.max((vim.o.lines - height) / 2 - 1, 0),
+    col      = math.max((vim.o.columns - width) / 2, 0),
+    style    = "minimal",
+    border   = "rounded",
+    title    = " Diff ",
+  })
+  -- Floats want an obvious close key; the split/inline views rely on :q or
+  -- :DiffClear instead, which is why this is float-local.
+  if validate.win_valid(win) then
+    for _, key in ipairs({ "q", "<Esc>" }) do
+      vim.keymap.set("n", key, function()
+        if api.nvim_win_is_valid(win) then
+          api.nvim_win_close(win, true)
+        end
+      end, { buffer = buf, nowait = true, silent = true, desc = "Close diff float" })
+    end
+  end
+end
+
+---Show the unified diff inside a single scratch buffer (ft=diff), either in a
+---split (`layout="split"`, default) or a floating window (`layout="float"`).
 ---@param origin_win integer
 ---@param a_lines string[]
 ---@param b_lines string[]
@@ -140,8 +191,9 @@ end
 ---@param b_label string
 ---@param algorithm string
 ---@param ctxlen integer
+---@param layout? "split"|"float"  Where to show it (default "split")
 ---@return integer|nil bufnr  The inline scratch buffer, or nil when nothing rendered
-function M.inline(origin_win, a_lines, b_lines, a_label, b_label, algorithm, ctxlen)
+function M.inline(origin_win, a_lines, b_lines, a_label, b_label, algorithm, ctxlen, layout)
   local unified, err = M.compute_unified(a_lines, b_lines, algorithm, ctxlen)
   if not unified then
     notify.error(err or "could not compute diff")
@@ -154,6 +206,11 @@ function M.inline(origin_win, a_lines, b_lines, a_label, b_label, algorithm, ctx
 
   local lines = with_header(unified, a_label, b_label)
   local buf = scratch.create(lines, string.format("[Diff] %s -> %s", a_label, b_label), "diff")
+
+  if layout == "float" then
+    open_float(buf, #lines)
+    return buf
+  end
 
   if validate.win_valid(origin_win) then
     api.nvim_set_current_win(origin_win)

@@ -17,7 +17,7 @@ local scratch  = require("diff_nvim.core.scratch")
 local M = {}
 
 ---@type string[]
-local VALID_VIEWS = { "vsplit", "split", "inline" }
+local VALID_VIEWS = { "vsplit", "split", "inline", "tab", "float" }
 
 ---@type string[]
 local VALID_OUTPUTS = { "buffer", "prompt", "file", "clipboard", "stat" }
@@ -100,14 +100,16 @@ function M.execute(opts, ctx)
   -- output == "buffer"
   local exit = require("diff_nvim.features.exit")
 
-  if opts.view == "inline" then
-    local buf = render.inline(ctx.origin_win, src_lines, tgt_lines, src_label, tgt_label, cfg.algorithm, cfg.ctxlen)
+  if opts.view == "inline" or opts.view == "float" then
+    local layout = (opts.view == "float") and "float" or "split"
+    local buf = render.inline(ctx.origin_win, src_lines, tgt_lines, src_label, tgt_label, cfg.algorithm, cfg.ctxlen, layout)
     if buf then
       exit.attach_buffer(buf)
     end
     return
   end
 
+  -- view == "vsplit" | "split" | "tab"
   local buf = scratch.create(tgt_lines, string.format("[Diff] %s", tgt_label))
   render.side_by_side(ctx.origin_win, buf, opts.view)
   exit.attach_buffer(buf)
