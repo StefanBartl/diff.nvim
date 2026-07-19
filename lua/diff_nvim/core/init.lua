@@ -108,8 +108,10 @@ function M.execute(opts, ctx)
   local exit = require("diff_nvim.features.exit")
 
   if opts.view == "inline" or opts.view == "float" then
-    local layout = (opts.view == "float") and "float" or "split"
-    local buf = render.inline(ctx.origin_win, src_lines, tgt_lines, src_label, tgt_label, cfg.algorithm, cfg.ctxlen, layout)
+    local buf = render.inline(ctx.origin_win, src_lines, tgt_lines, src_label, tgt_label, cfg.algorithm, cfg.ctxlen, {
+      layout    = (opts.view == "float") and "float" or "split",
+      word_diff = cfg.word_diff,
+    })
     if buf then
       exit.attach_buffer(buf)
     end

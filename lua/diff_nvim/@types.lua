@@ -75,6 +75,7 @@
 ---@field default_orig_view "vsplit"|"split" Split direction used by :DiffOrig
 ---@field algorithm         "myers"|"minimal"|"patience"|"histogram"  vim.diff algorithm
 ---@field ctxlen            integer  Context lines around each hunk in unified output
+---@field word_diff         boolean  Word/char-level DiffText highlighting in view=inline/float
 
 ---@alias DiffNvim.Config.ExitScope
 ---| '"buffer"'  # Buffer-local mapping on plugin-created diff buffers (default)

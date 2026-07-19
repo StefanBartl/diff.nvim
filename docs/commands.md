@@ -45,8 +45,8 @@ shell is spawned.
 | `vsplit` | Vertical split + native diffmode (side-by-side) |
 | `split` | Horizontal split + native diffmode |
 | `tab` | Side-by-side native diffmode in a new tab |
-| `inline` | Single scratch buffer holding the unified diff (`ft=diff`) |
-| `float` | Unified diff in a floating window (press `q` or `<Esc>` to close) |
+| `inline` | Single scratch buffer holding the unified diff (`ft=diff`), with word-level `DiffText` highlighting on changed spans |
+| `float` | Same as `inline`, in a floating window (press `q` or `<Esc>` to close) |
 
 **`output=`** (default: `buffer`)
 

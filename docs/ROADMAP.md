@@ -2,12 +2,6 @@
 
 ## Geplante Features
 
-### Anzeige / UX
-
-- **Wort-Level-Highlighting im Inline-View** — innerhalb geänderter Zeilen die
-  konkreten Wort-/Zeichen-Unterschiede hervorheben (`vim.diff` mit
-  `result_type = "indices"` + Extmarks). Nur im `view=inline`-Pfad.
-
 ### Quellen / Ziele
 
 - **Telescope-/Picker-Integration** — Buffernummer-Ziel über einen Buffer-Picker
@@ -38,17 +32,16 @@
 Priorisierte Reihenfolge für die "Geplante Features"-Liste oben, nach
 Aufwand/Abhängigkeit sortiert:
 
-1. **Wort-Level-Highlighting im Inline-View** — reine `render.lua`-Erweiterung
-   mit UI-Detailarbeit (Extmarks, Highlight-Gruppen, Intra-Zeilen-Diff über
-   `vim.diff` mit `result_type = "indices"`). Isoliert, gut testbar.
-2. **Telescope-/Picker-Integration** — baut auf dem `select_fn`-DI-Hook auf
+1. **Telescope-/Picker-Integration** — baut auf dem `select_fn`-DI-Hook auf
    (siehe [Configuration](configuration.md), Nutzung in `core/init.lua`s
-   `pick_specifier()`); optionale, lazy geladene Dependency. -> wenn möglic pickers.nvim verewnden (c:\repos\pickers.nvim), den dort wird schon abgeklärt, ob telescope oder fuf-lua am system verwendet wird und es wir mein plugin verwendet
-3. **Konfigurierbarer Exit-Key auch bei `scope="buffer"` für natives
+   `pick_specifier()`); nutzt bevorzugt [pickers.nvim](https://github.com/StefanBartl/pickers.nvim)
+   (dort ist bereits geklärt, ob telescope.nvim oder fzf-lua am System
+   verwendet wird), fällt sonst auf `vim.ui.select` zurück.
+2. **Konfigurierbarer Exit-Key auch bei `scope="buffer"` für natives
    `:diffthis`** — optionaler `OptionSet`-Autocmd, unabhängig vom Rest.
-4. **`:DiffBuffers`-Convenience-Command** — Buffer-Picker-Wrapper um die
+3. **`:DiffBuffers`-Convenience-Command** — Buffer-Picker-Wrapper um die
    bestehende Buffernummer-Auflösung.
-5. **Drei-Wege-Diff** und **URL als Quelle** — größte architektonische
+4. **Drei-Wege-Diff** und **URL als Quelle** — größte architektonische
    Änderungen (dritter Layout-Renderer bzw. Async-HTTP-Handling); bewusst
    zuletzt, da beide eigene Design-Entscheidungen brauchen.
 
