@@ -1,33 +1,6 @@
 # diff.nvim — Roadmap
 
-## Implemented (v0.1)
-
-- `:Diff [target= source= view= output=]` — flexible source/target diffing
-- Sources/targets: `current`, `clipboard`, file path, buffer number
-- Views: `vsplit`, `split`, `tab`, `inline` (single unified `ft=diff` buffer), `float`
-- Outputs: `buffer`, `prompt`, `file`, `clipboard`, `stat` (`+N -M, K hunks` summary)
-- `:DiffClear` — tear down all scratch buffers + diffmode
-- `:DiffOrig` — diff buffer vs. on-disk saved version (core-integrated)
-- `:DiffExit` — leave diffmode from anywhere
-- `target=ask` / `source=ask` — force the interactive picker even with a default
-- `:[range]Diff` — visual-range selection as the source (e.g. `:'<,'>Diff`)
-- `view=tab` — side-by-side native diffmode in a new tab
-- `view=float` — unified diff in a floating window
-- `target=git:<rev>` / `source=git:<rev>` — current file at a git revision
-  (`git:HEAD`, `git:HEAD~1`, `git:<sha>`, `git:<branch>`), via `core/git.lua`
-- `require("diff_nvim").status()` — statusline component (active-diff indicator)
-- Buffer-local exit keymap (fixes the global `<Esc><Esc>` delay)
-- Interactive target picker via `vim.ui.select`
-- Context-aware `key=value` tab completion
-- Config system with `config/DEFAULTS.lua`, idempotent `setup()`/`enable()`
-- `:checkhealth diff_nvim`
-- All diffing via `vim.diff` — no shell, cross-platform
-- Notifications via `lib.nvim.notify` (lib.nvim is the only dependency)
-
----
-
 ## Geplante Features
-
 
 ### Anzeige / UX
 
@@ -62,9 +35,7 @@
 
 ## Implementierungsplan
 
-Die kleinen, gut abgegrenzten Punkte (Diff-Statistik, `target=ask`/`source=ask`,
-Visual-Range, `view=tab`/`view=float`, Git-Quellen, Statuszeilen-Komponente)
-sind umgesetzt — siehe **Implemented** oben. Die verbleibende Reihenfolge, nach
+Priorisierte Reihenfolge für die "Geplante Features"-Liste oben, nach
 Aufwand/Abhängigkeit sortiert:
 
 1. **Wort-Level-Highlighting im Inline-View** — reine `render.lua`-Erweiterung
@@ -72,8 +43,7 @@ Aufwand/Abhängigkeit sortiert:
    `vim.diff` mit `result_type = "indices"`). Isoliert, gut testbar.
 2. **Telescope-/Picker-Integration** — baut auf dem `select_fn`-DI-Hook auf
    (siehe [Configuration](configuration.md), Nutzung in `core/init.lua`s
-   `pick_specifier()`); optionale, lazy geladene Dependency. Profitiert von den
-   inzwischen stabilisierten Target-Typen (Git, Range).
+   `pick_specifier()`); optionale, lazy geladene Dependency.
 3. **Konfigurierbarer Exit-Key auch bei `scope="buffer"` für natives
    `:diffthis`** — optionaler `OptionSet`-Autocmd, unabhängig vom Rest.
 4. **`:DiffBuffers`-Convenience-Command** — Buffer-Picker-Wrapper um die
