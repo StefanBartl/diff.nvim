@@ -1,9 +1,11 @@
 # Commands
 
-## `:[range]Diff [target=…] [source=…] [view=…] [output=…]`
+## `:[range]Diff [target=…] [source=…] [base=…] [view=…] [output=…]`
 
 Compares a **source** (left) with a **target** (right). Arguments use a
-`key=value` grammar, in any order; unknown keys are ignored.
+`key=value` grammar, in any order; unknown keys are ignored. Adding `base=`
+turns this into a **three-way diff** (see [Three-way diff](three-way-diff.md)) —
+a native three-window diffmode for merge-conflict workflows.
 
 When invoked with a **range** (e.g. a visual selection, `:'<,'>Diff`) and
 `source=current` (the default), only the selected lines are used as the
@@ -46,6 +48,19 @@ Requires Neovim 0.10+ (`vim.system`) and a `curl` executable on PATH. See
 [URL sources](url-sources.md) for the timeout setting, requirements, and
 usage examples.
 
+**`base=`** (optional — turns this into a three-way diff)
+
+Accepts the same grammar as `target=` (`clipboard`, `ask`, `git:{rev}`,
+`http(s)://{url}`, a file path, or a buffer number). When set, `:Diff` opens
+a native **three-window** diffmode instead of two: the current buffer stays
+live and editable in the origin window (local), `base=` gets a read-only
+scratch buffer (the common ancestor), `target=` gets another (the
+remote/incoming version). Requires `output=buffer` (the default) and
+`view=vsplit`/`split`/`tab` — `inline`/`float`/any non-`buffer` output are
+single-diff concepts with no three-way equivalent, and are rejected with an
+error if combined with `base=`. See [Three-way diff](three-way-diff.md) for
+the full picture and merge-conflict-resolution examples.
+
 **`view=`** (only for `output=buffer`, default: `vsplit`)
 
 | Value | Layout |
@@ -84,6 +99,7 @@ usage examples.
 :Diff target=git:HEAD                   " current file vs. its last commit
 :Diff target=git:HEAD~1 output=stat     " summary vs. two commits back
 :Diff target=https://raw.githubusercontent.com/user/repo/main/f.lua  " current buffer vs. a URL
+:Diff target=git:MERGE_HEAD base=git:HEAD  " three-way merge-conflict view
 ```
 
 ## `:DiffClear`
@@ -114,9 +130,10 @@ Leaves diff mode from anywhere (`diffoff!`).
 `:Diff` completes the `key=value` grammar context-sensitively:
 
 ```
-:Diff <Tab>            → target=  source=  view=  output=
+:Diff <Tab>            → target=  source=  base=  view=  output=
 :Diff view=<Tab>       → view=vsplit  view=split  view=tab  view=inline  view=float
 :Diff output=<Tab>     → output=buffer  output=prompt  output=file  output=clipboard  output=stat
 :Diff source=<Tab>     → source=current  source=clipboard  source=ask  source=git:HEAD
 :Diff target=<Tab>     → target=clipboard  target=ask  target=git:HEAD  (+ file paths)
+:Diff base=<Tab>       → base=clipboard  base=ask  base=git:HEAD  (+ file paths)
 ```

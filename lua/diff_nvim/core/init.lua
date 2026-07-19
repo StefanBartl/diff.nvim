@@ -75,11 +75,54 @@ local function resolve_side_async(spec, label, source_bufnr, range, callback)
   callback(resolve_side(spec, label, source_bufnr, range))
 end
 
+---Run a three-way diff: the origin window keeps its live buffer (left/local
+---— still editable, matching side_by_side's convention for output=buffer),
+---`base` (middle/ancestor) and `target` (right/remote) each get a read-only
+---scratch buffer. opts.source is deliberately not resolved here — exactly
+---like the two-way output=buffer path, the origin window's live content is
+---what's shown, so fetching/reading it separately would be wasted work (a
+---discarded network round-trip for a url:// source, in the worst case).
+---@see docs/three-way-diff.md
+---@param opts DiffNvim.ResolvedOpts
+---@param ctx DiffNvim.Context
+---@return nil
+local function execute_three_way(opts, ctx)
+  resolve_side_async(opts.base, "base", ctx.source_bufnr, nil, function(base_lines, base_err)
+    if not base_lines then
+      notify.error(base_err or "could not resolve base")
+      return
+    end
+
+    resolve_side_async(opts.target, "target", ctx.source_bufnr, nil, function(tgt_lines, tgt_err)
+      if not tgt_lines then
+        notify.error(tgt_err or "could not resolve target")
+        return
+      end
+
+      local base_label = tostring(opts.base)
+      local tgt_label  = tostring(opts.target)
+      local base_buf = scratch.create(base_lines, string.format("[Diff:base] %s", base_label))
+      local tgt_buf  = scratch.create(tgt_lines, string.format("[Diff:target] %s", tgt_label))
+
+      render.three_way(ctx.origin_win, base_buf, tgt_buf, opts.view)
+
+      local exit = require("diff_nvim.features.exit")
+      exit.attach_buffer(base_buf)
+      exit.attach_buffer(tgt_buf)
+    end)
+  end)
+end
+
 ---Run the diff with fully-resolved options.
 ---@param opts DiffNvim.ResolvedOpts
 ---@param ctx DiffNvim.Context
 ---@return nil
 function M.execute(opts, ctx)
+  if opts.base then
+    execute_three_way(opts, ctx)
+    return
+  end
+
   local cfg = config.get().diff
 
   -- The visual range applies to the source side only (the selection lives in
@@ -187,8 +230,9 @@ end
 
 ---Show the interactive picker for a side; calls `callback` with the chosen
 ---specifier string, or nil on cancel. The source picker additionally offers
----"current buffer"; the target picker does not.
----@param kind "target"|"source"
+---"current buffer"; target and base do not (base is virtually never the
+---current buffer in a three-way diff).
+---@param kind "target"|"source"|"base"
 ---@param callback fun(spec: string|nil): nil
 ---@return nil
 local function pick_specifier(kind, callback)
@@ -269,10 +313,27 @@ function M.run(raw_args, range)
     return
   end
 
+  -- base= (three-way diff) only makes sense as native multi-window diffmode:
+  -- prompt/file/clipboard/stat and inline/float are all fundamentally
+  -- two-input concepts (a single unified diff), not representable as three.
+  local has_base = type(kv.base) == "string" and kv.base ~= ""
+  if has_base then
+    if output ~= "buffer" then
+      notify.error(string.format("base= (three-way diff) only supports output=buffer, got output=%q", output))
+      return
+    end
+    if view == "inline" or view == "float" then
+      notify.error(string.format(
+        "base= (three-way diff) does not support view=%q (use vsplit, split, or tab)", view))
+      return
+    end
+  end
+
   ---@type DiffNvim.ResolvedOpts
   local opts = {
     target = "",
     source = kv.source or cfg.default_source,
+    base   = has_base and kv.base or nil,
     view   = view --[[@as DiffNvim.View]],
     output = output --[[@as DiffNvim.Output]],
   }
@@ -280,6 +341,7 @@ function M.run(raw_args, range)
   -- A missing target, or an explicit "ask", forces the interactive picker.
   local need_target = (not kv.target) or kv.target == "" or kv.target == "ask"
   local need_source = kv.source == "ask"
+  local need_base   = has_base and kv.base == "ask"
 
   local function pick_target_then_run()
     if not need_target then
@@ -297,6 +359,21 @@ function M.run(raw_args, range)
     end)
   end
 
+  local function pick_base_then_target_then_run()
+    if not need_base then
+      pick_target_then_run()
+      return
+    end
+    pick_specifier("base", function(chosen)
+      if not chosen then
+        notify.info("Diff cancelled")
+        return
+      end
+      opts.base = chosen
+      pick_target_then_run()
+    end)
+  end
+
   if need_source then
     pick_specifier("source", function(chosen)
       if not chosen then
@@ -304,12 +381,12 @@ function M.run(raw_args, range)
         return
       end
       opts.source = chosen
-      pick_target_then_run()
+      pick_base_then_target_then_run()
     end)
     return
   end
 
-  pick_target_then_run()
+  pick_base_then_target_then_run()
 end
 
 ---Diff the current buffer against another open buffer chosen from a picker.
