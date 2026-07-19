@@ -22,6 +22,9 @@ local DEFAULTS = {
     default_orig_view  = "vsplit",
     algorithm           = "histogram",
     ctxlen              = 3,
+    -- Word/char-level highlighting of changed spans in view=inline/float
+    -- (DiffText extmarks over paired -/+ line runs). Set false to disable.
+    word_diff           = true,
   },
   exit = {
     key   = "<Esc><Esc>",

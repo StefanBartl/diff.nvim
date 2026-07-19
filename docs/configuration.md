@@ -16,6 +16,7 @@ require("diff_nvim").setup({
     default_orig_view = "vsplit",    -- "vsplit"|"split" — split direction for :DiffOrig
     algorithm         = "histogram", -- vim.diff algorithm
     ctxlen            = 3,           -- context lines per hunk
+    word_diff         = true,        -- word/char-level DiffText highlighting in view=inline/float
   },
   exit = {
     key   = "<Esc><Esc>",         -- exit mapping
@@ -33,6 +34,12 @@ require("diff_nvim").setup({
 
 `diff.default_orig_view` is split off from `default_view` because `:DiffOrig`
 always opens a native diffmode split — it never supports `"inline"`.
+
+`diff.word_diff` highlights the exact changed byte span within each paired
+removed/added line in `view=inline`/`view=float`, using the same `DiffText`
+group Neovim's native diffmode uses for intra-line changes. Only applies to
+runs where the removed and added line counts match (an unambiguous 1:1
+pairing); set to `false` to disable.
 
 ## Exit scope
 

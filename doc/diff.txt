@@ -85,6 +85,7 @@ vim-plug: >vim
       default_orig_view = "vsplit",    -- "vsplit"|"split" — :DiffOrig split direction
       algorithm         = "histogram", -- vim.diff algorithm
       ctxlen            = 3,           -- context lines per hunk
+      word_diff         = true,        -- word/char DiffText highlighting in view=inline/float
     },
     exit = {
       key   = "<Esc><Esc>",         -- exit mapping
@@ -130,6 +131,13 @@ diff.algorithm ~
 
 diff.ctxlen ~
   Number of context lines around each hunk in unified output. Default: `3`.
+
+diff.word_diff ~
+  Highlights the exact changed byte span within each paired removed/added
+  line in `view=inline`/`view=float`, using the same `DiffText` group
+  Neovim's native diffmode uses for intra-line changes. Only applies to runs
+  where the removed and added line counts match (an unambiguous 1:1
+  pairing). Default: `true`.
 
 select_fn ~
   Optional replacement for `vim.ui.select`, injected for the target picker.
@@ -201,8 +209,9 @@ view= ~
     vsplit      Vertical split + native diffmode (side-by-side)
     split       Horizontal split + native diffmode
     tab         Side-by-side native diffmode in a new tab
-    inline      Single scratch buffer holding the unified diff (ft=diff)
-    float       Unified diff in a floating window (press q or <Esc> to close)
+    inline      Single scratch buffer holding the unified diff (ft=diff),
+                word-level DiffText highlighting on changed spans
+    float       Same as inline, in a floating window (press q or <Esc> to close)
 
 output= ~
   Where the result goes. Default: `buffer`.

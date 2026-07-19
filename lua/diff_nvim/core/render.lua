@@ -50,14 +50,19 @@ function M.compute_stats(a_lines, b_lines, algorithm, ctxlen)
     return nil, err
   end
 
+  -- Raw vim.diff "unified" output has no "---"/"+++" file-header lines (those
+  -- are only synthesized by with_header() below) — it starts directly at the
+  -- first "@@" hunk. So classify purely by the first byte; a removed/added
+  -- line whose own content happens to start with "--"/"++" (e.g. a Lua
+  -- comment "-- foo") must still count, not be mistaken for a header.
   local added, removed, hunks = 0, 0, 0
   for _, line in ipairs(vim.split(unified, "\n", { plain = true })) do
     local first = line:sub(1, 1)
     if first == "@" and line:sub(1, 2) == "@@" then
       hunks = hunks + 1
-    elseif first == "+" and line:sub(1, 3) ~= "+++" then
+    elseif first == "+" then
       added = added + 1
-    elseif first == "-" and line:sub(1, 3) ~= "---" then
+    elseif first == "-" then
       removed = removed + 1
     end
   end
@@ -182,6 +187,108 @@ local function open_float(buf, line_count)
   end
 end
 
+---@type integer  Extmark namespace for inline-view word-level diff highlights
+local WORD_DIFF_NS = api.nvim_create_namespace("diff_nvim_word_diff")
+
+---Compute byte-range spans that changed between two single lines, using
+---vim.diff at byte granularity (each byte of the line becomes one "line" of
+---a synthetic multi-line document, fed through result_type="indices"). Byte-
+---based rather than UTF-8-codepoint-aware: on non-ASCII lines a multi-byte
+---codepoint may straddle a highlighted/unhighlighted boundary — an accepted
+---simplification, since extmark columns are byte offsets anyway.
+---@param a string  Old line content (without the unified-diff "-" prefix)
+---@param b string  New line content (without the unified-diff "+" prefix)
+---@param algorithm string
+---@return { a: [integer, integer][], b: [integer, integer][] }|nil  0-based [start,end) byte ranges per side
+local function word_diff_ranges(a, b, algorithm)
+  if a == b then
+    return { a = {}, b = {} }
+  end
+
+  local function explode(s)
+    local bytes = {}
+    for i = 1, #s do
+      bytes[i] = s:sub(i, i)
+    end
+    return table.concat(bytes, "\n")
+  end
+
+  local ok, hunks = pcall(vim.diff, explode(a), explode(b), {
+    result_type = "indices",
+    algorithm = algorithm,
+  })
+  if not ok or type(hunks) ~= "table" then
+    return nil
+  end
+
+  local ranges = { a = {}, b = {} }
+  for _, h in ipairs(hunks) do
+    local start_a, count_a, start_b, count_b = h[1], h[2], h[3], h[4]
+    if count_a > 0 then
+      ranges.a[#ranges.a + 1] = { start_a - 1, start_a - 1 + count_a }
+    end
+    if count_b > 0 then
+      ranges.b[#ranges.b + 1] = { start_b - 1, start_b - 1 + count_b }
+    end
+  end
+  return ranges
+end
+
+---Find runs of consecutive "-" lines immediately followed by an equal-length
+---run of consecutive "+" lines in the unified-diff body, and highlight the
+---changed byte spans within each paired (old, new) line using `DiffText` —
+---the same group Neovim's native diffmode uses for intra-line changes.
+---Skips the fixed two-line "---"/"+++" file header (by position, not content
+---— a removed/added line's own text may start with "--"/"++") and any run
+---where the removed/added counts differ (ambiguous pairing; still shown,
+---just without word highlighting).
+---@param buf integer
+---@param lines string[]  The exact lines written into `buf` (from with_header)
+---@param algorithm string
+---@return nil
+local function apply_word_diff(buf, lines, algorithm)
+  local i = 3 -- lines[1]/[2] are always the "---"/"+++" file header
+  local n = #lines
+  while i <= n do
+    if lines[i]:sub(1, 1) == "-" then
+      local del_start = i
+      local j = i
+      while j <= n and lines[j]:sub(1, 1) == "-" do
+        j = j + 1
+      end
+      local del_count = j - del_start
+
+      local add_start = j
+      local k = j
+      while k <= n and lines[k]:sub(1, 1) == "+" do
+        k = k + 1
+      end
+      local add_count = k - add_start
+
+      if del_count == add_count and del_count > 0 then
+        for off = 0, del_count - 1 do
+          local a_line = lines[del_start + off]:sub(2)
+          local b_line = lines[add_start + off]:sub(2)
+          local ranges = word_diff_ranges(a_line, b_line, algorithm)
+          if ranges then
+            for _, r in ipairs(ranges.a) do
+              pcall(api.nvim_buf_set_extmark, buf, WORD_DIFF_NS, del_start + off - 1, r[1],
+                { end_col = r[2], hl_group = "DiffText" })
+            end
+            for _, r in ipairs(ranges.b) do
+              pcall(api.nvim_buf_set_extmark, buf, WORD_DIFF_NS, add_start + off - 1, r[1],
+                { end_col = r[2], hl_group = "DiffText" })
+            end
+          end
+        end
+      end
+      i = k
+    else
+      i = i + 1
+    end
+  end
+end
+
 ---Show the unified diff inside a single scratch buffer (ft=diff), either in a
 ---split (`layout="split"`, default) or a floating window (`layout="float"`).
 ---@param origin_win integer
@@ -191,9 +298,11 @@ end
 ---@param b_label string
 ---@param algorithm string
 ---@param ctxlen integer
----@param layout? "split"|"float"  Where to show it (default "split")
+---@param opts? { layout?: "split"|"float", word_diff?: boolean }
 ---@return integer|nil bufnr  The inline scratch buffer, or nil when nothing rendered
-function M.inline(origin_win, a_lines, b_lines, a_label, b_label, algorithm, ctxlen, layout)
+function M.inline(origin_win, a_lines, b_lines, a_label, b_label, algorithm, ctxlen, opts)
+  opts = opts or {}
+
   local unified, err = M.compute_unified(a_lines, b_lines, algorithm, ctxlen)
   if not unified then
     notify.error(err or "could not compute diff")
@@ -207,7 +316,11 @@ function M.inline(origin_win, a_lines, b_lines, a_label, b_label, algorithm, ctx
   local lines = with_header(unified, a_label, b_label)
   local buf = scratch.create(lines, string.format("[Diff] %s -> %s", a_label, b_label), "diff")
 
-  if layout == "float" then
+  if opts.word_diff ~= false then
+    apply_word_diff(buf, lines, algorithm)
+  end
+
+  if opts.layout == "float" then
     open_float(buf, #lines)
     return buf
   end
