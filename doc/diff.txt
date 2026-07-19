@@ -158,11 +158,16 @@ exit.scope = false ~
 5.1 :Diff                                                             *:Diff*
 
 >
-  :Diff [target=…] [source=…] [view=…] [output=…]
+  :[range]Diff [target=…] [source=…] [view=…] [output=…]
 <
 
 Compare a source (left) with a target (right). Arguments use a `key=value`
 grammar in any order. Unknown keys are ignored.
+
+When invoked with a range (e.g. a visual selection, `:'<,'>Diff`) and
+`source=current` (the default), only the selected lines are used as the
+source instead of the whole buffer. The range applies to the source side
+only; the target is always taken in full.
 
 target= ~
   The "other" material to compare against.
@@ -204,6 +209,7 @@ Examples: >
   :Diff target=a.lua source=b.lua
   :Diff target=clipboard output=clipboard
   :Diff target=src/old.lua output=stat
+  :'<,'>Diff target=clipboard
 <
 
 ------------------------------------------------------------------------------
