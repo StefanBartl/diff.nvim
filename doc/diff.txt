@@ -79,9 +79,9 @@ vim-plug: >vim
       diff_exit   = true,   -- register :DiffExit + exit keymap
     },
     diff = {
-      default_view      = "vsplit",    -- "vsplit"|"split"|"inline"
-      default_output    = "buffer",    -- "buffer"|"prompt"|"file"|"clipboard"
-      default_source    = "current",   -- "current"|"clipboard"|path|bufnr
+      default_view      = "vsplit",    -- "vsplit"|"split"|"tab"|"inline"|"float"
+      default_output    = "buffer",    -- "buffer"|"prompt"|"file"|"clipboard"|"stat"
+      default_source    = "current",   -- "current"|"clipboard"|"ask"|"git:<rev>"|path|bufnr
       default_orig_view = "vsplit",    -- "vsplit"|"split" — :DiffOrig split direction
       algorithm         = "histogram", -- vim.diff algorithm
       ctxlen            = 3,           -- context lines per hunk
@@ -321,10 +321,11 @@ Checks:
       notify.lua              "[diff] " prefixed vim.notify wrapper
       validate.lua            Pure validation helpers
     core/
-      init.lua                Orchestration: run(), execute(), target picker
+      init.lua                Orchestration: run(), execute(), source/target picker
       resolve.lua             Specifier → lines, argument parsing
-      scratch.lua             Scratch-buffer lifecycle + cleanup_all()
-      render.lua              Output renderers (buffer/prompt/file/clipboard)
+      git.lua                 git:<rev> resolution via vim.system git-show
+      scratch.lua             Scratch-buffer lifecycle + cleanup_all() + active_count()
+      render.lua              Output renderers (buffer/prompt/file/clipboard/stat)
     features/
       origin.lua              :DiffOrig logic
       exit.lua                :DiffExit logic + exit-behaviour config

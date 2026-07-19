@@ -22,6 +22,9 @@ The runner prints one line per spec and exits non-zero on the first failure
 | `config_spec.lua`  | Config defaults + deep-merge of user options.                    |
 | `resolve_spec.lua` | `parse_args` grammar + `resolve_lines` for clipboard/buffer/file. |
 | `validate_spec.lua`| `is_one_of` / `buf_valid` / `win_valid`.                          |
+| `render_spec.lua`  | `compute_stats` / `format_stats` (the `output=stat` summary).     |
+| `git_spec.lua`     | `is_git_spec` + live `git:HEAD` resolution against this repo.     |
+| `status_spec.lua`  | `scratch.active_count` + `diff_nvim.status` statusline string.    |
 | `run.lua`          | Runner: loads every spec, reports results, sets the exit code.   |
 
 ## Adding a spec

@@ -53,6 +53,9 @@ Omitting `target=` opens an interactive picker (`vim.ui.select`).
 :Diff                                  " interactive target picker
 :Diff target=clipboard                 " current buffer vs. clipboard
 :Diff target=src/old.lua               " current buffer vs. a file
+:Diff target=git:HEAD                  " current file vs. its last commit
+:Diff target=clipboard output=stat     " just the +N -M, K hunks summary
+:'<,'>Diff target=clipboard            " compare only the visual selection
 ```
 
 ---
@@ -66,4 +69,4 @@ Omitting `target=` opens an interactive picker (`vim.ui.select`).
 - [Architecture](docs/architecture.md) — module layout and load order.
 - [Testing & health check](docs/testing.md) — `:checkhealth diff_nvim` and the headless spec suite.
 - [Bindings cheatsheet](docs/BINDINGS.md) — every keymap, user command, and autocommand.
-- [Roadmap](docs/ROADMAP.md) — planned features: git revisions as a target/source, visual-range diffing, diff statistics, word-level inline highlighting, and more.
+- [Roadmap](docs/ROADMAP.md) — shipped (git revisions, visual-range diffing, diff statistics, `view=tab`/`float`, statusline component) and what's next (word-level inline highlighting, picker integration, three-way diff).

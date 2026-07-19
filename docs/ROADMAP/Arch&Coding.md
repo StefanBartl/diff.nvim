@@ -13,7 +13,7 @@ hand-rolled Lua.
 
 | Regel | Status | Notes |
 |---|---|---|
-| `pcall()` bevorzugt | ✅ | Used at every real risk point: `vim.diff` ([render.lua:24](../../lua/diff_nvim/core/render.lua)), `nvim_buf_delete` ([scratch.lua](../../lua/diff_nvim/core/scratch.lua)), `nvim_buf_set_name`, `writefile`. |
+| `pcall()` bevorzugt | ✅ | Used at every real risk point: `vim.diff` ([render.lua](../../lua/diff_nvim/core/render.lua)), the `vim.system` git call ([core/git.lua](../../lua/diff_nvim/core/git.lua)), `nvim_buf_delete` ([scratch.lua](../../lua/diff_nvim/core/scratch.lua)), `nvim_buf_set_name`, `writefile`. |
 | Type Guards & Literal Checks | ✅ | Centralized in [util/validate.lua](../../lua/diff_nvim/util/validate.lua) (`buf_valid`, `win_valid`, `is_one_of`), used before every API access. |
 | Explizite Rückgaben | ✅ | `resolve.lua` and `resolve_lines`/`resolve_side` return `(value, err)`, never notify. |
 | Kein `notify()` in Low-Level-Code | ⚠️ Partial | `core/resolve.lua` is silent (correct). `core/render.lua` notifies deliberately — its own header documents this ("Renderers may notify the user because this is the UI-facing layer"). `core/init.lua`'s `run()`/`execute()`/`clear()` also notify directly rather than bubbling `(ok, err)` up to `bindings/usrcmds.lua`. Accepted as-is: splitting `core/init.lua` into a silent core + a notifying command layer would add a return-value-threading layer for a single-command plugin with no other caller of `core.run()`/`core.execute()` — not worth the indirection at this size. |
@@ -87,8 +87,10 @@ keymaps live in `bindings/keymaps.lua`, which is imported last, from
 ## MISC / NVIM-Config spezifisch
 
 - **Cross-platform**: ✅ — no shell calls; `vim.diff`, `vim.fn.tempname()`,
-  `vim.fn.readfile()`/`writefile()` are all platform-agnostic. Documented in
-  the README.
+  `vim.fn.readfile()`/`writefile()` are all platform-agnostic. The `git:<rev>`
+  source ([core/git.lua](../../lua/diff_nvim/core/git.lua)) shells out to `git`
+  via `vim.system({...})` — a direct argv exec, not a shell string, so it stays
+  quoting-safe on Windows and Unix alike. Documented in the README.
 - **`lib.nvim`**: now a dependency, used for notifications only. The former
   "Eigenständiges Plugin ohne `lib.nvim`-Abhängigkeit" goal was reversed
   deliberately: `util/notify.lua` was a hand-rolled copy of what

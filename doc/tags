@@ -21,3 +21,4 @@ diff_nvim.enable()	diff.txt	/*diff_nvim.enable()*
 diff_nvim.exit()	diff.txt	/*diff_nvim.exit()*
 diff_nvim.run()	diff.txt	/*diff_nvim.run()*
 diff_nvim.setup()	diff.txt	/*diff_nvim.setup()*
+diff_nvim.status()	diff.txt	/*diff_nvim.status()*
