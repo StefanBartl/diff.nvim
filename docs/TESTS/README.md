@@ -25,6 +25,7 @@ The runner prints one line per spec and exits non-zero on the first failure
 | `render_spec.lua`  | `compute_stats` / `format_stats` (the `output=stat` summary).     |
 | `git_spec.lua`     | `is_git_spec` + live `git:HEAD` resolution against this repo.     |
 | `status_spec.lua`  | `scratch.active_count` + `diff_nvim.status` statusline string.    |
+| `pickers_bridge_spec.lua` | `pickers_bridge.resolve()` nil-fallback (absent / no engine).|
 | `run.lua`          | Runner: loads every spec, reports results, sets the exit code.   |
 
 ## Adding a spec

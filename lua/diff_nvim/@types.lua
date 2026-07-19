@@ -98,5 +98,6 @@
 ---@field exit      DiffNvim.Config.Exit
 ---@field commands  DiffNvim.Config.Commands
 ---@field select_fn (fun(items: any[], opts: table, on_choice: fun(item: any, idx: integer|nil)): nil)|nil  Optional vim.ui.select replacement (dependency injection)
+---@field use_pickers_nvim boolean  Auto-detect pickers.nvim as the picker engine when select_fn is unset (default true)
 
 return {}

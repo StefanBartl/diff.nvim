@@ -12,6 +12,7 @@ diff-exit-scope	diff.txt	/*diff-exit-scope*
 diff-health	diff.txt	/*diff-health*
 diff-installation	diff.txt	/*diff-installation*
 diff-intro	diff.txt	/*diff-intro*
+diff-picker-resolution	diff.txt	/*diff-picker-resolution*
 diff-requirements	diff.txt	/*diff-requirements*
 diff.nvim	diff.txt	/*diff.nvim*
 diff.txt	diff.txt	/*diff.txt*

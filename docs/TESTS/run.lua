@@ -62,6 +62,7 @@ local specs = {
   "render_spec.lua",
   "git_spec.lua",
   "status_spec.lua",
+  "pickers_bridge_spec.lua",
 }
 
 local failed = 0

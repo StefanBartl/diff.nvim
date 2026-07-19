@@ -39,6 +39,12 @@ function M.check()
     vim.health.warn("git executable not on PATH — git:<rev> source/target unavailable")
   end
 
+  if type(require("diff_nvim.core.pickers_bridge").resolve()) == "function" then
+    vim.health.ok("pickers.nvim detected — used for the target/source picker")
+  else
+    vim.health.ok("pickers.nvim not detected — using vim.ui.select for the target/source picker")
+  end
+
   if vim.g.loaded_diff_nvim then
     vim.health.ok("plugin loaded (vim.g.loaded_diff_nvim = " .. tostring(vim.g.loaded_diff_nvim) .. ")")
   else

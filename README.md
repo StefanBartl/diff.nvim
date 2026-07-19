@@ -13,9 +13,11 @@
 ![Status](https://img.shields.io/badge/status-alpha-orange)
 
 > **Pairs well with [pickers.nvim](https://github.com/StefanBartl/pickers.nvim)** —
-> diff.nvim's `select_fn` option lets you swap the built-in `vim.ui.select`
-> target picker for pickers.nvim's fuzzy picker, so choosing a buffer or file
-> to diff against gets fuzzy search instead of a flat list.
+> if it's installed, diff.nvim auto-detects it and uses its fuzzy picker
+> (telescope.nvim/fzf-lua/snacks.nvim, whichever pickers.nvim resolved) for
+> the target/source picker instead of the flat `vim.ui.select` — no config
+> needed. Set `select_fn` to use a different picker, or
+> `use_pickers_nvim = false` to always use `vim.ui.select`.
 
 Flexible diffing for Neovim — a single `:Diff` command that compares arbitrary
 sources (the current buffer, a file, a buffer number, the clipboard) against

@@ -153,7 +153,13 @@ end
 ---@param callback fun(spec: string|nil): nil
 ---@return nil
 local function pick_specifier(kind, callback)
-  local select_fn = config.get().select_fn
+  local cfg = config.get()
+  local select_fn = cfg.select_fn
+  -- Explicit select_fn always wins. Otherwise, unless opted out, prefer
+  -- pickers.nvim's fuzzy engine (if installed) over the flat vim.ui.select.
+  if type(select_fn) ~= "function" and cfg.use_pickers_nvim ~= false then
+    select_fn = require("diff_nvim.core.pickers_bridge").resolve()
+  end
   if type(select_fn) ~= "function" then
     select_fn = vim.ui.select
   end

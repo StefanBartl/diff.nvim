@@ -28,7 +28,8 @@ require("diff_nvim").setup({
     diff_orig  = "DiffOrig",
     diff_exit  = "DiffExit",
   },
-  select_fn = nil,                -- optional vim.ui.select replacement (DI)
+  select_fn        = nil,          -- optional vim.ui.select replacement (DI)
+  use_pickers_nvim = true,         -- auto-detect pickers.nvim as the picker engine
 })
 ```
 
@@ -40,6 +41,24 @@ removed/added line in `view=inline`/`view=float`, using the same `DiffText`
 group Neovim's native diffmode uses for intra-line changes. Only applies to
 runs where the removed and added line counts match (an unambiguous 1:1
 pairing); set to `false` to disable.
+
+## Picker resolution
+
+The target/source picker (shown when `target=`/`source=` is omitted or set to
+`ask`) resolves in this order:
+
+1. `select_fn`, if set — an explicit override always wins.
+2. [pickers.nvim](https://github.com/StefanBartl/pickers.nvim), if installed
+   and `use_pickers_nvim` isn't `false` — its fuzzy engine (telescope.nvim,
+   fzf-lua, or snacks.nvim, whichever pickers.nvim already resolved) is used
+   automatically. No configuration needed on diff.nvim's side.
+3. `vim.ui.select` — the built-in fallback, always available.
+
+Detection is soft: if pickers.nvim isn't installed, or has no picker engine
+available, diff.nvim silently falls back to `vim.ui.select` — nothing errors.
+Note that pickers.nvim's engines have no reliable cross-engine cancel signal,
+so cancelling that picker (e.g. `<Esc>`) does not show the usual
+"Diff cancelled" message the way cancelling `vim.ui.select` does.
 
 ## Exit scope
 
