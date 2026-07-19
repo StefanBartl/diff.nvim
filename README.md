@@ -37,7 +37,7 @@ Cross-platform (Windows + Unix). All diffing goes through `vim.diff` (libvim)
 {
   "StefanBartl/diff.nvim",
   dependencies = { "StefanBartl/lib.nvim" },
-  cmd = { "Diff", "DiffClear", "DiffOrig", "DiffExit" },
+  cmd = { "Diff", "DiffClear", "DiffBuffers", "DiffOrig", "DiffExit" },
   opts = {},
 }
 ```
@@ -46,6 +46,7 @@ Cross-platform (Windows + Unix). All diffing goes through `vim.diff` (libvim)
 |---|---|
 | `:Diff [target=… source=… view=… output=…]` | Compare two sources |
 | `:DiffClear` | Close every diff window and leave diffmode |
+| `:DiffBuffers [view=… output=…]` | Diff the current buffer against another open buffer (picker) |
 | `:DiffOrig` | Diff the current buffer against its on-disk saved version |
 | `:DiffExit` | Leave diff mode from anywhere (`diffoff!`) |
 

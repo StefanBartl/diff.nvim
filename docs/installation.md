@@ -15,7 +15,7 @@
 {
   "StefanBartl/diff.nvim",
   dependencies = { "StefanBartl/lib.nvim" },
-  cmd = { "Diff", "DiffClear", "DiffOrig", "DiffExit" },
+  cmd = { "Diff", "DiffClear", "DiffBuffers", "DiffOrig", "DiffExit" },
   opts = {},
 }
 ```
@@ -25,7 +25,7 @@ Or via `config`:
 ```lua
 {
   "StefanBartl/diff.nvim",
-  cmd = { "Diff", "DiffClear", "DiffOrig", "DiffExit" },
+  cmd = { "Diff", "DiffClear", "DiffBuffers", "DiffOrig", "DiffExit" },
   config = function()
     require("diff_nvim").setup({})
   end,
@@ -40,7 +40,7 @@ Or via `config`:
 use {
   "StefanBartl/diff.nvim",
   requires = { "StefanBartl/lib.nvim" },
-  cmd = { "Diff", "DiffClear", "DiffOrig", "DiffExit" },
+  cmd = { "Diff", "DiffClear", "DiffBuffers", "DiffOrig", "DiffExit" },
   config = function()
     require("diff_nvim").setup({})
   end,

@@ -1,4 +1,5 @@
 :Diff	diff.txt	/*:Diff*
+:DiffBuffers	diff.txt	/*:DiffBuffers*
 :DiffClear	diff.txt	/*:DiffClear*
 :DiffExit	diff.txt	/*:DiffExit*
 :DiffOrig	diff.txt	/*:DiffOrig*
@@ -18,6 +19,7 @@ diff-requirements	diff.txt	/*diff-requirements*
 diff.nvim	diff.txt	/*diff.nvim*
 diff.txt	diff.txt	/*diff.txt*
 diff_nvim.clear()	diff.txt	/*diff_nvim.clear()*
+diff_nvim.diff_buffers()	diff.txt	/*diff_nvim.diff_buffers()*
 diff_nvim.diff_origin()	diff.txt	/*diff_nvim.diff_origin()*
 diff_nvim.enable()	diff.txt	/*diff_nvim.enable()*
 diff_nvim.exit()	diff.txt	/*diff_nvim.exit()*

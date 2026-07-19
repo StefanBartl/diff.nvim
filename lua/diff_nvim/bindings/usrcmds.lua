@@ -64,6 +64,29 @@ local function complete(arglead)
   return out
 end
 
+---Tab completion for :DiffBuffers (only view=/output= apply — the source is
+---always the current buffer and the target is chosen from the picker).
+---@param arglead string
+---@return string[]
+local function complete_view_output(arglead)
+  local key, partial = arglead:match("^(%a+)=(.*)$")
+  if key and (key == "view" or key == "output") then
+    local vals = starts_with(VALUE_LISTS[key], partial)
+    local out = {}
+    for i = 1, #vals do
+      out[i] = key .. "=" .. vals[i]
+    end
+    return out
+  end
+
+  local out = {}
+  local keys = starts_with({ "view", "output" }, arglead)
+  for i = 1, #keys do
+    out[i] = keys[i] .. "="
+  end
+  return out
+end
+
 ---Register all commands. Idempotent at the nvim level (re-creates cleanly).
 ---@param cfg DiffNvim.Config
 ---@return nil
@@ -90,6 +113,14 @@ function M.register(cfg)
       core.clear()
     end, {
       desc = "Close all :Diff windows and disable diffmode",
+    })
+
+    api.nvim_create_user_command(names.diff_buffers, function(info)
+      core.run_buffers(info.args or "")
+    end, {
+      nargs = "*",
+      complete = complete_view_output,
+      desc = "Diff current buffer against another open buffer (picker)  :DiffBuffers [view=…] [output=…]",
     })
   end
 

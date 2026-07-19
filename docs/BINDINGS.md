@@ -26,6 +26,7 @@ Machine-readable overview of every keymap, user command, and autocommand defined
 | --- | --- | --- | --- |
 | `:Diff` | `:[range]Diff [target=…] [source=…] [view=…] [output=…]` | Compare a source (left) with a target (right); a range restricts the `current` source to the selection | `features.diff` |
 | `:DiffClear` | — | Close every scratch buffer and disable diffmode | `features.diff` |
+| `:DiffBuffers` | `[view=…] [output=…]` | Diff the current buffer against another open buffer (picker) | `features.diff` |
 | `:DiffOrig` | — | Diff current buffer against its on-disk saved version | `features.diff_origin` |
 | `:DiffExit` | — | Leave diff mode (`diffoff!`) from anywhere | `features.diff_exit` |
 

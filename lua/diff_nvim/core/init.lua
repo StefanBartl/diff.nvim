@@ -152,17 +152,23 @@ end
 ---@param kind "target"|"source"
 ---@param callback fun(spec: string|nil): nil
 ---@return nil
-local function pick_specifier(kind, callback)
+---Resolve the effective picker function: an explicit select_fn always wins,
+---otherwise pickers.nvim (if installed and not opted out), else vim.ui.select.
+---@return fun(items: any[], opts: table, on_choice: fun(item: any, idx: integer|nil)): nil
+local function resolve_select_fn()
   local cfg = config.get()
   local select_fn = cfg.select_fn
-  -- Explicit select_fn always wins. Otherwise, unless opted out, prefer
-  -- pickers.nvim's fuzzy engine (if installed) over the flat vim.ui.select.
   if type(select_fn) ~= "function" and cfg.use_pickers_nvim ~= false then
     select_fn = require("diff_nvim.core.pickers_bridge").resolve()
   end
   if type(select_fn) ~= "function" then
     select_fn = vim.ui.select
   end
+  return select_fn
+end
+
+local function pick_specifier(kind, callback)
+  local select_fn = resolve_select_fn()
 
   local choices, handlers
   if kind == "source" then
@@ -191,6 +197,25 @@ local function pick_specifier(kind, callback)
   end)
 end
 
+---Resolve+validate view/output from parsed args, notifying on an invalid
+---value. Shared by run() and run_buffers().
+---@param kv table<string, string>
+---@param cfg DiffNvim.Config.Diff
+---@return string|nil view, string|nil output  Both nil when validation failed
+local function resolve_view_output(kv, cfg)
+  local view = kv.view or cfg.default_view
+  if not validate.is_one_of(view, VALID_VIEWS) then
+    notify.error(string.format("Unknown view=%q  (valid: %s)", view, table.concat(VALID_VIEWS, ", ")))
+    return nil, nil
+  end
+  local output = kv.output or cfg.default_output
+  if not validate.is_one_of(output, VALID_OUTPUTS) then
+    notify.error(string.format("Unknown output=%q  (valid: %s)", output, table.concat(VALID_OUTPUTS, ", ")))
+    return nil, nil
+  end
+  return view, output
+end
+
 ---Parse raw command arguments and launch the diff workflow.
 ---When `target` is absent an interactive picker is shown first.
 ---@param raw_args string  Raw <args> delivered by nvim_create_user_command
@@ -215,15 +240,8 @@ function M.run(raw_args, range)
   local cfg = config.get().diff
   local kv  = resolve.parse_args(type(raw_args) == "string" and raw_args or "")
 
-  local view = kv.view or cfg.default_view
-  if not validate.is_one_of(view, VALID_VIEWS) then
-    notify.error(string.format("Unknown view=%q  (valid: %s)", view, table.concat(VALID_VIEWS, ", ")))
-    return
-  end
-
-  local output = kv.output or cfg.default_output
-  if not validate.is_one_of(output, VALID_OUTPUTS) then
-    notify.error(string.format("Unknown output=%q  (valid: %s)", output, table.concat(VALID_OUTPUTS, ", ")))
+  local view, output = resolve_view_output(kv, cfg)
+  if not view then
     return
   end
 
@@ -268,6 +286,63 @@ function M.run(raw_args, range)
   end
 
   pick_target_then_run()
+end
+
+---Diff the current buffer against another open buffer chosen from a picker.
+---Convenience wrapper over `target=<bufnr>`; only `view=`/`output=` args apply
+---(the source is always the current buffer).
+---@param raw_args string  Raw <args> (view=/output= only)
+---@return nil
+function M.run_buffers(raw_args)
+  ---@type DiffNvim.Context
+  local ctx = {
+    source_bufnr = api.nvim_get_current_buf(),
+    origin_win   = api.nvim_get_current_win(),
+  }
+
+  local cfg = config.get().diff
+  local kv  = resolve.parse_args(type(raw_args) == "string" and raw_args or "")
+
+  local view, output = resolve_view_output(kv, cfg)
+  if not view then
+    return
+  end
+
+  -- Collect every other listed, loaded buffer as a diff candidate.
+  local items = {}
+  local by_label = {}
+  for _, b in ipairs(api.nvim_list_bufs()) do
+    if b ~= ctx.source_bufnr
+      and api.nvim_buf_is_loaded(b)
+      and vim.bo[b].buflisted
+      and validate.buf_valid(b) then
+      local name = api.nvim_buf_get_name(b)
+      local disp = (name ~= "") and vim.fn.fnamemodify(name, ":~:.") or "[No Name]"
+      local label = string.format("buf %d  %s", b, disp)
+      items[#items + 1] = label
+      by_label[label] = b
+    end
+  end
+
+  if #items == 0 then
+    notify.warn("No other listed buffers to diff against")
+    return
+  end
+
+  resolve_select_fn()(items, { prompt = "Diff against buffer:" }, function(choice)
+    local bufnr = choice and by_label[choice]
+    if not bufnr then
+      notify.info("Diff cancelled")
+      return
+    end
+    ---@type DiffNvim.ResolvedOpts
+    M.execute({
+      target = tostring(bufnr),
+      source = "current",
+      view   = view --[[@as DiffNvim.View]],
+      output = output --[[@as DiffNvim.Output]],
+    }, ctx)
+  end)
 end
 
 ---Close all diff.nvim scratch buffers and disable diffmode.

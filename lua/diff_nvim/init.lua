@@ -60,6 +60,14 @@ function M.clear()
   require("diff_nvim.core").clear()
 end
 
+---Diff the current buffer against another open buffer chosen from a picker.
+---`raw_args` accepts the same `view=`/`output=` grammar as `:Diff`.
+---@param raw_args? string
+---@return nil
+function M.diff_buffers(raw_args)
+  require("diff_nvim.core").run_buffers(raw_args or "")
+end
+
 ---Diff the current buffer against its on-disk saved version.
 ---@return nil
 function M.diff_origin()

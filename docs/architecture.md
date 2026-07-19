@@ -12,7 +12,7 @@ lua/diff_nvim/
     notify.lua               "[diff] " prefixed vim.notify wrapper
     validate.lua              Pure validation helpers (is_one_of, *_valid)
   core/
-    init.lua                 Orchestration: run(), execute(), source/target picker
+    init.lua                 Orchestration: run(), run_buffers(), execute(), picker
     resolve.lua               Specifier → lines, argument parsing
     git.lua                    git:<rev> resolution via vim.system git-show
     pickers_bridge.lua         Optional select_fn adapter for pickers.nvim

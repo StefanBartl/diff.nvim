@@ -36,10 +36,11 @@ local DEFAULTS = {
     native_diffthis = false,
   },
   commands = {
-    diff       = "Diff",
-    diff_clear = "DiffClear",
-    diff_orig  = "DiffOrig",
-    diff_exit  = "DiffExit",
+    diff         = "Diff",
+    diff_clear   = "DiffClear",
+    diff_buffers = "DiffBuffers",
+    diff_orig    = "DiffOrig",
+    diff_exit    = "DiffExit",
   },
   select_fn = nil,
   -- Auto-detect pickers.nvim (StefanBartl/pickers.nvim) and use its fuzzy

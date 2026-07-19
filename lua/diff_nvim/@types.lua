@@ -88,10 +88,11 @@
 ---@field native_diffthis boolean  Also mirror the key onto buffers a native :diffthis puts into diffmode (scope="buffer" only). Off by default — see config/DEFAULTS.lua for the rationale.
 
 ---@class DiffNvim.Config.Commands
----@field diff       string  Name of the main diff command
----@field diff_clear string  Name of the clear command
----@field diff_orig  string  Name of the origin command
----@field diff_exit  string  Name of the exit command
+---@field diff         string  Name of the main diff command
+---@field diff_clear   string  Name of the clear command
+---@field diff_buffers string  Name of the buffer-picker diff command
+---@field diff_orig    string  Name of the origin command
+---@field diff_exit    string  Name of the exit command
 
 ---@class DiffNvim.Config
 ---@field features  DiffNvim.Config.Features

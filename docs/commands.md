@@ -82,6 +82,14 @@ shell is spawned.
 Closes every scratch buffer diff.nvim created and disables diffmode in every
 window.
 
+## `:DiffBuffers [view=…] [output=…]`
+
+Diffs the current buffer against another open buffer, chosen from a picker of
+all other listed, loaded buffers (the same picker as `:Diff` — see
+[Configuration › Picker resolution](configuration.md#picker-resolution)). A
+convenience wrapper over `:Diff target={number}`: the source is always the
+current buffer, so only `view=` and `output=` apply.
+
 ## `:DiffOrig`
 
 Diffs the current buffer against its last-saved version on disk — "what
