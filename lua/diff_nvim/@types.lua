@@ -28,7 +28,9 @@
 --- How a `output="buffer"` diff is laid out on screen.
 ---| '"vsplit"'     # Side-by-side vertical split + native diffmode (default)
 ---| '"split"'      # Horizontal split + native diffmode
+---| '"tab"'        # Side-by-side native diffmode in a new tab
 ---| '"inline"'     # Single scratch buffer holding the unified diff (ft=diff)
+---| '"float"'      # Unified diff (ft=diff) in a floating window
 
 ---@alias DiffNvim.Output
 --- Where the diff result is delivered.

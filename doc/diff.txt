@@ -189,7 +189,9 @@ view= ~
   Layout for `output=buffer`. Default: `vsplit`.
     vsplit      Vertical split + native diffmode (side-by-side)
     split       Horizontal split + native diffmode
+    tab         Side-by-side native diffmode in a new tab
     inline      Single scratch buffer holding the unified diff (ft=diff)
+    float       Unified diff in a floating window (press q or <Esc> to close)
 
 output= ~
   Where the result goes. Default: `buffer`.
@@ -210,6 +212,7 @@ Examples: >
   :Diff target=clipboard output=clipboard
   :Diff target=src/old.lua output=stat
   :'<,'>Diff target=clipboard
+  :Diff target=clipboard view=float
 <
 
 ------------------------------------------------------------------------------
@@ -237,7 +240,7 @@ Leave diff mode from anywhere (`diffoff!`). Works regardless of the configured
 `:Diff` completes the `key=value` grammar context-sensitively: >
 
   :Diff <Tab>            target=  source=  view=  output=
-  :Diff view=<Tab>       view=vsplit  view=split  view=inline
+  :Diff view=<Tab>       view=vsplit  view=split  view=tab  view=inline  view=float
   :Diff output=<Tab>     output=buffer  output=prompt  output=file  output=clipboard  output=stat
   :Diff source=<Tab>     source=current  source=clipboard  source=ask
   :Diff target=<Tab>     target=clipboard  target=ask  (+ file paths)

@@ -36,7 +36,9 @@ When `target=` is omitted, an interactive picker is shown.
 |---|---|
 | `vsplit` | Vertical split + native diffmode (side-by-side) |
 | `split` | Horizontal split + native diffmode |
+| `tab` | Side-by-side native diffmode in a new tab |
 | `inline` | Single scratch buffer holding the unified diff (`ft=diff`) |
+| `float` | Unified diff in a floating window (press `q` or `<Esc>` to close) |
 
 **`output=`** (default: `buffer`)
 
@@ -61,6 +63,8 @@ When `target=` is omitted, an interactive picker is shown.
 :Diff target=clipboard output=clipboard " diff to the clipboard
 :Diff target=src/old.lua output=stat   " just the +N -M, K hunks summary
 :'<,'>Diff target=clipboard            " compare only the selection vs. clipboard
+:Diff target=clipboard view=float      " unified diff in a floating window
+:Diff target=a.lua view=tab            " side-by-side diff in a new tab
 ```
 
 ## `:DiffClear`
@@ -84,7 +88,7 @@ Leaves diff mode from anywhere (`diffoff!`).
 
 ```
 :Diff <Tab>            → target=  source=  view=  output=
-:Diff view=<Tab>       → view=vsplit  view=split  view=inline
+:Diff view=<Tab>       → view=vsplit  view=split  view=tab  view=inline  view=float
 :Diff output=<Tab>     → output=buffer  output=prompt  output=file  output=clipboard  output=stat
 :Diff source=<Tab>     → source=current  source=clipboard  source=ask
 :Diff target=<Tab>     → target=clipboard  target=ask  (+ file paths)
