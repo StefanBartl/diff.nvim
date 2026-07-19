@@ -11,17 +11,19 @@
 
 ---@alias DiffNvim.Target
 --- The right-hand side of the comparison (the "other" content).
+--- @see docs/url-sources.md for `http(s)://` requirements and examples.
 ---| '"clipboard"'  # Pull content from the system clipboard register (+)
 ---| '"ask"'        # Force the interactive picker even if a default exists
----| string         # File path, buffer number, or `git:<rev>` (current file at a git revision)
+---| string         # File path, buffer number, `git:<rev>`, or `http(s)://…` (fetched async via curl)
 ---| integer        # An already-open buffer number
 
 ---@alias DiffNvim.Source
 --- The left-hand side of the comparison.
+--- @see docs/url-sources.md for `http(s)://` requirements and examples.
 ---| '"current"'    # The buffer active when :Diff was invoked (default)
 ---| '"clipboard"'  # System clipboard register (+)
 ---| '"ask"'        # Force the interactive picker even if a default exists
----| string         # File path, or `git:<rev>` (current file at a git revision)
+---| string         # File path, `git:<rev>`, or `http(s)://…` (fetched async via curl)
 ---| integer        # Buffer number
 
 ---@alias DiffNvim.View
@@ -76,6 +78,7 @@
 ---@field algorithm         "myers"|"minimal"|"patience"|"histogram"  vim.diff algorithm
 ---@field ctxlen            integer  Context lines around each hunk in unified output
 ---@field word_diff         boolean  Word/char-level DiffText highlighting in view=inline/float
+---@field url_timeout_ms    integer  Timeout for http(s):// sources/targets in ms — @see docs/url-sources.md
 
 ---@alias DiffNvim.Config.ExitScope
 ---| '"buffer"'  # Buffer-local mapping on plugin-created diff buffers (default)

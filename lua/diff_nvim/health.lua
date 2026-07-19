@@ -39,6 +39,14 @@ function M.check()
     vim.health.warn("git executable not on PATH — git:<rev> source/target unavailable")
   end
 
+  if type(vim.system) == "function" and vim.fn.executable("curl") == 1 then
+    vim.health.ok("curl + vim.system available (target=http(s):// / source=http(s)://)")
+  elseif type(vim.system) ~= "function" then
+    vim.health.warn("vim.system missing (Neovim 0.10+) — http(s):// source/target unavailable")
+  else
+    vim.health.warn("curl executable not on PATH — http(s):// source/target unavailable")
+  end
+
   if type(require("diff_nvim.core.pickers_bridge").resolve()) == "function" then
     vim.health.ok("pickers.nvim detected — used for the target/source picker")
   else

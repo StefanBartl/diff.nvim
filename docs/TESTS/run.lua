@@ -64,6 +64,7 @@ local specs = {
   "status_spec.lua",
   "pickers_bridge_spec.lua",
   "native_diffthis_spec.lua",
+  "url_spec.lua",
 }
 
 local failed = 0

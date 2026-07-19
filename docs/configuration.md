@@ -12,11 +12,12 @@ require("diff_nvim").setup({
   diff = {
     default_view      = "vsplit",    -- "vsplit"|"split"|"tab"|"inline"|"float"
     default_output    = "buffer",    -- "buffer"|"prompt"|"file"|"clipboard"|"stat"
-    default_source    = "current",   -- "current"|"clipboard"|"ask"|"git:<rev>"|path|bufnr
+    default_source    = "current",   -- "current"|"clipboard"|"ask"|"git:<rev>"|"http(s)://…"|path|bufnr
     default_orig_view = "vsplit",    -- "vsplit"|"split" — split direction for :DiffOrig
     algorithm         = "histogram", -- vim.diff algorithm
     ctxlen            = 3,           -- context lines per hunk
     word_diff         = true,        -- word/char-level DiffText highlighting in view=inline/float
+    url_timeout_ms    = 10000,       -- fetch timeout for http(s):// sources/targets
   },
   exit = {
     key             = "<Esc><Esc>", -- exit mapping
@@ -24,10 +25,11 @@ require("diff_nvim").setup({
     native_diffthis = false,        -- also mirror the key onto native :diffthis buffers
   },
   commands = {
-    diff       = "Diff",
-    diff_clear = "DiffClear",
-    diff_orig  = "DiffOrig",
-    diff_exit  = "DiffExit",
+    diff         = "Diff",
+    diff_clear   = "DiffClear",
+    diff_buffers = "DiffBuffers",
+    diff_orig    = "DiffOrig",
+    diff_exit    = "DiffExit",
   },
   select_fn        = nil,          -- optional vim.ui.select replacement (DI)
   use_pickers_nvim = true,         -- auto-detect pickers.nvim as the picker engine
@@ -42,6 +44,11 @@ removed/added line in `view=inline`/`view=float`, using the same `DiffText`
 group Neovim's native diffmode uses for intra-line changes. Only applies to
 runs where the removed and added line counts match (an unambiguous 1:1
 pairing); set to `false` to disable.
+
+`diff.url_timeout_ms` bounds how long an `http(s)://` source/target is given
+to fetch before it's cancelled and reported as an error. See
+[URL sources](url-sources.md) for the full picture (requirements, how the
+async fetch works, and usage examples).
 
 ## Picker resolution
 

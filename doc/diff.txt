@@ -14,6 +14,7 @@ CONTENTS                                                       *diff-contents*
      4.2 Exit scope ............ |diff-exit-scope|
   5. Commands .................. |diff-commands|
      5.1 :Diff ................. |:Diff|
+         URL sources ........... |diff-url-sources|
      5.2 :DiffClear ............ |:DiffClear|
      5.3 :DiffBuffers .......... |:DiffBuffers|
      5.4 :DiffOrig ............. |:DiffOrig|
@@ -33,14 +34,17 @@ inline unified buffer, the message prompt, a temp file, or the clipboard.
 
 Cross-platform (Windows + Unix). All diffing goes through `vim.diff` (libvim)
 — no shell commands. `git:<rev>` sources use `vim.system` to call git directly
-(still no shell). Notifications go through lib.nvim, the only dependency.
+(still no shell); `http(s)://` sources fetch asynchronously via `curl`, same
+way — see |diff-url-sources|. Notifications go through lib.nvim, the only
+dependency.
 
 ==============================================================================
 2. REQUIREMENTS                                            *diff-requirements*
 
-  - Neovim 0.9 or later (0.10+ for `git:<rev>` sources/targets)
+  - Neovim 0.9 or later (0.10+ for `git:<rev>` and `http(s)://` sources/targets)
   - lib.nvim (used for notifications)
   - Optional: a `git` executable on PATH for `git:<rev>` sources/targets
+  - Optional: a `curl` executable on PATH for `http(s)://` sources/targets
 
 ==============================================================================
 3. INSTALLATION                                            *diff-installation*
@@ -83,11 +87,12 @@ vim-plug: >vim
     diff = {
       default_view      = "vsplit",    -- "vsplit"|"split"|"tab"|"inline"|"float"
       default_output    = "buffer",    -- "buffer"|"prompt"|"file"|"clipboard"|"stat"
-      default_source    = "current",   -- "current"|"clipboard"|"ask"|"git:<rev>"|path|bufnr
+      default_source    = "current",   -- "current"|"clipboard"|"ask"|"git:<rev>"|"http(s)://…"|path|bufnr
       default_orig_view = "vsplit",    -- "vsplit"|"split" — :DiffOrig split direction
       algorithm         = "histogram", -- vim.diff algorithm
       ctxlen            = 3,           -- context lines per hunk
       word_diff         = true,        -- word/char DiffText highlighting in view=inline/float
+      url_timeout_ms    = 10000,       -- fetch timeout for http(s):// sources/targets
     },
     exit = {
       key             = "<Esc><Esc>", -- exit mapping
@@ -144,6 +149,11 @@ diff.word_diff ~
   Neovim's native diffmode uses for intra-line changes. Only applies to runs
   where the removed and added line counts match (an unambiguous 1:1
   pairing). Default: `true`.
+
+diff.url_timeout_ms ~
+  Timeout in milliseconds for `http(s)://` sources/targets before the fetch
+  is cancelled and reported as an error. See |diff-url-sources|.
+  Default: `10000`.
 
 select_fn ~
   Optional replacement for `vim.ui.select`, injected for the target/source
@@ -225,21 +235,23 @@ only; the target is always taken in full.
 
 target= ~
   The "other" material to compare against.
-    clipboard   Content from the system clipboard register (+)
-    ask         Force the interactive picker (same as omitting target=)
-    git:{rev}   The current file at a git revision (see below)
-    {path}      A file (tab-completed)
-    {number}    An already-open buffer number
+    clipboard    Content from the system clipboard register (+)
+    ask          Force the interactive picker (same as omitting target=)
+    git:{rev}    The current file at a git revision (see below)
+    http(s)://…  Content fetched from a URL, async (see |diff-url-sources|)
+    {path}       A file (tab-completed)
+    {number}     An already-open buffer number
   When omitted, an interactive picker (`vim.ui.select`) is shown.
 
 source= ~
   The left-hand side. Default: `current`.
-    current     The buffer active when :Diff was invoked
-    clipboard   System clipboard
-    ask         Force the interactive picker (offers "current buffer" too)
-    git:{rev}   The current file at a git revision (see below)
-    {path}      A file
-    {number}    A buffer number
+    current      The buffer active when :Diff was invoked
+    clipboard    System clipboard
+    ask          Force the interactive picker (offers "current buffer" too)
+    git:{rev}    The current file at a git revision (see below)
+    http(s)://…  Content fetched from a URL, async (see |diff-url-sources|)
+    {path}       A file
+    {number}     A buffer number
 
   git:{rev} ~
     Resolves the *current file* at a git revision — e.g. `git:HEAD`,
@@ -247,6 +259,11 @@ source= ~
     (`vim.system`), a `git` executable on PATH, and a file-backed buffer
     inside a git repository. Runs `git show <rev>:<relpath>` synchronously;
     no shell is spawned.
+
+  http(s)://{url} ~
+    Fetches the URL's content asynchronously via `curl` and diffs against
+    it. Requires Neovim 0.10+ (`vim.system`) and a `curl` executable on
+    PATH. See |diff-url-sources| for the timeout setting and examples.
 
 view= ~
   Layout for `output=buffer`. Default: `vsplit`.
@@ -265,6 +282,17 @@ output= ~
     clipboard   Unified diff copied to the clipboard register (+)
     stat        Report `+N -M, K hunks` as a notification only (no window)
 
+URL sources ~                                             *diff-url-sources*
+  `target=http(s)://…` / `source=http(s)://…` fetch content asynchronously
+  via `curl` (a direct argv exec through `vim.system`, never a shell string)
+  — the editor stays responsive while the fetch is in flight, bounded by
+  `diff.url_timeout_ms` (default 10000ms). Non-2xx HTTP responses are
+  reported as errors, not diffed as content. Requires Neovim 0.10+ and a
+  `curl` executable on PATH (both checked by |diff-health|). See
+  docs/url-sources.md in the repository for requirements, configuration, and
+  a set of real-world usage examples (dotfiles drift, vendored-code drift,
+  gists, API schema checks, verifying a script before running it, …).
+
 Examples: >
   :Diff
   :Diff target=clipboard
@@ -279,6 +307,7 @@ Examples: >
   :Diff target=clipboard view=float
   :Diff target=git:HEAD
   :Diff target=git:HEAD~1 output=stat
+  :Diff target=https://raw.githubusercontent.com/user/repo/main/f.lua
 <
 
 ------------------------------------------------------------------------------
@@ -374,6 +403,7 @@ Checks:
   - `vim.ui.select` available
   - clipboard provider present
   - git + `vim.system` available (for `git:<rev>` sources/targets)
+  - curl + `vim.system` available (for `http(s)://` sources/targets)
   - pickers.nvim detected (informational — falls back to `vim.ui.select`)
   - plugin loaded (guard flag set)
 
@@ -394,6 +424,7 @@ Checks:
       init.lua                Orchestration: run(), run_buffers(), execute(), picker
       resolve.lua             Specifier → lines, argument parsing
       git.lua                 git:<rev> resolution via vim.system git-show
+      url.lua                 http(s):// async fetch via curl + timeout timer
       pickers_bridge.lua      Optional select_fn adapter for pickers.nvim
       scratch.lua             Scratch-buffer lifecycle + cleanup_all() + active_count()
       render.lua              Output renderers (buffer/prompt/file/clipboard/stat)
