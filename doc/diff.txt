@@ -15,8 +15,9 @@ CONTENTS                                                       *diff-contents*
   5. Commands .................. |diff-commands|
      5.1 :Diff ................. |:Diff|
      5.2 :DiffClear ............ |:DiffClear|
-     5.3 :DiffOrig ............. |:DiffOrig|
-     5.4 :DiffExit ............. |:DiffExit|
+     5.3 :DiffBuffers .......... |:DiffBuffers|
+     5.4 :DiffOrig ............. |:DiffOrig|
+     5.5 :DiffExit ............. |:DiffExit|
   6. Tab completion ............ |diff-completion|
   7. Lua API ................... |diff-api|
   8. Health check .............. |diff-health|
@@ -47,7 +48,7 @@ Cross-platform (Windows + Unix). All diffing goes through `vim.diff` (libvim)
 lazy.nvim: >lua
   {
     "StefanBartl/diff.nvim",
-    cmd  = { "Diff", "DiffClear", "DiffOrig", "DiffExit" },
+    cmd  = { "Diff", "DiffClear", "DiffBuffers", "DiffOrig", "DiffExit" },
     opts = {},
   }
 <
@@ -55,7 +56,7 @@ lazy.nvim: >lua
 packer.nvim: >lua
   use {
     "StefanBartl/diff.nvim",
-    cmd = { "Diff", "DiffClear", "DiffOrig", "DiffExit" },
+    cmd = { "Diff", "DiffClear", "DiffBuffers", "DiffOrig", "DiffExit" },
     config = function()
       require("diff_nvim").setup({})
     end,
@@ -75,7 +76,7 @@ vim-plug: >vim
 >lua
   require("diff_nvim").setup({
     features = {
-      diff        = true,   -- register :Diff / :DiffClear
+      diff        = true,   -- register :Diff / :DiffClear / :DiffBuffers
       diff_origin = true,   -- register :DiffOrig
       diff_exit   = true,   -- register :DiffExit + exit keymap
     },
@@ -94,10 +95,11 @@ vim-plug: >vim
       native_diffthis = false,        -- also mirror the key onto native :diffthis buffers
     },
     commands = {
-      diff       = "Diff",
-      diff_clear = "DiffClear",
-      diff_orig  = "DiffOrig",
-      diff_exit  = "DiffExit",
+      diff         = "Diff",
+      diff_clear   = "DiffClear",
+      diff_buffers = "DiffBuffers",
+      diff_orig    = "DiffOrig",
+      diff_exit    = "DiffExit",
     },
     select_fn        = nil,         -- optional vim.ui.select replacement
     use_pickers_nvim = true,        -- auto-detect pickers.nvim as the picker engine
@@ -105,7 +107,8 @@ vim-plug: >vim
 <
 
 features.diff ~
-  Register the |:Diff| and |:DiffClear| commands. Default: `true`.
+  Register the |:Diff|, |:DiffClear|, and |:DiffBuffers| commands.
+  Default: `true`.
 
 features.diff_origin ~
   Register the |:DiffOrig| command. Default: `true`.
@@ -285,14 +288,26 @@ Close every scratch buffer diff.nvim created and disable diffmode in all
 windows.
 
 ------------------------------------------------------------------------------
-5.3 :DiffOrig                                                     *:DiffOrig*
+5.3 :DiffBuffers                                               *:DiffBuffers*
+
+>
+  :DiffBuffers [view=…] [output=…]
+<
+
+Diff the current buffer against another open buffer, chosen from a picker of
+all other listed, loaded buffers (uses the same picker as |:Diff|, see
+|diff-picker-resolution|). A convenience wrapper over `:Diff target={number}`;
+the source is always the current buffer, so only `view=` and `output=` apply.
+
+------------------------------------------------------------------------------
+5.4 :DiffOrig                                                     *:DiffOrig*
 
 Diff the current buffer against its last-saved version on disk — "what changed
 since the last save". The snapshot buffer is tracked and cleaned up by
 |:DiffClear|.
 
 ------------------------------------------------------------------------------
-5.4 :DiffExit                                                     *:DiffExit*
+5.5 :DiffExit                                                     *:DiffExit*
 
 Leave diff mode from anywhere (`diffoff!`). Works regardless of the configured
 |diff-exit-scope|.
@@ -327,6 +342,10 @@ run({raw_args})                                                *diff_nvim.run()*
 
 clear()                                                      *diff_nvim.clear()*
   Close all diff windows and disable diffmode.
+
+diff_buffers({raw_args})                            *diff_nvim.diff_buffers()*
+  Diff the current buffer against another open buffer chosen from a picker.
+  {raw_args} accepts the same `view=`/`output=` grammar as |:Diff|.
 
 diff_origin()                                          *diff_nvim.diff_origin()*
   Diff the current buffer against its on-disk saved version.
@@ -372,7 +391,7 @@ Checks:
       notify.lua              "[diff] " prefixed vim.notify wrapper
       validate.lua            Pure validation helpers
     core/
-      init.lua                Orchestration: run(), execute(), source/target picker
+      init.lua                Orchestration: run(), run_buffers(), execute(), picker
       resolve.lua             Specifier → lines, argument parsing
       git.lua                 git:<rev> resolution via vim.system git-show
       pickers_bridge.lua      Optional select_fn adapter for pickers.nvim
