@@ -72,4 +72,20 @@ function M.exit()
   require("diff_nvim.features.exit").exit()
 end
 
+---Statusline component: a short string describing whether a diff.nvim diff is
+---active, or `""` when none is. Drop it into any statusline, e.g.
+--- >lua
+---   vim.o.statusline = "%f %{v:lua.require'diff_nvim'.status()}"
+--- <
+---@param opts? { prefix?: string }  `prefix` defaults to "diff:"
+---@return string
+function M.status(opts)
+  local n = require("diff_nvim.core.scratch").active_count()
+  if n == 0 then
+    return ""
+  end
+  local prefix = (type(opts) == "table" and type(opts.prefix) == "string") and opts.prefix or "diff:"
+  return prefix .. n
+end
+
 return M

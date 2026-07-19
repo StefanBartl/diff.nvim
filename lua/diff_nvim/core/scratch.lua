@@ -49,6 +49,19 @@ function M.track(bufnr)
   end
 end
 
+---Count the scratch buffers diff.nvim is currently tracking (valid handles
+---only). Used by the statusline component to show whether a diff is active.
+---@return integer count
+function M.active_count()
+  local n = 0
+  for _, bufnr in ipairs(_bufs) do
+    if validate.buf_valid(bufnr) then
+      n = n + 1
+    end
+  end
+  return n
+end
+
 ---Turn off diffmode in every window currently showing one of our buffers,
 ---wipe those buffers, then disable any remaining stray diffmode windows.
 ---@return integer cleared  Number of buffers wiped
