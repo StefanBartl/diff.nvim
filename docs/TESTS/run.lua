@@ -60,6 +60,7 @@ local specs = {
   "resolve_spec.lua",
   "validate_spec.lua",
   "render_spec.lua",
+  "git_spec.lua",
 }
 
 local failed = 0

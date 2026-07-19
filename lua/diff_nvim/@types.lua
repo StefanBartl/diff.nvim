@@ -13,7 +13,7 @@
 --- The right-hand side of the comparison (the "other" content).
 ---| '"clipboard"'  # Pull content from the system clipboard register (+)
 ---| '"ask"'        # Force the interactive picker even if a default exists
----| string         # Absolute or relative file path (tab-completion supported)
+---| string         # File path, buffer number, or `git:<rev>` (current file at a git revision)
 ---| integer        # An already-open buffer number
 
 ---@alias DiffNvim.Source
@@ -21,7 +21,7 @@
 ---| '"current"'    # The buffer active when :Diff was invoked (default)
 ---| '"clipboard"'  # System clipboard register (+)
 ---| '"ask"'        # Force the interactive picker even if a default exists
----| string         # File path
+---| string         # File path, or `git:<rev>` (current file at a git revision)
 ---| integer        # Buffer number
 
 ---@alias DiffNvim.View

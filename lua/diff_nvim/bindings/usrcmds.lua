@@ -15,8 +15,8 @@ local M = {}
 local VALUE_LISTS = {
   view   = { "vsplit", "split", "inline", "tab", "float" },
   output = { "buffer", "prompt", "file", "clipboard", "stat" },
-  source = { "current", "clipboard", "ask" },
-  target = { "clipboard", "ask" },
+  source = { "current", "clipboard", "ask", "git:HEAD" },
+  target = { "clipboard", "ask", "git:HEAD" },
 }
 
 ---@type string[]  The completable keys

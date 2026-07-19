@@ -31,6 +31,14 @@ function M.check()
     vim.health.warn("no clipboard provider — clipboard source/output unavailable")
   end
 
+  if type(vim.system) == "function" and vim.fn.executable("git") == 1 then
+    vim.health.ok("git + vim.system available (target=git:<rev> / source=git:<rev>)")
+  elseif type(vim.system) ~= "function" then
+    vim.health.warn("vim.system missing (Neovim 0.10+) — git:<rev> source/target unavailable")
+  else
+    vim.health.warn("git executable not on PATH — git:<rev> source/target unavailable")
+  end
+
   if vim.g.loaded_diff_nvim then
     vim.health.ok("plugin loaded (vim.g.loaded_diff_nvim = " .. tostring(vim.g.loaded_diff_nvim) .. ")")
   else

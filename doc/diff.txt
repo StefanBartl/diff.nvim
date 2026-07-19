@@ -29,14 +29,16 @@ sources — the current buffer, a file, a buffer number, or the system
 clipboard — and delivers the result in several ways: a side-by-side split, an
 inline unified buffer, the message prompt, a temp file, or the clipboard.
 
-Standalone plugin (no lib.nvim dependency), cross-platform (Windows + Unix).
-All diffing goes through `vim.diff` (libvim) — no shell commands.
+Cross-platform (Windows + Unix). All diffing goes through `vim.diff` (libvim)
+— no shell commands. `git:<rev>` sources use `vim.system` to call git directly
+(still no shell). Notifications go through lib.nvim, the only dependency.
 
 ==============================================================================
 2. REQUIREMENTS                                            *diff-requirements*
 
-  - Neovim 0.9 or later
-  - No external plugins required
+  - Neovim 0.9 or later (0.10+ for `git:<rev>` sources/targets)
+  - lib.nvim (used for notifications)
+  - Optional: a `git` executable on PATH for `git:<rev>` sources/targets
 
 ==============================================================================
 3. INSTALLATION                                            *diff-installation*
@@ -173,6 +175,7 @@ target= ~
   The "other" material to compare against.
     clipboard   Content from the system clipboard register (+)
     ask         Force the interactive picker (same as omitting target=)
+    git:{rev}   The current file at a git revision (see below)
     {path}      A file (tab-completed)
     {number}    An already-open buffer number
   When omitted, an interactive picker (`vim.ui.select`) is shown.
@@ -182,8 +185,16 @@ source= ~
     current     The buffer active when :Diff was invoked
     clipboard   System clipboard
     ask         Force the interactive picker (offers "current buffer" too)
+    git:{rev}   The current file at a git revision (see below)
     {path}      A file
     {number}    A buffer number
+
+  git:{rev} ~
+    Resolves the *current file* at a git revision — e.g. `git:HEAD`,
+    `git:HEAD~1`, `git:<sha>`, or `git:<branch>`. Requires Neovim 0.10+
+    (`vim.system`), a `git` executable on PATH, and a file-backed buffer
+    inside a git repository. Runs `git show <rev>:<relpath>` synchronously;
+    no shell is spawned.
 
 view= ~
   Layout for `output=buffer`. Default: `vsplit`.
@@ -213,6 +224,8 @@ Examples: >
   :Diff target=src/old.lua output=stat
   :'<,'>Diff target=clipboard
   :Diff target=clipboard view=float
+  :Diff target=git:HEAD
+  :Diff target=git:HEAD~1 output=stat
 <
 
 ------------------------------------------------------------------------------
@@ -242,8 +255,8 @@ Leave diff mode from anywhere (`diffoff!`). Works regardless of the configured
   :Diff <Tab>            target=  source=  view=  output=
   :Diff view=<Tab>       view=vsplit  view=split  view=tab  view=inline  view=float
   :Diff output=<Tab>     output=buffer  output=prompt  output=file  output=clipboard  output=stat
-  :Diff source=<Tab>     source=current  source=clipboard  source=ask
-  :Diff target=<Tab>     target=clipboard  target=ask  (+ file paths)
+  :Diff source=<Tab>     source=current  source=clipboard  source=ask  source=git:HEAD
+  :Diff target=<Tab>     target=clipboard  target=ask  target=git:HEAD  (+ file paths)
 <
 
 ==============================================================================
@@ -283,6 +296,7 @@ Checks:
   - `vim.diff` available
   - `vim.ui.select` available
   - clipboard provider present
+  - git + `vim.system` available (for `git:<rev>` sources/targets)
   - plugin loaded (guard flag set)
 
 ==============================================================================
