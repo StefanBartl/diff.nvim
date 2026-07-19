@@ -15,6 +15,7 @@ CONTENTS                                                       *diff-contents*
   5. Commands .................. |diff-commands|
      5.1 :Diff ................. |:Diff|
          URL sources ........... |diff-url-sources|
+         Three-way diff ........ |diff-three-way|
      5.2 :DiffClear ............ |:DiffClear|
      5.3 :DiffBuffers .......... |:DiffBuffers|
      5.4 :DiffOrig ............. |:DiffOrig|
@@ -222,11 +223,12 @@ Native :diffthis ~
 5.1 :Diff                                                             *:Diff*
 
 >
-  :[range]Diff [target=…] [source=…] [view=…] [output=…]
+  :[range]Diff [target=…] [source=…] [base=…] [view=…] [output=…]
 <
 
 Compare a source (left) with a target (right). Arguments use a `key=value`
-grammar in any order. Unknown keys are ignored.
+grammar in any order. Unknown keys are ignored. Adding `base=` turns this
+into a three-way diff — see |diff-three-way|.
 
 When invoked with a range (e.g. a visual selection, `:'<,'>Diff`) and
 `source=current` (the default), only the selected lines are used as the
@@ -265,6 +267,12 @@ source= ~
     it. Requires Neovim 0.10+ (`vim.system`) and a `curl` executable on
     PATH. See |diff-url-sources| for the timeout setting and examples.
 
+base= ~
+  Optional — turns :Diff into a three-way diff. Accepts the same grammar as
+  target= (clipboard, ask, git:{rev}, http(s)://{url}, a file path, or a
+  buffer number). Requires output=buffer and view=vsplit/split/tab — see
+  |diff-three-way|.
+
 view= ~
   Layout for `output=buffer`. Default: `vsplit`.
     vsplit      Vertical split + native diffmode (side-by-side)
@@ -293,6 +301,24 @@ URL sources ~                                             *diff-url-sources*
   a set of real-world usage examples (dotfiles drift, vendored-code drift,
   gists, API schema checks, verifying a script before running it, …).
 
+Three-way diff ~                                              *diff-three-way*
+  `base=` opens a native *three-window* diffmode instead of two — the layout
+  merge-conflict tools use. The current buffer stays the *local* side, live
+  and editable, in the origin window (:diffget/:diffput write straight into
+  the file you'll save). `base=` (the common ancestor) and `target=` (the
+  remote/incoming version) each get a read-only scratch buffer. Neovim's
+  diffmode natively diffs 3+ windows against each other — nothing custom is
+  computed.
+
+  Requires `output=buffer` (the default) and `view=vsplit`/`split`/`tab` —
+  `prompt`/`file`/`clipboard`/`stat` and `inline`/`float` are all two-input
+  concepts with no three-way equivalent, and are rejected with an error if
+  combined with `base=`. `source=` is accepted but only `current` (the
+  default) makes practical sense.
+
+  See docs/three-way-diff.md in the repository for the full picture,
+  layout diagrams, and merge-conflict-resolution examples.
+
 Examples: >
   :Diff
   :Diff target=clipboard
@@ -308,6 +334,7 @@ Examples: >
   :Diff target=git:HEAD
   :Diff target=git:HEAD~1 output=stat
   :Diff target=https://raw.githubusercontent.com/user/repo/main/f.lua
+  :Diff target=git:MERGE_HEAD base=git:HEAD
 <
 
 ------------------------------------------------------------------------------
@@ -346,11 +373,12 @@ Leave diff mode from anywhere (`diffoff!`). Works regardless of the configured
 
 `:Diff` completes the `key=value` grammar context-sensitively: >
 
-  :Diff <Tab>            target=  source=  view=  output=
+  :Diff <Tab>            target=  source=  base=  view=  output=
   :Diff view=<Tab>       view=vsplit  view=split  view=tab  view=inline  view=float
   :Diff output=<Tab>     output=buffer  output=prompt  output=file  output=clipboard  output=stat
   :Diff source=<Tab>     source=current  source=clipboard  source=ask  source=git:HEAD
   :Diff target=<Tab>     target=clipboard  target=ask  target=git:HEAD  (+ file paths)
+  :Diff base=<Tab>       base=clipboard  base=ask  base=git:HEAD  (+ file paths)
 <
 
 ==============================================================================
@@ -427,7 +455,7 @@ Checks:
       url.lua                 http(s):// async fetch via curl + timeout timer
       pickers_bridge.lua      Optional select_fn adapter for pickers.nvim
       scratch.lua             Scratch-buffer lifecycle + cleanup_all() + active_count()
-      render.lua              Output renderers (buffer/prompt/file/clipboard/stat)
+      render.lua              Output renderers (buffer/prompt/file/clipboard/stat/three_way)
     features/
       origin.lua              :DiffOrig logic
       exit.lua                :DiffExit logic + exit-behaviour config

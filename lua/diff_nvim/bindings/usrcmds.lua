@@ -17,10 +17,11 @@ local VALUE_LISTS = {
   output = { "buffer", "prompt", "file", "clipboard", "stat" },
   source = { "current", "clipboard", "ask", "git:HEAD" },
   target = { "clipboard", "ask", "git:HEAD" },
+  base   = { "clipboard", "ask", "git:HEAD" },
 }
 
 ---@type string[]  The completable keys
-local KEYS = { "target", "source", "view", "output" }
+local KEYS = { "target", "source", "base", "view", "output" }
 
 ---Filter a list down to entries that start with `lead`.
 ---@param list string[]
@@ -106,7 +107,7 @@ function M.register(cfg)
       nargs = "*",
       range = true,
       complete = complete,
-      desc = "Diff sources  :[range]Diff [target=…] [source=…] [view=…] [output=…]",
+      desc = "Diff sources  :[range]Diff [target=…] [source=…] [base=…] [view=…] [output=…]",
     })
 
     api.nvim_create_user_command(names.diff_clear, function()

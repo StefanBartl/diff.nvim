@@ -46,6 +46,7 @@
 --- Fully-resolved options handed to the core executor.
 ---@field target DiffNvim.Target
 ---@field source DiffNvim.Source
+---@field base   DiffNvim.Target|nil  Third side for a three-way diff — @see docs/three-way-diff.md
 ---@field view   DiffNvim.View
 ---@field output DiffNvim.Output
 
