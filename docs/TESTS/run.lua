@@ -63,6 +63,7 @@ local specs = {
   "git_spec.lua",
   "status_spec.lua",
   "pickers_bridge_spec.lua",
+  "native_diffthis_spec.lua",
 }
 
 local failed = 0

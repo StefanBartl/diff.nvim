@@ -21,6 +21,7 @@ lua/diff_nvim/
   features/
     origin.lua                :DiffOrig logic
     exit.lua                    :DiffExit logic + exit-behaviour config
+    native_diffthis.lua           Opt-in exit-key mirroring onto native :diffthis buffers
   bindings/
     usrcmds.lua                 :Diff/:DiffClear/:DiffOrig/:DiffExit registration + completion
     keymaps.lua                  Exit-keymap wiring (global + buffer-local)

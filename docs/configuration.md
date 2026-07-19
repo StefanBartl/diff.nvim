@@ -19,8 +19,9 @@ require("diff_nvim").setup({
     word_diff         = true,        -- word/char-level DiffText highlighting in view=inline/float
   },
   exit = {
-    key   = "<Esc><Esc>",         -- exit mapping
-    scope = "buffer",             -- "buffer"|"global"|false
+    key             = "<Esc><Esc>", -- exit mapping
+    scope           = "buffer",     -- "buffer"|"global"|false
+    native_diffthis = false,        -- also mirror the key onto native :diffthis buffers
   },
   commands = {
     diff       = "Diff",
@@ -74,3 +75,17 @@ fixes this:
 `:DiffExit` always works, regardless of scope. All keymaps carry a `desc`, so
 [which-key.nvim](https://github.com/folke/which-key.nvim) (if installed) shows
 them out of the box — no extra wiring needed.
+
+### Native `:diffthis`
+
+By default the buffer-local exit key is only attached to buffers `diff.nvim`
+itself puts into diffmode — a plain `:diffthis` on some other buffer (outside
+diff.nvim's workflow) won't have it. Set `exit.native_diffthis = true`
+(requires `scope = "buffer"`) to mirror the key onto *any* buffer that enters
+or leaves diffmode, native `:diffthis`/`:diffoff!` included, via an `OptionSet`
+watcher on the window-local `'diff'` option.
+
+This is **off by default**: it changes buffer-local keymaps outside
+diff.nvim's own workflow, which could surprise a config that already binds
+its own key on native `:diffthis` buffers (e.g. a merge-conflict tool), or
+that uses `:diffthis` for something unrelated to diff.nvim entirely.

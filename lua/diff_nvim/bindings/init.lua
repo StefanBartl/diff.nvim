@@ -16,6 +16,7 @@ function M.register(cfg)
 
   if cfg.features.diff_exit then
     require("diff_nvim.features.exit").setup(cfg.exit)
+    require("diff_nvim.features.native_diffthis").register(cfg.exit)
   end
 
   require("diff_nvim.bindings.autocmds").register()

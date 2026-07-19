@@ -2,6 +2,7 @@
 :DiffClear	diff.txt	/*:DiffClear*
 :DiffExit	diff.txt	/*:DiffExit*
 :DiffOrig	diff.txt	/*:DiffOrig*
+any	diff.txt	/*any*
 diff-api	diff.txt	/*diff-api*
 diff-architecture	diff.txt	/*diff-architecture*
 diff-commands	diff.txt	/*diff-commands*
