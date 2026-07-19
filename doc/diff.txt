@@ -284,6 +284,14 @@ diff_origin()                                          *diff_nvim.diff_origin()*
 exit()                                                        *diff_nvim.exit()*
   Leave diff mode from anywhere.
 
+status({opts})                                              *diff_nvim.status()*
+  Statusline component. Returns a short string (default `diff:N`, where N is
+  the number of active diff.nvim scratch buffers) while a diff is active, or
+  an empty string when none is. {opts.prefix} overrides the `diff:` prefix.
+  Example: >lua
+    vim.o.statusline = "%f %{v:lua.require'diff_nvim'.status()}"
+<
+
 ==============================================================================
 8. HEALTH CHECK                                                  *diff-health*
 

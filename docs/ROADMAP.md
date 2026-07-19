@@ -15,6 +15,7 @@
 - `view=float` — unified diff in a floating window
 - `target=git:<rev>` / `source=git:<rev>` — current file at a git revision
   (`git:HEAD`, `git:HEAD~1`, `git:<sha>`, `git:<branch>`), via `core/git.lua`
+- `require("diff_nvim").status()` — statusline component (active-diff indicator)
 - Buffer-local exit keymap (fixes the global `<Esc><Esc>` delay)
 - Interactive target picker via `vim.ui.select`
 - Context-aware `key=value` tab completion
@@ -33,9 +34,6 @@
 - **Wort-Level-Highlighting im Inline-View** — innerhalb geänderter Zeilen die
   konkreten Wort-/Zeichen-Unterschiede hervorheben (`vim.diff` mit
   `result_type = "indices"` + Extmarks). Nur im `view=inline`-Pfad.
-
-- **Persistenter Diff-Status in der Statuszeile** — kleine Komponente, die
-  anzeigt, dass aktuell ein `diff.nvim`-Diff aktiv ist (Anzahl Scratch-Buffer).
 
 ### Quellen / Ziele
 
