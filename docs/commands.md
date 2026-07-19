@@ -10,6 +10,7 @@ Compares a **source** (left) with a **target** (right). Arguments use a
 | Value | Meaning |
 |---|---|
 | `clipboard` | Content from the system clipboard (`+`) |
+| `ask` | Force the interactive picker (same as omitting `target=`) |
 | `{path}` | A file (tab-completed) |
 | `{number}` | An already-open buffer number |
 
@@ -21,6 +22,7 @@ When `target=` is omitted, an interactive picker is shown.
 |---|---|
 | `current` | The buffer active when `:Diff` was invoked (default) |
 | `clipboard` | System clipboard |
+| `ask` | Force the interactive picker (also offers "current buffer") |
 | `{path}` / `{number}` | A file or buffer |
 
 **`view=`** (only for `output=buffer`, default: `vsplit`)
@@ -78,6 +80,6 @@ Leaves diff mode from anywhere (`diffoff!`).
 :Diff <Tab>            → target=  source=  view=  output=
 :Diff view=<Tab>       → view=vsplit  view=split  view=inline
 :Diff output=<Tab>     → output=buffer  output=prompt  output=file  output=clipboard  output=stat
-:Diff source=<Tab>     → source=current  source=clipboard
-:Diff target=<Tab>     → target=clipboard  (+ file paths)
+:Diff source=<Tab>     → source=current  source=clipboard  source=ask
+:Diff target=<Tab>     → target=clipboard  target=ask  (+ file paths)
 ```

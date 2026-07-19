@@ -9,6 +9,7 @@
 - `:DiffClear` — tear down all scratch buffers + diffmode
 - `:DiffOrig` — diff buffer vs. on-disk saved version (core-integrated)
 - `:DiffExit` — leave diffmode from anywhere
+- `target=ask` / `source=ask` — force the interactive picker even with a default
 - Buffer-local exit keymap (fixes the global `<Esc><Esc>` delay)
 - Interactive target picker via `vim.ui.select`
 - Context-aware `key=value` tab completion
@@ -47,9 +48,6 @@
   anzeigt, dass aktuell ein `diff.nvim`-Diff aktiv ist (Anzahl Scratch-Buffer).
 
 ### Quellen / Ziele
-
-- **`target=ask` / `source=ask`** — erzwingt den interaktiven Picker auch wenn
-  ein Default existiert; vereinheitlicht den Workflow.
 
 - **Telescope-/Picker-Integration** — Buffernummer-Ziel über einen Buffer-Picker
   auswählen statt manueller Eingabe; optionale Dependency, lazy geladen.

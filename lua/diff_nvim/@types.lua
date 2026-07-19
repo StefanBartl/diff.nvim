@@ -12,6 +12,7 @@
 ---@alias DiffNvim.Target
 --- The right-hand side of the comparison (the "other" content).
 ---| '"clipboard"'  # Pull content from the system clipboard register (+)
+---| '"ask"'        # Force the interactive picker even if a default exists
 ---| string         # Absolute or relative file path (tab-completion supported)
 ---| integer        # An already-open buffer number
 
@@ -19,6 +20,7 @@
 --- The left-hand side of the comparison.
 ---| '"current"'    # The buffer active when :Diff was invoked (default)
 ---| '"clipboard"'  # System clipboard register (+)
+---| '"ask"'        # Force the interactive picker even if a default exists
 ---| string         # File path
 ---| integer        # Buffer number
 
