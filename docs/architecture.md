@@ -15,6 +15,7 @@ lua/diff_nvim/
     init.lua                 Orchestration: run(), execute(), source/target picker
     resolve.lua               Specifier → lines, argument parsing
     git.lua                    git:<rev> resolution via vim.system git-show
+    pickers_bridge.lua         Optional select_fn adapter for pickers.nvim
     scratch.lua                Scratch-buffer lifecycle + cleanup_all() + active_count()
     render.lua                 Output renderers (buffer/prompt/file/clipboard/stat) + tab/float layouts
   features/

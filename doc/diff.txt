@@ -10,7 +10,8 @@ CONTENTS                                                       *diff-contents*
   2. Requirements .............. |diff-requirements|
   3. Installation .............. |diff-installation|
   4. Configuration ............. |diff-config|
-     4.1 Exit scope ............ |diff-exit-scope|
+     4.1 Picker resolution ..... |diff-picker-resolution|
+     4.2 Exit scope ............ |diff-exit-scope|
   5. Commands .................. |diff-commands|
      5.1 :Diff ................. |:Diff|
      5.2 :DiffClear ............ |:DiffClear|
@@ -97,7 +98,8 @@ vim-plug: >vim
       diff_orig  = "DiffOrig",
       diff_exit  = "DiffExit",
     },
-    select_fn = nil,                -- optional vim.ui.select replacement
+    select_fn        = nil,         -- optional vim.ui.select replacement
+    use_pickers_nvim = true,        -- auto-detect pickers.nvim as the picker engine
   })
 <
 
@@ -140,11 +142,36 @@ diff.word_diff ~
   pairing). Default: `true`.
 
 select_fn ~
-  Optional replacement for `vim.ui.select`, injected for the target picker.
-  Useful to wire a custom UI. Default: `nil` (uses `vim.ui.select`).
+  Optional replacement for `vim.ui.select`, injected for the target/source
+  picker. Useful to wire a custom UI. Default: `nil`. When unset, see
+  |diff-picker-resolution| for what actually gets used.
+
+use_pickers_nvim ~
+  Auto-detect pickers.nvim (https://github.com/StefanBartl/pickers.nvim) as
+  the picker engine when `select_fn` is unset. Set `false` to always use
+  `vim.ui.select`, even if pickers.nvim is installed. Default: `true`.
 
 ------------------------------------------------------------------------------
-4.1 Exit scope                                               *diff-exit-scope*
+4.1 Picker resolution                                *diff-picker-resolution*
+
+The target/source picker (shown when `target=`/`source=` is omitted or set to
+`ask`) resolves in this order:
+
+  1. `select_fn`, if set — an explicit override always wins.
+  2. pickers.nvim, if installed and `use_pickers_nvim` isn't `false` — its
+     fuzzy engine (telescope.nvim, fzf-lua, or snacks.nvim, whichever
+     pickers.nvim already resolved) is used automatically. No configuration
+     needed on diff.nvim's side.
+  3. `vim.ui.select` — the built-in fallback, always available.
+
+Detection is soft: if pickers.nvim isn't installed, or has no picker engine
+available, diff.nvim silently falls back to `vim.ui.select` — nothing errors.
+Note that pickers.nvim's engines have no reliable cross-engine cancel signal,
+so cancelling that picker (<Esc>) does not show the usual "Diff cancelled"
+message the way cancelling `vim.ui.select` does.
+
+------------------------------------------------------------------------------
+4.2 Exit scope                                               *diff-exit-scope*
 
 The original global `<Esc><Esc>` mapping noticeably delayed a plain <Esc>
 because Neovim had to wait for a possible second key everywhere. diff.nvim
@@ -314,6 +341,7 @@ Checks:
   - `vim.ui.select` available
   - clipboard provider present
   - git + `vim.system` available (for `git:<rev>` sources/targets)
+  - pickers.nvim detected (informational — falls back to `vim.ui.select`)
   - plugin loaded (guard flag set)
 
 ==============================================================================
@@ -333,6 +361,7 @@ Checks:
       init.lua                Orchestration: run(), execute(), source/target picker
       resolve.lua             Specifier → lines, argument parsing
       git.lua                 git:<rev> resolution via vim.system git-show
+      pickers_bridge.lua      Optional select_fn adapter for pickers.nvim
       scratch.lua             Scratch-buffer lifecycle + cleanup_all() + active_count()
       render.lua              Output renderers (buffer/prompt/file/clipboard/stat)
     features/
