@@ -29,16 +29,21 @@ local CHOICE_FILE      = "file path …"
 local CHOICE_BUFFER    = "buffer number …"
 
 ---Resolve a side to its lines, treating "current" as the snapshotted buffer.
+---When `range` is given (only meaningful for "current"), just the selected
+---line span is returned instead of the whole buffer.
 ---@param spec DiffNvim.Source|DiffNvim.Target
 ---@param label string
 ---@param source_bufnr integer
+---@param range DiffNvim.Range|nil
 ---@return string[]|nil lines, string|nil err
-local function resolve_side(spec, label, source_bufnr)
+local function resolve_side(spec, label, source_bufnr, range)
   if spec == "current" then
     if not validate.buf_valid(source_bufnr) then
       return nil, label .. " buffer is no longer valid"
     end
-    return api.nvim_buf_get_lines(source_bufnr, 0, -1, false), nil
+    local first = range and (range.line1 - 1) or 0
+    local last  = range and range.line2 or -1
+    return api.nvim_buf_get_lines(source_bufnr, first, last, false), nil
   end
   return resolve.resolve_lines(spec, label)
 end
@@ -50,19 +55,29 @@ end
 function M.execute(opts, ctx)
   local cfg = config.get().diff
 
-  local src_lines, src_err = resolve_side(opts.source, "source", ctx.source_bufnr)
+  -- The visual range applies to the source side only (the selection lives in
+  -- the buffer that was current when :Diff was invoked).
+  local src_lines, src_err = resolve_side(opts.source, "source", ctx.source_bufnr, ctx.range)
   if not src_lines then
     notify.error(src_err or "could not resolve source")
     return
   end
 
-  local tgt_lines, tgt_err = resolve_side(opts.target, "target", ctx.source_bufnr)
+  local tgt_lines, tgt_err = resolve_side(opts.target, "target", ctx.source_bufnr, nil)
   if not tgt_lines then
     notify.error(tgt_err or "could not resolve target")
     return
   end
 
-  local src_label = (opts.source == "current") and ("buf:" .. ctx.source_bufnr) or tostring(opts.source)
+  local src_label
+  if opts.source == "current" then
+    src_label = "buf:" .. ctx.source_bufnr
+    if ctx.range then
+      src_label = src_label .. string.format("@%d-%d", ctx.range.line1, ctx.range.line2)
+    end
+  else
+    src_label = tostring(opts.source)
+  end
   local tgt_label = tostring(opts.target)
 
   if opts.output == "prompt" then
@@ -162,12 +177,22 @@ end
 ---Parse raw command arguments and launch the diff workflow.
 ---When `target` is absent an interactive picker is shown first.
 ---@param raw_args string  Raw <args> delivered by nvim_create_user_command
+---@param range? DiffNvim.Range  Selected line span (only when :Diff got a range)
 ---@return nil
-function M.run(raw_args)
+function M.run(raw_args, range)
+  ---@type DiffNvim.Range|nil
+  local sel = nil
+  if type(range) == "table"
+    and type(range.line1) == "number" and type(range.line2) == "number"
+    and range.line2 >= range.line1 then
+    sel = { line1 = range.line1, line2 = range.line2 }
+  end
+
   ---@type DiffNvim.Context
   local ctx = {
     source_bufnr = api.nvim_get_current_buf(),
     origin_win   = api.nvim_get_current_win(),
+    range        = sel,
   }
 
   local cfg = config.get().diff

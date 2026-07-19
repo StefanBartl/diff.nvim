@@ -10,6 +10,7 @@
 - `:DiffOrig` — diff buffer vs. on-disk saved version (core-integrated)
 - `:DiffExit` — leave diffmode from anywhere
 - `target=ask` / `source=ask` — force the interactive picker even with a default
+- `:[range]Diff` — visual-range selection as the source (e.g. `:'<,'>Diff`)
 - Buffer-local exit keymap (fixes the global `<Esc><Esc>` delay)
 - Interactive target picker via `vim.ui.select`
 - Context-aware `key=value` tab completion
@@ -29,9 +30,6 @@
   `vim.system({ "git", "show", rev .. ":" .. relpath })`. Erfordert Repo-Root-
   Erkennung (Aufwärtssuche nach `.git`); deshalb als eigenes `core/git.lua`.
 
-- **Visual-Range als Quelle** — `:'<,'>Diff target=clipboard` vergleicht nur die
-  selektierten Zeilen statt des ganzen Buffers. Benötigt `range = true` am
-  User-Command und Übergabe von `line1`/`line2` an die Resolver-Schicht.
 
 ### Anzeige / UX
 

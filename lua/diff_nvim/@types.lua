@@ -45,11 +45,17 @@
 ---@field view   DiffNvim.View
 ---@field output DiffNvim.Output
 
+---@class DiffNvim.Range
+--- A 1-based, inclusive line span from a :Diff invoked with a visual range.
+---@field line1 integer  First selected line (1-based)
+---@field line2 integer  Last selected line (1-based, inclusive)
+
 ---@class DiffNvim.Context
 --- Snapshot of the editing context captured the instant :Diff was invoked.
 --- Captured eagerly so async pickers cannot let these values drift.
----@field source_bufnr integer  Buffer that was active at invocation
----@field origin_win   integer  Window that was active at invocation
+---@field source_bufnr integer         Buffer that was active at invocation
+---@field origin_win   integer         Window that was active at invocation
+---@field range        DiffNvim.Range|nil  Selected span when :Diff got a range
 
 -- #####################################################################
 -- config

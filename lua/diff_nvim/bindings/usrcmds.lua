@@ -72,11 +72,18 @@ function M.register(cfg)
 
   if cfg.features.diff then
     api.nvim_create_user_command(names.diff, function(info)
-      core.run(info.args or "")
+      -- info.range is the number of range parts (0 = none, 1 or 2 = a range).
+      -- Only forward line1/line2 when a real range was given so a plain :Diff
+      -- still diffs the whole buffer.
+      local range = (info.range and info.range > 0)
+        and { line1 = info.line1, line2 = info.line2 }
+        or nil
+      core.run(info.args or "", range)
     end, {
       nargs = "*",
+      range = true,
       complete = complete,
-      desc = "Diff sources  :Diff [target=…] [source=…] [view=…] [output=…]",
+      desc = "Diff sources  :[range]Diff [target=…] [source=…] [view=…] [output=…]",
     })
 
     api.nvim_create_user_command(names.diff_clear, function()

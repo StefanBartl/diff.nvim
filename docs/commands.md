@@ -1,9 +1,14 @@
 # Commands
 
-## `:Diff [target=…] [source=…] [view=…] [output=…]`
+## `:[range]Diff [target=…] [source=…] [view=…] [output=…]`
 
 Compares a **source** (left) with a **target** (right). Arguments use a
 `key=value` grammar, in any order; unknown keys are ignored.
+
+When invoked with a **range** (e.g. a visual selection, `:'<,'>Diff`) and
+`source=current` (the default), only the selected lines are used as the
+source instead of the whole buffer. The range applies to the source side
+only — the target is always taken in full.
 
 **`target=`** (the "other" material)
 
@@ -55,6 +60,7 @@ When `target=` is omitted, an interactive picker is shown.
 :Diff target=a.lua source=b.lua        " compare two files
 :Diff target=clipboard output=clipboard " diff to the clipboard
 :Diff target=src/old.lua output=stat   " just the +N -M, K hunks summary
+:'<,'>Diff target=clipboard            " compare only the selection vs. clipboard
 ```
 
 ## `:DiffClear`
