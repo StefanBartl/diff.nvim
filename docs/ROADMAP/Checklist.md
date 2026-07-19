@@ -80,7 +80,7 @@ headless spec suite now exists in [docs/TESTS/](../TESTS/) as the
 | Status | Prüfschritt | Verdict |
 |---|---|---|
 | `[x]` | Lua LS Settings | `.luarc.json` added at repo root (`diagnostics.globals = ["vim"]`, `workspace.library`). |
-| `[ ]` | Formatter/Linter (stylua/luacheck) im CI | Not set up. Left as a roadmap item — see [docs/ROADMAP.md](../ROADMAP.md); no CI workflow exists yet for this repo. |
+| `[~]` | Formatter/Linter (stylua/luacheck) im CI | Partial. A GitHub Actions workflow ([.github/workflows/ci.yml](../../.github/workflows/ci.yml)) now runs the headless spec suite on push/PR. `stylua`/`luacheck` gates are intentionally not wired yet (no formatter config committed); tracked as the remaining half of this item. |
 
 ## Coding-Checkliste (beim Implementieren)
 
@@ -137,8 +137,8 @@ meaningful work.
 | Neovim-API | Handles validated before every use, including deferred picker callbacks | None |
 | Performance | Not a concern at this scale; `vim.diff` does the real work | None |
 | Doku/Annotation | Full `@module`/`@param`/`@return` coverage | None |
-| Tests | Headless spec suite added ([docs/TESTS/](../TESTS/)) | Consider adding a GitHub Actions workflow to run it in CI (tracked as a separate task, not part of this checklist) |
-| checkhealth | Implemented (`:checkhealth diff_nvim`) | None |
+| Tests | Headless spec suite ([docs/TESTS/](../TESTS/)), now run in CI ([.github/workflows/ci.yml](../../.github/workflows/ci.yml)) | Add `stylua`/`luacheck` gates once a formatter config is committed |
+| checkhealth | Implemented (`:checkhealth diff_nvim`), now also reports git/`vim.system` for `git:<rev>` | None |
 
 ## Referenzen
 

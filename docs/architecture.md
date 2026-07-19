@@ -12,10 +12,11 @@ lua/diff_nvim/
     notify.lua               "[diff] " prefixed vim.notify wrapper
     validate.lua              Pure validation helpers (is_one_of, *_valid)
   core/
-    init.lua                 Orchestration: run(), execute(), target picker
+    init.lua                 Orchestration: run(), execute(), source/target picker
     resolve.lua               Specifier → lines, argument parsing
-    scratch.lua                Scratch-buffer lifecycle + cleanup_all()
-    render.lua                 Output renderers (buffer/prompt/file/clipboard)
+    git.lua                    git:<rev> resolution via vim.system git-show
+    scratch.lua                Scratch-buffer lifecycle + cleanup_all() + active_count()
+    render.lua                 Output renderers (buffer/prompt/file/clipboard/stat) + tab/float layouts
   features/
     origin.lua                :DiffOrig logic
     exit.lua                    :DiffExit logic + exit-behaviour config

@@ -2,8 +2,9 @@
 
 ## Requirements
 
-- Neovim 0.9+
-- No external plugins required
+- Neovim 0.9+ (0.10+ for `git:<rev>` sources/targets, which use `vim.system`)
+- [lib.nvim](https://github.com/StefanBartl/lib.nvim) (used for notifications)
+- Optional: a `git` executable on `PATH` for `git:<rev>` sources/targets
 
 ## Package managers
 

@@ -10,9 +10,9 @@ require("diff_nvim").setup({
     diff_exit   = true,   -- register :DiffExit + exit keymap
   },
   diff = {
-    default_view      = "vsplit",    -- "vsplit"|"split"|"inline"
-    default_output    = "buffer",    -- "buffer"|"prompt"|"file"|"clipboard"
-    default_source    = "current",   -- "current"|"clipboard"|path|bufnr
+    default_view      = "vsplit",    -- "vsplit"|"split"|"tab"|"inline"|"float"
+    default_output    = "buffer",    -- "buffer"|"prompt"|"file"|"clipboard"|"stat"
+    default_source    = "current",   -- "current"|"clipboard"|"ask"|"git:<rev>"|path|bufnr
     default_orig_view = "vsplit",    -- "vsplit"|"split" — split direction for :DiffOrig
     algorithm         = "histogram", -- vim.diff algorithm
     ctxlen            = 3,           -- context lines per hunk

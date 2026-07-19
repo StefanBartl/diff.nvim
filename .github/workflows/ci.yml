@@ -1,0 +1,41 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  tests:
+    name: Headless spec suite
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout diff.nvim
+        uses: actions/checkout@v4
+        with:
+          path: diff.nvim
+
+      # diff.nvim depends on lib.nvim at runtime (util/notify, util/validate).
+      # The test runner picks it up via $LIB_NVIM_PATH (see docs/TESTS/run.lua).
+      - name: Checkout lib.nvim
+        uses: actions/checkout@v4
+        with:
+          repository: StefanBartl/lib.nvim
+          path: lib.nvim
+
+      - name: Install Neovim
+        uses: rhysd/action-setup-vim@v1
+        with:
+          neovim: true
+          version: stable
+
+      - name: Run spec suite
+        working-directory: diff.nvim
+        env:
+          LIB_NVIM_PATH: ${{ github.workspace }}/lib.nvim
+        run: |
+          nvim --headless -u NONE \
+            -c "set rtp+=." \
+            -c "luafile docs/TESTS/run.lua" \
+            -c "qa!" | tee out.log
+          grep -q DIFF_NVIM_TESTS_OK out.log

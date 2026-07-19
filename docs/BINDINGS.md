@@ -16,6 +16,7 @@ Machine-readable overview of every keymap, user command, and autocommand defined
 | mode | lhs | desc | default scope | configurable via |
 | --- | --- | --- | --- | --- |
 | n | `<Esc><Esc>` | Exit diff mode | buffer | `exit.key` / `exit.scope` |
+| n | `q` / `<Esc>` | Close diff float | buffer (float windows only, `view=float`) | not configurable |
 
 ---
 
@@ -23,7 +24,7 @@ Machine-readable overview of every keymap, user command, and autocommand defined
 
 | default name | args | desc | feature flag |
 | --- | --- | --- | --- |
-| `:Diff` | `[target=…] [source=…] [view=…] [output=…]` | Compare a source (left) with a target (right) | `features.diff` |
+| `:Diff` | `:[range]Diff [target=…] [source=…] [view=…] [output=…]` | Compare a source (left) with a target (right); a range restricts the `current` source to the selection | `features.diff` |
 | `:DiffClear` | — | Close every scratch buffer and disable diffmode | `features.diff` |
 | `:DiffOrig` | — | Diff current buffer against its on-disk saved version | `features.diff_origin` |
 | `:DiffExit` | — | Leave diff mode (`diffoff!`) from anywhere | `features.diff_exit` |
