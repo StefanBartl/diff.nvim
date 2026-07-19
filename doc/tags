@@ -16,6 +16,7 @@ diff-installation	diff.txt	/*diff-installation*
 diff-intro	diff.txt	/*diff-intro*
 diff-picker-resolution	diff.txt	/*diff-picker-resolution*
 diff-requirements	diff.txt	/*diff-requirements*
+diff-three-way	diff.txt	/*diff-three-way*
 diff-url-sources	diff.txt	/*diff-url-sources*
 diff.nvim	diff.txt	/*diff.nvim*
 diff.txt	diff.txt	/*diff.txt*
@@ -27,3 +28,5 @@ diff_nvim.exit()	diff.txt	/*diff_nvim.exit()*
 diff_nvim.run()	diff.txt	/*diff_nvim.run()*
 diff_nvim.setup()	diff.txt	/*diff_nvim.setup()*
 diff_nvim.status()	diff.txt	/*diff_nvim.status()*
+local	diff.txt	/*local*
+three-window	diff.txt	/*three-window*
