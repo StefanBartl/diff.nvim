@@ -1,11 +1,24 @@
 ---@module 'diff_nvim.bindings.usrcmds'
----@brief User-command registration + context-aware tab completion for :Diff.
+---@brief User-command registration for :Diff, built via
+--- lib.nvim.usercmd.composer.
 ---@description
---- Registers :Diff, :DiffClear, :DiffOrig and :DiffExit using the configured
---- command names. Completion understands the `key=value` grammar and suggests
---- both keys and their valid values.
+--- Registers :Diff, :DiffClear, :DiffBuffers, :DiffOrig and :DiffExit using
+--- the configured command names -- five separate top-level commands (not a
+--- subcommand tree; each is independently name-configurable and has its own
+--- distinct grammar), each its own composer verb. :Diff/:DiffBuffers use
+--- Route.kv for their bare `key=value` grammar (the case that originally
+--- motivated Phase 7's kv support); dispatch bypasses composer's own bound
+--- ctx.kv and calls the ORIGINAL, unmodified core.run(raw_args, range) /
+--- core.run_buffers(raw_args) with ctx.raw.args (composer's untouched
+--- nvim-callback opts table has the exact same .args string the old
+--- nvim_create_user_command callback received) -- so the declared kv schema
+--- exists purely to drive <Tab> completion; core's own key=value parsing is
+--- unchanged. VALUE_LISTS are completion HINTS, not a closed set (a real
+--- filename is also a valid target=/source=/base=), so they're wired as
+--- KvSpec.values (soft, unenforced) rather than KvSpec.enum (which would
+--- reject any value not in the list -- a real behavior regression).
 
-local api = vim.api
+local composer = require("lib.nvim.usercmd.composer")
 
 local core = require("diff_nvim.core")
 
@@ -20,72 +33,10 @@ local VALUE_LISTS = {
   base   = { "clipboard", "ask", "git:HEAD" },
 }
 
----@type string[]  The completable keys
-local KEYS = { "target", "source", "base", "view", "output" }
-
----Filter a list down to entries that start with `lead`.
----@param list string[]
----@param lead string
----@return string[]
-local function starts_with(list, lead)
-  if lead == "" then
-    return list
-  end
-  local out = {}
-  for i = 1, #list do
-    local v = list[i]
-    if v:sub(1, #lead) == lead then
-      out[#out + 1] = v
-    end
-  end
-  return out
-end
-
----Tab completion for :Diff.
----@param arglead string  The partial token under the cursor
----@return string[]
-local function complete(arglead)
-  -- Completing the value half of `key=value`.
-  local key, partial = arglead:match("^(%a+)=(.*)$")
-  if key and VALUE_LISTS[key] then
-    local vals = starts_with(VALUE_LISTS[key], partial)
-    local out = {}
-    for i = 1, #vals do
-      out[i] = key .. "=" .. vals[i]
-    end
-    return out
-  end
-
-  -- Completing a key; suggest `key=` for each.
-  local out = {}
-  local keys = starts_with(KEYS, arglead)
-  for i = 1, #keys do
-    out[i] = keys[i] .. "="
-  end
-  return out
-end
-
----Tab completion for :DiffBuffers (only view=/output= apply — the source is
----always the current buffer and the target is chosen from the picker).
----@param arglead string
----@return string[]
-local function complete_view_output(arglead)
-  local key, partial = arglead:match("^(%a+)=(.*)$")
-  if key and (key == "view" or key == "output") then
-    local vals = starts_with(VALUE_LISTS[key], partial)
-    local out = {}
-    for i = 1, #vals do
-      out[i] = key .. "=" .. vals[i]
-    end
-    return out
-  end
-
-  local out = {}
-  local keys = starts_with({ "view", "output" }, arglead)
-  for i = 1, #keys do
-    out[i] = keys[i] .. "="
-  end
-  return out
+---@param key string
+---@return table  KvSpec
+local function kv(key)
+  return { key = key, type = "STRING", values = VALUE_LISTS[key] }
 end
 
 ---Register all commands. Idempotent at the nvim level (re-creates cleanly).
@@ -95,49 +46,48 @@ function M.register(cfg)
   local names = cfg.commands
 
   if cfg.features.diff then
-    api.nvim_create_user_command(names.diff, function(info)
-      -- info.range is the number of range parts (0 = none, 1 or 2 = a range).
-      -- Only forward line1/line2 when a real range was given so a plain :Diff
-      -- still diffs the whole buffer.
-      local range = (info.range and info.range > 0)
-        and { line1 = info.line1, line2 = info.line2 }
-        or nil
-      core.run(info.args or "", range)
-    end, {
-      nargs = "*",
-      range = true,
-      complete = complete,
+    composer.verb(names.diff, {
       desc = "Diff sources  :[range]Diff [target=…] [source=…] [base=…] [view=…] [output=…]",
+      range = true,
+      routes = {
+        { path = {},
+          kv = { kv("target"), kv("source"), kv("base"), kv("view"), kv("output") },
+          run = function(ctx)
+            -- ctx.range.range is 0 when no real range was given; only then
+            -- are line1/line2 meaningless (both default to the cursor line).
+            local range = (ctx.range.range and ctx.range.range > 0)
+              and { line1 = ctx.range.line1, line2 = ctx.range.line2 } or nil
+            core.run(ctx.raw.args or "", range)
+          end },
+      },
     })
 
-    api.nvim_create_user_command(names.diff_clear, function()
-      core.clear()
-    end, {
+    composer.verb(names.diff_clear, {
       desc = "Close all :Diff windows and disable diffmode",
+      routes = { { path = {}, run = function() core.clear() end } },
     })
 
-    api.nvim_create_user_command(names.diff_buffers, function(info)
-      core.run_buffers(info.args or "")
-    end, {
-      nargs = "*",
-      complete = complete_view_output,
+    composer.verb(names.diff_buffers, {
       desc = "Diff current buffer against another open buffer (picker)  :DiffBuffers [view=…] [output=…]",
+      routes = {
+        { path = {},
+          kv = { kv("view"), kv("output") },
+          run = function(ctx) core.run_buffers(ctx.raw.args or "") end },
+      },
     })
   end
 
   if cfg.features.diff_origin then
-    api.nvim_create_user_command(names.diff_orig, function()
-      require("diff_nvim.features.origin").run()
-    end, {
+    composer.verb(names.diff_orig, {
       desc = "Diff current buffer against its on-disk saved version",
+      routes = { { path = {}, run = function() require("diff_nvim.features.origin").run() end } },
     })
   end
 
   if cfg.features.diff_exit then
-    api.nvim_create_user_command(names.diff_exit, function()
-      require("diff_nvim.features.exit").exit()
-    end, {
+    composer.verb(names.diff_exit, {
       desc = "Leave diff mode (diffoff!) from anywhere",
+      routes = { { path = {}, run = function() require("diff_nvim.features.exit").exit() end } },
     })
   end
 end

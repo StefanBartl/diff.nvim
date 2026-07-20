@@ -13,6 +13,15 @@ function M.check()
     vim.health.warn("Neovim 0.9+ recommended")
   end
 
+  if pcall(require, "lib.nvim.usercmd.composer") then
+    vim.health.ok("lib.nvim detected (:Diff command layer available)")
+  else
+    vim.health.error(
+      "lib.nvim not found — :Diff/:DiffClear/:DiffBuffers/:DiffOrig/:DiffExit will fail to register",
+      { "Install \"StefanBartl/lib.nvim\" as a dependency" }
+    )
+  end
+
   if type(vim.diff) == "function" then
     vim.health.ok("vim.diff is available")
   else
