@@ -9,6 +9,7 @@
 --- wiring — diff.nvim has no leader-prefixed group to label.
 
 local validate = require("diff_nvim.util.validate")
+local map = require("lib.nvim.map")
 
 local M = {}
 
@@ -19,10 +20,9 @@ function M.register_global(cfg)
   if cfg.scope ~= "global" or type(cfg.key) ~= "string" or cfg.key == "" then
     return
   end
-  vim.keymap.set("n", cfg.key, require("diff_nvim.features.exit").exit, {
+  map("n", cfg.key, require("diff_nvim.features.exit").exit, {
     silent = true,
-    desc = "[diff] Exit diff mode when active",
-  })
+  }, "[diff] Exit diff mode when active")
 end
 
 ---Bind the exit key buffer-locally on a buffer diff.nvim just diffed.
@@ -37,11 +37,10 @@ function M.attach_buffer(cfg, bufnr)
   if not validate.buf_valid(bufnr) then
     return
   end
-  vim.keymap.set("n", cfg.key, require("diff_nvim.features.exit").exit, {
+  map("n", cfg.key, require("diff_nvim.features.exit").exit, {
     buffer = bufnr,
     silent = true,
-    desc = "[diff] Exit diff mode",
-  })
+  }, "[diff] Exit diff mode")
 end
 
 return M
