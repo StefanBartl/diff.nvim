@@ -371,14 +371,18 @@ Leave diff mode from anywhere (`diffoff!`). Works regardless of the configured
 ==============================================================================
 6. TAB COMPLETION                                            *diff-completion*
 
-`:Diff` completes the `key=value` grammar context-sensitively: >
+`:Diff` completes the `key=value` grammar context-sensitively, built via
+lib.nvim.usercmd.composer (Route.kv). The value lists below are completion
+hints, not a closed set — any string is still accepted as target=/source=/
+base= (e.g. a literal file path); only view=/output= are drawn from a
+fixed set of modes: >
 
   :Diff <Tab>            target=  source=  base=  view=  output=
   :Diff view=<Tab>       view=vsplit  view=split  view=tab  view=inline  view=float
   :Diff output=<Tab>     output=buffer  output=prompt  output=file  output=clipboard  output=stat
   :Diff source=<Tab>     source=current  source=clipboard  source=ask  source=git:HEAD
-  :Diff target=<Tab>     target=clipboard  target=ask  target=git:HEAD  (+ file paths)
-  :Diff base=<Tab>       base=clipboard  base=ask  base=git:HEAD  (+ file paths)
+  :Diff target=<Tab>     target=clipboard  target=ask  target=git:HEAD
+  :Diff base=<Tab>       base=clipboard  base=ask  base=git:HEAD
 <
 
 ==============================================================================
@@ -461,7 +465,7 @@ Checks:
       exit.lua                :DiffExit logic + exit-behaviour config
       native_diffthis.lua     Opt-in exit-key mirroring onto native :diffthis buffers
     bindings/
-      usrcmds.lua             :Diff/:DiffClear/:DiffOrig/:DiffExit + completion
+      usrcmds.lua             :Diff/:DiffClear/:DiffBuffers/:DiffOrig/:DiffExit (lib.nvim.usercmd.composer) + completion
       keymaps.lua             Exit-keymap wiring (global + buffer-local)
       autocmds.lua            VimLeavePre cleanup
       init.lua                Orchestrates the three above
