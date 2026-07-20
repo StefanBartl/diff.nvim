@@ -11,6 +11,7 @@ local fn  = vim.fn
 local notify   = require("diff_nvim.util.notify")
 local validate = require("diff_nvim.util.validate")
 local scratch  = require("diff_nvim.core.scratch")
+local window   = require("lib.nvim.window")
 
 local M = {}
 
@@ -232,13 +233,7 @@ local function open_float(buf, line_count)
   -- Floats want an obvious close key; the split/inline views rely on :q or
   -- :DiffClear instead, which is why this is float-local.
   if validate.win_valid(win) then
-    for _, key in ipairs({ "q", "<Esc>" }) do
-      vim.keymap.set("n", key, function()
-        if api.nvim_win_is_valid(win) then
-          api.nvim_win_close(win, true)
-        end
-      end, { buffer = buf, nowait = true, silent = true, desc = "Close diff float" })
-    end
+    window.nice_quit(win, { keys = { "q", "<Esc>" } })
   end
 end
 

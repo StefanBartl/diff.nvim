@@ -14,6 +14,7 @@
 --- without depending on the OptionSet event actually firing.
 
 local validate = require("diff_nvim.util.validate")
+local autocmd = require("lib.nvim.autocmd")
 
 local M = {}
 
@@ -50,13 +51,16 @@ function M.register(cfg)
     return
   end
 
+  -- Created directly via nvim_create_augroup(..., { clear = true }) rather
+  -- than lib.nvim.autocmd.group(): that helper caches groups by name and
+  -- skips the clear on subsequent calls, which would stack duplicate
+  -- autocmds if register() ever re-runs.
   local aug = vim.api.nvim_create_augroup(AUGROUP, { clear = true })
-  vim.api.nvim_create_autocmd("OptionSet", {
+  autocmd.create("OptionSet", function()
+    M.sync(cfg, vim.api.nvim_get_current_win())
+  end, {
     group = aug,
     pattern = "diff",
-    callback = function()
-      M.sync(cfg, vim.api.nvim_get_current_win())
-    end,
     desc = "[diff] Mirror the buffer-local exit key onto native :diffthis/:diffoff",
   })
 end
