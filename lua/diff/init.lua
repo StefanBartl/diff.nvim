@@ -1,4 +1,4 @@
----@module 'diff_nvim'
+---@module 'diff'
 ---@brief Public entry point for diff.nvim.
 ---@description
 --- Bootstraps the diff subsystem: merges config, registers commands, sets up the
@@ -6,11 +6,11 @@
 --- wins and later calls are no-ops.
 ---
 --- Two equivalent entry points are provided:
----   require("diff_nvim").setup({ ... })   -- conventional plugin style
----   require("diff_nvim").enable({ ... })   -- alias matching the old custom.diff API
+---   require("diff").setup({ ... })   -- conventional plugin style
+---   require("diff").enable({ ... })   -- alias matching the old custom.diff API
 ---
 --- Example: >lua
----   require("diff_nvim").setup({
+---   require("diff").setup({
 ---     features = { diff = true, diff_origin = true, diff_exit = true },
 ---   })
 --- <
@@ -29,12 +29,12 @@ function M.setup(user_opts)
   end
   _setup_done = true
 
-  local config = require("diff_nvim.config")
+  local config = require("diff.config")
   local cfg = config.setup(user_opts)
 
-  require("diff_nvim.bindings").register(cfg)
+  require("diff.bindings").register(cfg)
 
-  vim.g.loaded_diff_nvim = 1
+  vim.g.loaded_diff = 1
 end
 
 ---Alias for setup() — mirrors the legacy `require("custom.diff").enable(opts)`
@@ -51,13 +51,13 @@ end
 ---@param raw_args? string
 ---@return nil
 function M.run(raw_args)
-  require("diff_nvim.core").run(raw_args or "")
+  require("diff.core").run(raw_args or "")
 end
 
 ---Close all diff windows and disable diffmode.
 ---@return nil
 function M.clear()
-  require("diff_nvim.core").clear()
+  require("diff.core").clear()
 end
 
 ---Diff the current buffer against another open buffer chosen from a picker.
@@ -65,30 +65,30 @@ end
 ---@param raw_args? string
 ---@return nil
 function M.diff_buffers(raw_args)
-  require("diff_nvim.core").run_buffers(raw_args or "")
+  require("diff.core").run_buffers(raw_args or "")
 end
 
 ---Diff the current buffer against its on-disk saved version.
 ---@return nil
 function M.diff_origin()
-  require("diff_nvim.features.origin").run()
+  require("diff.features.origin").run()
 end
 
 ---Leave diff mode from anywhere.
 ---@return nil
 function M.exit()
-  require("diff_nvim.features.exit").exit()
+  require("diff.features.exit").exit()
 end
 
 ---Statusline component: a short string describing whether a diff.nvim diff is
 ---active, or `""` when none is. Drop it into any statusline, e.g.
 --- >lua
----   vim.o.statusline = "%f %{v:lua.require'diff_nvim'.status()}"
+---   vim.o.statusline = "%f %{v:lua.require'diff'.status()}"
 --- <
 ---@param opts? { prefix?: string }  `prefix` defaults to "diff:"
 ---@return string
 function M.status(opts)
-  local n = require("diff_nvim.core.scratch").active_count()
+  local n = require("diff.core.scratch").active_count()
   if n == 0 then
     return ""
   end

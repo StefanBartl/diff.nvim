@@ -3,7 +3,7 @@
 
 return function(H)
   local eq, ok = H.eq, H.ok
-  local render = require("diff_nvim.core.render")
+  local render = require("diff.core.render")
 
   local function count_diff_wins()
     local n = 0
@@ -19,7 +19,7 @@ return function(H)
   vim.cmd("silent! tabonly | silent! only")
   local origin_buf = H.scratch()
   local origin_win = vim.api.nvim_get_current_win()
-  local scratch = require("diff_nvim.core.scratch")
+  local scratch = require("diff.core.scratch")
   local b_buf = scratch.create({ "base" }, "[Diff:base] test")
   local t_buf = scratch.create({ "target" }, "[Diff:target] test")
 
@@ -63,7 +63,7 @@ return function(H)
 
   -- core.run(): base= validation -------------------------------------------
   vim.cmd("silent! tabonly | silent! only")
-  local core = require("diff_nvim.core")
+  local core = require("diff.core")
   local base_file = vim.fn.tempname()
   vim.fn.writefile({ "base line" }, base_file)
   local target_file = vim.fn.tempname()

@@ -1,4 +1,4 @@
----@module 'diff_nvim.core.pickers_bridge'
+---@module 'diff.core.pickers_bridge'
 ---@brief Optional select_fn bridge to pickers.nvim (StefanBartl/pickers.nvim).
 ---@description
 --- pickers.nvim already resolves which fuzzy-picker engine (telescope.nvim,

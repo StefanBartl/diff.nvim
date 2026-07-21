@@ -1,6 +1,6 @@
 # diff.nvim — Binding Cheatsheet
 
-Machine-readable overview of every keymap, user command, and autocommand defined by `diff.nvim`. This file is documentation only and mirrors the source of truth in `lua/diff_nvim/bindings/usrcmds.lua`, `lua/diff_nvim/bindings/keymaps.lua`, and `lua/diff_nvim/bindings/autocmds.lua`. Any change there must be reflected here.
+Machine-readable overview of every keymap, user command, and autocommand defined by `diff.nvim`. This file is documentation only and mirrors the source of truth in `lua/diff/bindings/usrcmds.lua`, `lua/diff/bindings/keymaps.lua`, and `lua/diff/bindings/autocmds.lua`. Any change there must be reflected here.
 
 ## Table of content
 
@@ -38,8 +38,8 @@ Note: the command name column shows the default; every command is renameable via
 
 | event | group | desc |
 | --- | --- | --- |
-| `VimLeavePre` | `diff_nvim_cleanup` | Wipe tracked scratch buffers on exit without touching diffmode |
-| `OptionSet diff` | `diff_nvim_native_diffthis` | Opt-in (`exit.native_diffthis = true`, `exit.scope = "buffer"`): mirror the buffer-local exit key onto any buffer entering/leaving diffmode, including native `:diffthis`/`:diffoff!` |
+| `VimLeavePre` | `diff_cleanup` | Wipe tracked scratch buffers on exit without touching diffmode |
+| `OptionSet diff` | `diff_native_diffthis` | Opt-in (`exit.native_diffthis = true`, `exit.scope = "buffer"`): mirror the buffer-local exit key onto any buffer entering/leaving diffmode, including native `:diffthis`/`:diffoff!` |
 
 ---
 

@@ -1,4 +1,4 @@
----@module 'diff_nvim.bindings.usrcmds'
+---@module 'diff.bindings.usrcmds'
 ---@brief User-command registration for :Diff, built via
 --- lib.nvim.usercmd.composer.
 ---@description
@@ -20,7 +20,7 @@
 
 local composer = require("lib.nvim.usercmd.composer")
 
-local core = require("diff_nvim.core")
+local core = require("diff.core")
 
 local M = {}
 
@@ -80,14 +80,14 @@ function M.register(cfg)
   if cfg.features.diff_origin then
     composer.verb(names.diff_orig, {
       desc = "Diff current buffer against its on-disk saved version",
-      routes = { { path = {}, run = function() require("diff_nvim.features.origin").run() end } },
+      routes = { { path = {}, run = function() require("diff.features.origin").run() end } },
     })
   end
 
   if cfg.features.diff_exit then
     composer.verb(names.diff_exit, {
       desc = "Leave diff mode (diffoff!) from anywhere",
-      routes = { { path = {}, run = function() require("diff_nvim.features.exit").exit() end } },
+      routes = { { path = {}, run = function() require("diff.features.exit").exit() end } },
     })
   end
 end

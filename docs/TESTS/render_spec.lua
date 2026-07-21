@@ -2,7 +2,7 @@
 
 return function(H)
   local eq, ok = H.eq, H.ok
-  local render = require("diff_nvim.core.render")
+  local render = require("diff.core.render")
 
   -- compute_stats: additions + deletions --------------------------------
   local a = { "one", "two", "three" }
@@ -42,7 +42,7 @@ return function(H)
 
   -- inline(): word_diff=false must skip extmarks; word_diff=true (default)
   -- must place at least one DiffText extmark on the changed line pair.
-  local WORD_DIFF_NS = vim.api.nvim_get_namespaces()["diff_nvim_word_diff"]
+  local WORD_DIFF_NS = vim.api.nvim_get_namespaces()["diff_word_diff"]
   ok(type(WORD_DIFF_NS) == "number", "word-diff namespace is registered")
 
   local buf_off = render.inline(0, { "hello world" }, { "hello there" }, "a", "b", "histogram", 3,

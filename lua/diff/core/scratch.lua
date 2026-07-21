@@ -1,4 +1,4 @@
----@module 'diff_nvim.core.scratch'
+---@module 'diff.core.scratch'
 ---@brief Scratch-buffer lifecycle for diff.nvim.
 ---@description
 --- Owns every scratch buffer the plugin creates and provides a single
@@ -8,7 +8,7 @@
 
 local api = vim.api
 
-local validate = require("diff_nvim.util.validate")
+local validate = require("diff.util.validate")
 
 local M = {}
 

@@ -3,7 +3,7 @@
 
 return function(H)
   local eq, ok = H.eq, H.ok
-  local config = require("diff_nvim.config")
+  local config = require("diff.config")
 
   -- defaults
   config.setup({})

@@ -1,11 +1,11 @@
----@module 'diff_nvim.health'
----@brief :checkhealth diff_nvim provider.
+---@module 'diff.health'
+---@brief :checkhealth diff provider.
 
 local M = {}
 
 ---@return nil
 function M.check()
-  vim.health.start("diff_nvim")
+  vim.health.start("diff")
 
   if vim.fn.has("nvim-0.9") == 1 then
     vim.health.ok("Neovim >= 0.9")
@@ -56,16 +56,16 @@ function M.check()
     vim.health.warn("curl executable not on PATH — http(s):// source/target unavailable")
   end
 
-  if type(require("diff_nvim.core.pickers_bridge").resolve()) == "function" then
+  if type(require("diff.core.pickers_bridge").resolve()) == "function" then
     vim.health.ok("pickers.nvim detected — used for the target/source picker")
   else
     vim.health.ok("pickers.nvim not detected — using vim.ui.select for the target/source picker")
   end
 
-  if vim.g.loaded_diff_nvim then
-    vim.health.ok("plugin loaded (vim.g.loaded_diff_nvim = " .. tostring(vim.g.loaded_diff_nvim) .. ")")
+  if vim.g.loaded_diff then
+    vim.health.ok("plugin loaded (vim.g.loaded_diff = " .. tostring(vim.g.loaded_diff) .. ")")
   else
-    vim.health.warn("plugin guard not set — call require('diff_nvim').setup()")
+    vim.health.warn("plugin guard not set — call require('diff').setup()")
   end
 end
 

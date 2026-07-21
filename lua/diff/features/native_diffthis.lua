@@ -1,4 +1,4 @@
----@module 'diff_nvim.features.native_diffthis'
+---@module 'diff.features.native_diffthis'
 ---@brief Mirrors the buffer-local exit key onto buffers a *native* :diffthis
 ---puts into diffmode, not just diff.nvim's own scratch buffers.
 ---@description
@@ -13,13 +13,13 @@
 --- (the OptionSet wiring) so the logic itself stays directly unit-testable
 --- without depending on the OptionSet event actually firing.
 
-local validate = require("diff_nvim.util.validate")
+local validate = require("diff.util.validate")
 local autocmd = require("lib.nvim.autocmd")
 
 local M = {}
 
 ---@type string
-local AUGROUP = "diff_nvim_native_diffthis"
+local AUGROUP = "diff_native_diffthis"
 
 ---Attach or detach the buffer-local exit key on `win`'s current buffer to
 ---match its current 'diff' window-option state.
@@ -36,7 +36,7 @@ function M.sync(cfg, win)
   end
 
   if vim.wo[win].diff then
-    require("diff_nvim.bindings.keymaps").attach_buffer(cfg, buf)
+    require("diff.bindings.keymaps").attach_buffer(cfg, buf)
   else
     pcall(vim.keymap.del, "n", cfg.key, { buffer = buf })
   end

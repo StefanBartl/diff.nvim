@@ -28,12 +28,12 @@ one specifier type that talks to the network, hence its own page.
 - Neovim 0.10+ (`vim.system`)
 - A `curl` executable on `PATH`
 
-Both are checked by `:checkhealth diff_nvim`.
+Both are checked by `:checkhealth diff`.
 
 ## Configuration
 
 ```lua
-require("diff_nvim").setup({
+require("diff").setup({
   diff = {
     url_timeout_ms = 10000, -- fetch timeout in ms
   },

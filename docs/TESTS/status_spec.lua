@@ -1,9 +1,9 @@
--- docs/TESTS/status_spec.lua — diff_nvim.status + scratch.active_count.
+-- docs/TESTS/status_spec.lua — diff.status + scratch.active_count.
 
 return function(H)
   local eq = H.eq
-  local diff    = require("diff_nvim")
-  local scratch = require("diff_nvim.core.scratch")
+  local diff    = require("diff")
+  local scratch = require("diff.core.scratch")
 
   -- No diff active yet -> empty status, zero count.
   scratch.cleanup_all()

@@ -1,4 +1,4 @@
----@module 'diff_nvim.core.render'
+---@module 'diff.core.render'
 ---@brief Output renderers for diff.nvim (buffer / prompt / file / clipboard).
 ---@description
 --- Each renderer takes already-resolved line arrays and produces a specific kind
@@ -8,9 +8,9 @@
 local api = vim.api
 local fn  = vim.fn
 
-local notify   = require("diff_nvim.util.notify")
-local validate = require("diff_nvim.util.validate")
-local scratch  = require("diff_nvim.core.scratch")
+local notify   = require("diff.util.notify")
+local validate = require("diff.util.validate")
+local scratch  = require("diff.core.scratch")
 local window   = require("lib.nvim.window")
 
 local M = {}
@@ -238,7 +238,7 @@ local function open_float(buf, line_count)
 end
 
 ---@type integer  Extmark namespace for inline-view word-level diff highlights
-local WORD_DIFF_NS = api.nvim_create_namespace("diff_nvim_word_diff")
+local WORD_DIFF_NS = api.nvim_create_namespace("diff_word_diff")
 
 ---Compute byte-range spans that changed between two single lines, using
 ---vim.diff at byte granularity (each byte of the line becomes one "line" of

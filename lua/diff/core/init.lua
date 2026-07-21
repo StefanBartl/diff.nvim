@@ -1,4 +1,4 @@
----@module 'diff_nvim.core'
+---@module 'diff.core'
 ---@brief Orchestration for the :Diff workflow.
 ---@description
 --- Ties the resolution, render, and scratch layers together. `run()` parses raw
@@ -7,13 +7,13 @@
 
 local api = vim.api
 
-local notify   = require("diff_nvim.util.notify")
-local validate = require("diff_nvim.util.validate")
-local config   = require("diff_nvim.config")
-local resolve  = require("diff_nvim.core.resolve")
-local render   = require("diff_nvim.core.render")
-local scratch  = require("diff_nvim.core.scratch")
-local url      = require("diff_nvim.core.url")
+local notify   = require("diff.util.notify")
+local validate = require("diff.util.validate")
+local config   = require("diff.config")
+local resolve  = require("diff.core.resolve")
+local render   = require("diff.core.render")
+local scratch  = require("diff.core.scratch")
+local url      = require("diff.core.url")
 
 local M = {}
 
@@ -49,7 +49,7 @@ local function resolve_side(spec, label, source_bufnr, range)
   end
   -- `git:<rev>` resolves the current file at a git revision; it needs the name
   -- of the buffer :Diff was invoked from, which resolve.resolve_lines lacks.
-  local git = require("diff_nvim.core.git")
+  local git = require("diff.core.git")
   if git.is_git_spec(spec) then
     local bufname = validate.buf_valid(source_bufnr) and api.nvim_buf_get_name(source_bufnr) or ""
     return git.resolve(spec, bufname, label)
@@ -106,7 +106,7 @@ local function execute_three_way(opts, ctx)
 
       render.three_way(ctx.origin_win, base_buf, tgt_buf, opts.view)
 
-      local exit = require("diff_nvim.features.exit")
+      local exit = require("diff.features.exit")
       exit.attach_buffer(base_buf)
       exit.attach_buffer(tgt_buf)
     end)
@@ -170,7 +170,7 @@ function M.execute(opts, ctx)
       end
 
       -- output == "buffer"
-      local exit = require("diff_nvim.features.exit")
+      local exit = require("diff.features.exit")
 
       if opts.view == "inline" or opts.view == "float" then
         local buf = render.inline(ctx.origin_win, src_lines, tgt_lines, src_label, tgt_label, cfg.algorithm, cfg.ctxlen, {
@@ -220,7 +220,7 @@ local function resolve_select_fn()
   local cfg = config.get()
   local select_fn = cfg.select_fn
   if type(select_fn) ~= "function" and cfg.use_pickers_nvim ~= false then
-    select_fn = require("diff_nvim.core.pickers_bridge").resolve()
+    select_fn = require("diff.core.pickers_bridge").resolve()
   end
   if type(select_fn) ~= "function" then
     select_fn = vim.ui.select

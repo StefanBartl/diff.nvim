@@ -1,4 +1,4 @@
----@module 'diff_nvim.core.url'
+---@module 'diff.core.url'
 ---@brief Resolve a `http(s)://…` specifier to fetched content lines, async.
 ---@description
 --- Fetches a URL via `curl` (a direct argv exec through `vim.system`, never a

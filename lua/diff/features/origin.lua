@@ -1,4 +1,4 @@
----@module 'diff_nvim.features.origin'
+---@module 'diff.features.origin'
 ---@brief :DiffOrig — diff the current buffer against its on-disk saved version.
 ---@description
 --- Reimplemented on top of the core scratch/diff machinery (no raw :read heredoc)
@@ -8,10 +8,10 @@
 local api = vim.api
 local fn  = vim.fn
 
-local notify   = require("diff_nvim.util.notify")
-local validate = require("diff_nvim.util.validate")
-local scratch  = require("diff_nvim.core.scratch")
-local config   = require("diff_nvim.config")
+local notify   = require("diff.util.notify")
+local validate = require("diff.util.validate")
+local scratch  = require("diff.core.scratch")
+local config   = require("diff.config")
 
 local M = {}
 
@@ -67,7 +67,7 @@ function M.run()
     vim.wo[origin_win].diff = true
   end
 
-  require("diff_nvim.features.exit").attach_buffer(snap)
+  require("diff.features.exit").attach_buffer(snap)
 end
 
 return M

@@ -63,7 +63,7 @@ packer.nvim: >lua
     "StefanBartl/diff.nvim",
     cmd = { "Diff", "DiffClear", "DiffBuffers", "DiffOrig", "DiffExit" },
     config = function()
-      require("diff_nvim").setup({})
+      require("diff").setup({})
     end,
   }
 <
@@ -72,14 +72,14 @@ vim-plug: >vim
   Plug 'StefanBartl/diff.nvim'
 <
   Then, in an `init.lua` sourced later: >lua
-  require("diff_nvim").setup({})
+  require("diff").setup({})
 <
 
 ==============================================================================
 4. CONFIGURATION                                                 *diff-config*
 
 >lua
-  require("diff_nvim").setup({
+  require("diff").setup({
     features = {
       diff        = true,   -- register :Diff / :DiffClear / :DiffBuffers
       diff_origin = true,   -- register :DiffOrig
@@ -389,44 +389,44 @@ fixed set of modes: >
 7. LUA API                                                          *diff-api*
 
 >lua
-  local diff = require("diff_nvim")
+  local diff = require("diff")
 <
 
-setup({opts})                                                *diff_nvim.setup()*
+setup({opts})                                                *diff.setup()*
   Configure and activate. Idempotent.
 
-enable({opts})                                              *diff_nvim.enable()*
+enable({opts})                                              *diff.enable()*
   Alias for setup() — matches the legacy `custom.diff` signature.
 
-run({raw_args})                                                *diff_nvim.run()*
+run({raw_args})                                                *diff.run()*
   Run a diff. {raw_args} uses the same grammar as |:Diff|.
 
-clear()                                                      *diff_nvim.clear()*
+clear()                                                      *diff.clear()*
   Close all diff windows and disable diffmode.
 
-diff_buffers({raw_args})                            *diff_nvim.diff_buffers()*
+diff_buffers({raw_args})                            *diff.diff_buffers()*
   Diff the current buffer against another open buffer chosen from a picker.
   {raw_args} accepts the same `view=`/`output=` grammar as |:Diff|.
 
-diff_origin()                                          *diff_nvim.diff_origin()*
+diff_origin()                                          *diff.diff_origin()*
   Diff the current buffer against its on-disk saved version.
 
-exit()                                                        *diff_nvim.exit()*
+exit()                                                        *diff.exit()*
   Leave diff mode from anywhere.
 
-status({opts})                                              *diff_nvim.status()*
+status({opts})                                              *diff.status()*
   Statusline component. Returns a short string (default `diff:N`, where N is
   the number of active diff.nvim scratch buffers) while a diff is active, or
   an empty string when none is. {opts.prefix} overrides the `diff:` prefix.
   Example: >lua
-    vim.o.statusline = "%f %{v:lua.require'diff_nvim'.status()}"
+    vim.o.statusline = "%f %{v:lua.require'diff'.status()}"
 <
 
 ==============================================================================
 8. HEALTH CHECK                                                  *diff-health*
 
 >
-  :checkhealth diff_nvim
+  :checkhealth diff
 <
 
 Checks:
@@ -442,8 +442,8 @@ Checks:
 ==============================================================================
 9. ARCHITECTURE                                            *diff-architecture*
 
-  plugin/diff_nvim.lua        Load guard
-  lua/diff_nvim/
+  plugin/diff.lua        Load guard
+  lua/diff/
     init.lua                  Public API, setup()/enable()
     @types.lua                LuaLS type definitions
     config/
