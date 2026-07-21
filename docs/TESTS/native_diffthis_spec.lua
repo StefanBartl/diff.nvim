@@ -7,7 +7,7 @@
 
 return function(H)
   local eq, ok = H.eq, H.ok
-  local native = require("diff_nvim.features.native_diffthis")
+  local native = require("diff.features.native_diffthis")
 
   local cfg = { key = "<C-x><C-x>", scope = "buffer", native_diffthis = true }
 
@@ -36,7 +36,7 @@ return function(H)
 
   -- register(): no-op unless scope=="buffer" and native_diffthis==true ----
   local function autocmd_count()
-    return #vim.api.nvim_get_autocmds({ group = "diff_nvim_native_diffthis" })
+    return #vim.api.nvim_get_autocmds({ group = "diff_native_diffthis" })
   end
 
   local ok1, err1 = pcall(native.register, { key = "<C-x><C-x>", scope = "global", native_diffthis = true })

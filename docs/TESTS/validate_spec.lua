@@ -2,7 +2,7 @@
 
 return function(H)
   local eq, ok = H.eq, H.ok
-  local validate = require("diff_nvim.util.validate")
+  local validate = require("diff.util.validate")
 
   -- is_one_of --------------------------------------------------------------
   ok(validate.is_one_of("b", { "a", "b", "c" }), "is_one_of finds a member")

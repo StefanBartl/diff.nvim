@@ -2,7 +2,7 @@
 
 return function(H)
   local eq, ok = H.eq, H.ok
-  local resolve = require("diff_nvim.core.resolve")
+  local resolve = require("diff.core.resolve")
 
   -- parse_args -----------------------------------------------------------
   local kv = resolve.parse_args("target=clipboard view=inline output=prompt")

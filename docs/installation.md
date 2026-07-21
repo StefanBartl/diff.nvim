@@ -28,7 +28,7 @@ Or via `config`:
   "StefanBartl/diff.nvim",
   cmd = { "Diff", "DiffClear", "DiffBuffers", "DiffOrig", "DiffExit" },
   config = function()
-    require("diff_nvim").setup({})
+    require("diff").setup({})
   end,
 }
 ```
@@ -43,7 +43,7 @@ use {
   requires = { "StefanBartl/lib.nvim" },
   cmd = { "Diff", "DiffClear", "DiffBuffers", "DiffOrig", "DiffExit" },
   config = function()
-    require("diff_nvim").setup({})
+    require("diff").setup({})
   end,
 }
 ```
@@ -59,6 +59,6 @@ Plug 'StefanBartl/diff.nvim'
 Then, in an `init.lua` sourced later:
 
 ```lua
-require("diff_nvim").setup({})
+require("diff").setup({})
 ```
 </details>

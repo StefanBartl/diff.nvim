@@ -3,7 +3,7 @@
 Full defaults:
 
 ```lua
-require("diff_nvim").setup({
+require("diff").setup({
   features = {
     diff        = true,   -- register :Diff / :DiffClear
     diff_origin = true,   -- register :DiffOrig

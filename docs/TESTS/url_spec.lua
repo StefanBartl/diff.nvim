@@ -3,7 +3,7 @@
 
 return function(H)
   local eq, ok = H.eq, H.ok
-  local url = require("diff_nvim.core.url")
+  local url = require("diff.core.url")
 
   -- is_url_spec ------------------------------------------------------------
   ok(url.is_url_spec("https://example.com/a.txt"), "https:// is a url spec")

@@ -5,7 +5,7 @@
 
 return function(H)
   local eq, ok = H.eq, H.ok
-  local git = require("diff_nvim.core.git")
+  local git = require("diff.core.git")
 
   -- is_git_spec ----------------------------------------------------------
   ok(git.is_git_spec("git:HEAD"), "git:HEAD is a git spec")
@@ -20,7 +20,7 @@ return function(H)
   end
 
   -- resolve: a committed file at HEAD -----------------------------------
-  local abspath = vim.fs.normalize(vim.fn.getcwd() .. "/lua/diff_nvim/init.lua")
+  local abspath = vim.fs.normalize(vim.fn.getcwd() .. "/lua/diff/init.lua")
   local lines, err = git.resolve("git:HEAD", abspath, "target")
   ok(err == nil, "git:HEAD resolves without error (" .. tostring(err) .. ")")
   ok(type(lines) == "table" and #lines > 0, "git:HEAD returns content lines")

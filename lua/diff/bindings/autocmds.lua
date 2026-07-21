@@ -1,4 +1,4 @@
----@module 'diff_nvim.bindings.autocmds'
+---@module 'diff.bindings.autocmds'
 ---@brief Autocommand registration for diff.nvim.
 ---@description
 --- The only autocmd diff.nvim ships: wipe tracked scratch buffers on exit
@@ -10,7 +10,7 @@ local autocmd = require("lib.nvim.autocmd")
 local M = {}
 
 ---@type string  Augroup name for cleanup autocmds
-local AUGROUP = "diff_nvim_cleanup"
+local AUGROUP = "diff_cleanup"
 
 ---Register the VimLeavePre cleanup autocmd.
 ---@return nil
@@ -21,7 +21,7 @@ function M.register()
   -- autocmds if register() ever re-runs.
   local aug = vim.api.nvim_create_augroup(AUGROUP, { clear = true })
   autocmd.create("VimLeavePre", function()
-    require("diff_nvim.core.scratch").wipe_on_exit()
+    require("diff.core.scratch").wipe_on_exit()
   end, {
     group = aug,
     desc = "[diff] Wipe scratch buffers on exit",

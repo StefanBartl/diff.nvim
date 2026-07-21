@@ -1,4 +1,4 @@
----@module 'diff_nvim.features.exit'
+---@module 'diff.features.exit'
 ---@brief :DiffExit logic and the context-aware "leave diffmode" behaviour.
 ---@description
 --- The original global `<Esc><Esc>` mapping noticeably delayed a normal <Esc>
@@ -12,8 +12,8 @@
 
 local api = vim.api
 
-local notify   = require("diff_nvim.util.notify")
-local validate = require("diff_nvim.util.validate")
+local notify   = require("diff.util.notify")
+local validate = require("diff.util.validate")
 
 local M = {}
 
@@ -45,7 +45,7 @@ function M.attach_buffer(bufnr)
   if not _cfg then
     return
   end
-  require("diff_nvim.bindings.keymaps").attach_buffer(_cfg, bufnr)
+  require("diff.bindings.keymaps").attach_buffer(_cfg, bufnr)
 end
 
 ---Register the exit feature according to config (keymap wiring only; see
@@ -54,7 +54,7 @@ end
 ---@return nil
 function M.setup(cfg)
   _cfg = cfg
-  require("diff_nvim.bindings.keymaps").register_global(cfg)
+  require("diff.bindings.keymaps").register_global(cfg)
 end
 
 return M

@@ -1,4 +1,4 @@
----@module 'diff_nvim.util.validate'
+---@module 'diff.util.validate'
 ---@brief Small, pure validation helpers shared across the core.
 ---@description
 --- Pure functions only — no side effects, no notifications. Safe to call in

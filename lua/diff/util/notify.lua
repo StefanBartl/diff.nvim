@@ -1,4 +1,4 @@
----@module 'diff_nvim.util.notify'
+---@module 'diff.util.notify'
 ---@brief Prefixed wrapper around lib.nvim.notify so every message is traceable.
 ---@description
 --- Only the UI layer should call this — keep low-level/core modules silent and

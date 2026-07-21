@@ -3,7 +3,7 @@
 
 return function(H)
   local eq, ok = H.eq, H.ok
-  local bridge = require("diff_nvim.core.pickers_bridge")
+  local bridge = require("diff.core.pickers_bridge")
 
   -- pickers.nvim is not on rtp/package.path yet in this process: resolve()
   -- must return nil, never error.

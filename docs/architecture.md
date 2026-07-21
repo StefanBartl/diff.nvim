@@ -1,8 +1,8 @@
 # Architecture
 
 ```
-plugin/diff_nvim.lua         Load guard
-lua/diff_nvim/
+plugin/diff.lua         Load guard
+lua/diff/
   init.lua                   Public API, setup()/enable()
   @types.lua                 LuaLS type definitions
   config/
@@ -28,7 +28,7 @@ lua/diff_nvim/
     keymaps.lua                  Exit-keymap wiring (global + buffer-local)
     autocmds.lua                  VimLeavePre cleanup
     init.lua                       Orchestrates the three above
-  health.lua                  :checkhealth diff_nvim
+  health.lua                  :checkhealth diff
 ```
 
 Load order: util → config → core → features → bindings → init

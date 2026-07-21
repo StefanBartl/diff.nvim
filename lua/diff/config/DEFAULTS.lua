@@ -1,4 +1,4 @@
----@module 'diff_nvim.config.DEFAULTS'
+---@module 'diff.config.DEFAULTS'
 ---@brief Immutable default configuration for diff.nvim.
 ---@description
 --- Single source of truth for every configurable value. `config/init.lua`

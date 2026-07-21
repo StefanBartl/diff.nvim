@@ -3,7 +3,7 @@
 ## Health check
 
 ```
-:checkhealth diff_nvim
+:checkhealth diff
 ```
 
 ## Tests

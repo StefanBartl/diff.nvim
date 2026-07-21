@@ -1,4 +1,4 @@
----@module 'diff_nvim.bindings.keymaps'
+---@module 'diff.bindings.keymaps'
 ---@brief Keymap registration for diff.nvim.
 ---@description
 --- The only keymap diff.nvim ships is the "leave diffmode" key. Registration
@@ -8,7 +8,7 @@
 --- `desc`, so which-key.nvim (if installed) picks them up with no further
 --- wiring — diff.nvim has no leader-prefixed group to label.
 
-local validate = require("diff_nvim.util.validate")
+local validate = require("diff.util.validate")
 local map = require("lib.nvim.map")
 
 local M = {}
@@ -20,7 +20,7 @@ function M.register_global(cfg)
   if cfg.scope ~= "global" or type(cfg.key) ~= "string" or cfg.key == "" then
     return
   end
-  map("n", cfg.key, require("diff_nvim.features.exit").exit, {
+  map("n", cfg.key, require("diff.features.exit").exit, {
     silent = true,
   }, "[diff] Exit diff mode when active")
 end
@@ -37,7 +37,7 @@ function M.attach_buffer(cfg, bufnr)
   if not validate.buf_valid(bufnr) then
     return
   end
-  map("n", cfg.key, require("diff_nvim.features.exit").exit, {
+  map("n", cfg.key, require("diff.features.exit").exit, {
     buffer = bufnr,
     silent = true,
   }, "[diff] Exit diff mode")

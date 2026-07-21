@@ -24,7 +24,7 @@ The runner prints one line per spec and exits non-zero on the first failure
 | `validate_spec.lua`| `is_one_of` / `buf_valid` / `win_valid`.                          |
 | `render_spec.lua`  | `compute_stats` / `format_stats` (the `output=stat` summary).     |
 | `git_spec.lua`     | `is_git_spec` + live `git:HEAD` resolution against this repo.     |
-| `status_spec.lua`  | `scratch.active_count` + `diff_nvim.status` statusline string.    |
+| `status_spec.lua`  | `scratch.active_count` + `diff.status` statusline string.    |
 | `pickers_bridge_spec.lua` | `pickers_bridge.resolve()` nil-fallback (absent / no engine).|
 | `native_diffthis_spec.lua` | `native_diffthis.sync()` attach/detach logic + `register()` gating. |
 | `url_spec.lua`     | `is_url_spec` + `fetch()` guard clauses; best-effort live round-trip (skipped, not failed, without network). |

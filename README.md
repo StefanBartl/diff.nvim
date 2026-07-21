@@ -72,8 +72,8 @@ Omitting `target=` opens an interactive picker (`vim.ui.select`).
 - [Commands](docs/commands.md) — full `:Diff` argument grammar, examples, and tab completion.
 - [URL sources](docs/url-sources.md) — diffing against `http(s)://` URLs, async fetch, timeout, and examples.
 - [Three-way diff](docs/three-way-diff.md) — `base=` for merge-conflict workflows, layout, and examples.
-- [Lua API](docs/api.md) — the `require("diff_nvim")` module surface.
+- [Lua API](docs/api.md) — the `require("diff")` module surface.
 - [Architecture](docs/architecture.md) — module layout and load order.
-- [Testing & health check](docs/testing.md) — `:checkhealth diff_nvim` and the headless spec suite.
+- [Testing & health check](docs/testing.md) — `:checkhealth diff` and the headless spec suite.
 - [Bindings cheatsheet](docs/BINDINGS.md) — every keymap, user command, and autocommand.
 - [Roadmap](docs/ROADMAP.md) — planned features.

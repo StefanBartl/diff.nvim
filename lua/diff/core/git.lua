@@ -1,4 +1,4 @@
----@module 'diff_nvim.core.git'
+---@module 'diff.core.git'
 ---@brief Resolve a `git:<rev>` specifier to the file's content at that revision.
 ---@description
 --- Pure-ish resolution layer for git-backed sources/targets. A specifier of the

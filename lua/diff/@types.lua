@@ -1,5 +1,5 @@
 ---@meta
----@module 'diff_nvim.@types'
+---@module 'diff.@types'
 ---@brief Type definitions for diff.nvim.
 ---@description
 --- Central type catalog so the source files stay free of long annotation blocks.

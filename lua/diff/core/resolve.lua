@@ -1,4 +1,4 @@
----@module 'diff_nvim.core.resolve'
+---@module 'diff.core.resolve'
 ---@brief Resolve a target/source specifier to a flat list of lines.
 ---@description
 --- Pure resolution layer: takes a specifier ("clipboard", a buffer number, or a
@@ -8,7 +8,7 @@
 local fn = vim.fn
 local api = vim.api
 
-local validate = require("diff_nvim.util.validate")
+local validate = require("diff.util.validate")
 
 local M = {}
 

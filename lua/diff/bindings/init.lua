@@ -1,7 +1,7 @@
----@module 'diff_nvim.bindings'
+---@module 'diff.bindings'
 ---@brief Orchestrates diff.nvim's bindings: usrcmds, keymaps, autocmds.
 ---@description
---- Single entry point `require("diff_nvim.init")` calls into. Registers the
+--- Single entry point `require("diff.init")` calls into. Registers the
 --- user commands, wires the exit keymap (global scope only — buffer scope is
 --- attached per-diff by `features/exit.lua`), and installs the VimLeavePre
 --- cleanup autocmd.
@@ -12,14 +12,14 @@ local M = {}
 ---@param cfg DiffNvim.Config
 ---@return nil
 function M.register(cfg)
-  require("diff_nvim.bindings.usrcmds").register(cfg)
+  require("diff.bindings.usrcmds").register(cfg)
 
   if cfg.features.diff_exit then
-    require("diff_nvim.features.exit").setup(cfg.exit)
-    require("diff_nvim.features.native_diffthis").register(cfg.exit)
+    require("diff.features.exit").setup(cfg.exit)
+    require("diff.features.native_diffthis").register(cfg.exit)
   end
 
-  require("diff_nvim.bindings.autocmds").register()
+  require("diff.bindings.autocmds").register()
 end
 
 return M

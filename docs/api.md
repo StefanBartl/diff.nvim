@@ -1,7 +1,7 @@
 # Lua API
 
 ```lua
-local diff = require("diff_nvim")
+local diff = require("diff")
 
 diff.setup(opts)        -- configure + activate (idempotent)
 diff.enable(opts)       -- alias for setup() (compat with custom.diff)
@@ -21,10 +21,10 @@ or `""` when none is. `opts.prefix` overrides the `diff:` prefix.
 
 ```lua
 -- native statusline
-vim.o.statusline = "%f %{v:lua.require'diff_nvim'.status()}"
+vim.o.statusline = "%f %{v:lua.require'diff'.status()}"
 
 -- lualine
 require("lualine").setup({
-  sections = { lualine_x = { function() return require("diff_nvim").status() end } },
+  sections = { lualine_x = { function() return require("diff").status() end } },
 })
 ```
