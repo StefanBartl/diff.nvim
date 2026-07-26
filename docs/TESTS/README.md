@@ -26,6 +26,7 @@ The runner prints one line per spec and exits non-zero on the first failure
 | `git_spec.lua`     | `is_git_spec` + live `git:HEAD` resolution against this repo.     |
 | `status_spec.lua`  | `scratch.active_count` + `diff.status` statusline string.    |
 | `pickers_bridge_spec.lua` | `pickers_bridge.resolve()` nil-fallback (absent / no engine).|
+| `pick_specifier_spec.lua` | `pick_specifier`'s default fallback renders via `kit.confirm` (≤4 choices), and a configured `select_fn` still takes precedence. |
 | `native_diffthis_spec.lua` | `native_diffthis.sync()` attach/detach logic + `register()` gating. |
 | `url_spec.lua`     | `is_url_spec` + `fetch()` guard clauses; best-effort live round-trip (skipped, not failed, without network). |
 | `three_way_spec.lua` | `render.three_way()` layout (vsplit/tab/invalid window) + `core.run()`'s `base=` validation and end-to-end wiring. |
