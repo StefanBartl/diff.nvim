@@ -220,19 +220,55 @@ local function prompt_buffer(callback)
   })
 end
 
----Resolve the effective picker function: an explicit select_fn always wins,
----otherwise pickers.nvim (if installed and not opted out), else vim.ui.select.
----@return fun(items: any[], opts: table, on_choice: fun(item: any, idx: integer|nil)): nil
-local function resolve_select_fn()
+---Resolve an explicit select_fn or pickers.nvim backend, if configured/
+---available. Returns nil when neither applies — callers supply their own
+---last-resort fallback (kit.confirm's button row for pick_specifier's
+---always-≤4 choices, vim.ui.select for run_buffers' dynamic-length list).
+---@return (fun(items: any[], opts: table, on_choice: fun(item: any, idx: integer|nil)): nil)|nil
+local function resolve_configured_select_fn()
   local cfg = config.get()
   local select_fn = cfg.select_fn
   if type(select_fn) ~= "function" and cfg.use_pickers_nvim ~= false then
     select_fn = require("diff.core.pickers_bridge").resolve()
   end
-  if type(select_fn) ~= "function" then
-    select_fn = vim.ui.select
+  if type(select_fn) == "function" then
+    return select_fn
   end
-  return select_fn
+  return nil
+end
+
+---Resolve the effective picker function: an explicit select_fn always wins,
+---otherwise pickers.nvim (if installed and not opted out), else vim.ui.select.
+---@return fun(items: any[], opts: table, on_choice: fun(item: any, idx: integer|nil)): nil
+local function resolve_select_fn()
+  return resolve_configured_select_fn() or vim.ui.select
+end
+
+---vim.ui.select-shaped adapter over kit.confirm's button row — the default
+---fallback for pick_specifier, whose choice lists are always ≤4 long (a
+---natural fit for buttons, unlike run_buffers' dynamic-length buffer list
+---which keeps the vim.ui.select fallback above).
+---@param items string[]
+---@param opts table  # { prompt? }
+---@param on_choice fun(choice: string|nil, idx: integer|nil): nil
+local function kit_confirm_select(items, opts, on_choice)
+  require("lib.nvim.ui.kit.confirm").open({
+    question = (opts and opts.prompt) or "Select",
+    choices = items,
+    on_answer = function(choice)
+      if choice == nil then
+        on_choice(nil, nil)
+        return
+      end
+      for i, item in ipairs(items) do
+        if item == choice then
+          on_choice(choice, i)
+          return
+        end
+      end
+      on_choice(nil, nil)
+    end,
+  })
 end
 
 ---Show the interactive picker for a side; calls `callback` with the chosen
@@ -243,7 +279,7 @@ end
 ---@param callback fun(spec: string|nil): nil
 ---@return nil
 local function pick_specifier(kind, callback)
-  local select_fn = resolve_select_fn()
+  local select_fn = resolve_configured_select_fn() or kit_confirm_select
 
   local choices, handlers
   if kind == "source" then

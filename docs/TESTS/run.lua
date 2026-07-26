@@ -63,6 +63,7 @@ local specs = {
   "git_spec.lua",
   "status_spec.lua",
   "pickers_bridge_spec.lua",
+  "pick_specifier_spec.lua",
   "native_diffthis_spec.lua",
   "url_spec.lua",
   "three_way_spec.lua",
