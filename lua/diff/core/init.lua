@@ -192,6 +192,9 @@ function M.execute(opts, ctx)
 end
 
 ---Prompt for a file path and hand it back (nil on empty/cancel).
+--- Stays on vim.ui.input on purpose: it needs cmdline-style `completion =
+--- "file"` Tab-completion, which kit.input (a plain insert-mode buffer) has
+--- no equivalent for yet.
 ---@param callback fun(spec: string|nil): nil
 local function prompt_file(callback)
   vim.ui.input({ prompt = "File path: ", completion = "file" }, function(path)
@@ -202,15 +205,19 @@ end
 ---Prompt for a buffer number and hand it back (nil on invalid/cancel).
 ---@param callback fun(spec: string|nil): nil
 local function prompt_buffer(callback)
-  vim.ui.input({ prompt = "Buffer number: " }, function(raw)
-    local n = tonumber(raw)
-    if n then
-      callback(tostring(n))
-    else
-      notify.warn("Invalid buffer number")
-      callback(nil)
-    end
-  end)
+  require("lib.nvim.ui.kit").input({
+    title = "Buffer number: ",
+    on_submit = function(raw)
+      local n = tonumber(raw)
+      if n then
+        callback(tostring(n))
+      else
+        notify.warn("Invalid buffer number")
+        callback(nil)
+      end
+    end,
+    on_cancel = function() callback(nil) end,
+  })
 end
 
 ---Resolve the effective picker function: an explicit select_fn always wins,
