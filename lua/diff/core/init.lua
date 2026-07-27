@@ -254,6 +254,14 @@ local function kit_select_select(items, opts, on_choice)
     format_item = opts and opts.format_item,
     respect_override = true,
     on_select = on_choice,
+    -- kit.select reports cancellation through on_cancel rather than by
+    -- calling on_select with nil; translate back, since this adapter is
+    -- interchangeable with the vim.ui.select-shaped cfg.select_fn and
+    -- pickers.nvim bridge (and run_buffers relies on the nil call for its
+    -- "Diff cancelled" notice). Same translation kit_confirm_select does.
+    on_cancel = function()
+      on_choice(nil, nil)
+    end,
   })
 end
 
