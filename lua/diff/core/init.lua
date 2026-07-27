@@ -192,14 +192,18 @@ function M.execute(opts, ctx)
 end
 
 ---Prompt for a file path and hand it back (nil on empty/cancel).
---- Stays on vim.ui.input on purpose: it needs cmdline-style `completion =
---- "file"` Tab-completion, which kit.input (a plain insert-mode buffer) has
---- no equivalent for yet.
 ---@param callback fun(spec: string|nil): nil
 local function prompt_file(callback)
-  vim.ui.input({ prompt = "File path: ", completion = "file" }, function(path)
-    callback((type(path) == "string" and path ~= "") and path or nil)
-  end)
+  require("lib.nvim.ui.kit").input({
+    title = "File path: ",
+    completion = "file",
+    on_submit = function(path)
+      callback(path ~= "" and path or nil)
+    end,
+    on_cancel = function()
+      callback(nil)
+    end,
+  })
 end
 
 ---Prompt for a buffer number and hand it back (nil on invalid/cancel).
