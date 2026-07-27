@@ -223,7 +223,7 @@ end
 ---Resolve an explicit select_fn or pickers.nvim backend, if configured/
 ---available. Returns nil when neither applies — callers supply their own
 ---last-resort fallback (kit.confirm's button row for pick_specifier's
----always-≤4 choices, vim.ui.select for run_buffers' dynamic-length list).
+---always-≤4 choices, kit.select for run_buffers' dynamic-length list).
 ---@return (fun(items: any[], opts: table, on_choice: fun(item: any, idx: integer|nil)): nil)|nil
 local function resolve_configured_select_fn()
   local cfg = config.get()
@@ -237,11 +237,32 @@ local function resolve_configured_select_fn()
   return nil
 end
 
+---vim.ui.select-shaped adapter over kit.select's respect_override: still
+---defers to a real vim.ui.select override (telescope-ui-select,
+---dressing.nvim, ...) exactly like the plain vim.ui.select fallback below
+---did, but uses kit's own themed chooser instead of the plain builtin
+---vim.ui.select when nothing has overridden it. Used for run_buffers'
+---dynamic-length buffer list, which isn't a good fit for kit_confirm_select's
+---button row (see pick_specifier above).
+---@param items string[]
+---@param opts table  # { prompt?, format_item? }
+---@param on_choice fun(choice: string|nil, idx: integer|nil): nil
+local function kit_select_select(items, opts, on_choice)
+  require("lib.nvim.ui.kit").select({
+    items = items,
+    title = opts and opts.prompt,
+    format_item = opts and opts.format_item,
+    respect_override = true,
+    on_select = on_choice,
+  })
+end
+
 ---Resolve the effective picker function: an explicit select_fn always wins,
----otherwise pickers.nvim (if installed and not opted out), else vim.ui.select.
+---otherwise pickers.nvim (if installed and not opted out), else kit.select
+---(itself deferring to a real vim.ui.select override, if any).
 ---@return fun(items: any[], opts: table, on_choice: fun(item: any, idx: integer|nil)): nil
 local function resolve_select_fn()
-  return resolve_configured_select_fn() or vim.ui.select
+  return resolve_configured_select_fn() or kit_select_select
 end
 
 ---vim.ui.select-shaped adapter over kit.confirm's button row — the default
