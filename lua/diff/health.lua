@@ -67,6 +67,8 @@ function M.check()
   else
     vim.health.warn("plugin guard not set — call require('diff').setup()")
   end
+
+  require("lib.nvim.usercmd.composer").checkhealth("Diff")
 end
 
 return M
