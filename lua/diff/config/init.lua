@@ -17,7 +17,9 @@ local _active = nil
 ---@return DiffNvim.Config
 function M.setup(user_opts)
   if type(user_opts) ~= "table" then
-    user_opts = {}
+    -- Partial/absent user opts are valid here; DEFAULTS (merged below) is
+    -- what actually guarantees a complete DiffNvim.Config.
+    user_opts = {} --[[@as table]]
   end
 
   _active = vim.tbl_deep_extend("force", vim.deepcopy(DEFAULTS), user_opts)
