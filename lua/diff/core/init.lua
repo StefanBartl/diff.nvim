@@ -53,7 +53,7 @@ local function resolve_side(spec, label, source_bufnr, range)
   local git = require("diff.core.git")
   if git.is_git_spec(spec) then
     local bufname = validate.buf_valid(source_bufnr) and api.nvim_buf_get_name(source_bufnr) or ""
-    return git.resolve(spec, bufname, label)
+    return git.resolve(spec --[[@as string]], bufname, label)
   end
   return resolve.resolve_lines(spec, label)
 end
@@ -71,7 +71,7 @@ end
 ---@return nil
 local function resolve_side_async(spec, label, source_bufnr, range, callback)
   if url.is_url_spec(spec) then
-    url.fetch(spec, label, { timeout_ms = config.get().diff.url_timeout_ms }, callback)
+    url.fetch(spec --[[@as string]], label, { timeout_ms = config.get().diff.url_timeout_ms }, callback)
     return
   end
   callback(resolve_side(spec, label, source_bufnr, range))
@@ -107,7 +107,7 @@ local function execute_three_way(opts, ctx)
       local base_buf = scratch.create(base_lines, string.format("[Diff:base] %s", base_label))
       local tgt_buf  = scratch.create(tgt_lines, string.format("[Diff:target] %s", tgt_label))
 
-      render.three_way(ctx.origin_win, base_buf, tgt_buf, opts.view)
+      render.three_way(ctx.origin_win, base_buf, tgt_buf, opts.view --[[@as "vsplit"|"split"|"tab"]])
 
       local exit = require("diff.features.exit")
       exit.attach_buffer(base_buf)
