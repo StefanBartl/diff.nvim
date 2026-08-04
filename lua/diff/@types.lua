@@ -9,17 +9,17 @@
 -- core / command surface
 -- #####################################################################
 
+--- @see docs/url-sources.md for `http(s)://` requirements and examples.
 ---@alias DiffNvim.Target
 --- The right-hand side of the comparison (the "other" content).
---- @see docs/url-sources.md for `http(s)://` requirements and examples.
 ---| '"clipboard"'  # Pull content from the system clipboard register (+)
 ---| '"ask"'        # Force the interactive picker even if a default exists
 ---| string         # File path, buffer number, `git:<rev>`, or `http(s)://…` (fetched async via curl)
 ---| integer        # An already-open buffer number
 
+--- @see docs/url-sources.md for `http(s)://` requirements and examples.
 ---@alias DiffNvim.Source
 --- The left-hand side of the comparison.
---- @see docs/url-sources.md for `http(s)://` requirements and examples.
 ---| '"current"'    # The buffer active when :Diff was invoked (default)
 ---| '"clipboard"'  # System clipboard register (+)
 ---| '"ask"'        # Force the interactive picker even if a default exists
