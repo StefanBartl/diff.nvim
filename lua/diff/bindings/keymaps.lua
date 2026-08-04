@@ -1,6 +1,6 @@
 ---@module 'diff.bindings.keymaps'
----@brief Keymap registration for diff.nvim.
----@description
+--- Keymap registration for diff.nvim.
+---
 --- The only keymap diff.nvim ships is the "leave diffmode" key. Registration
 --- (this module) is kept separate from its logic (`features/exit.lua`) so
 --- every `vim.keymap.set` call lives in one place, alongside

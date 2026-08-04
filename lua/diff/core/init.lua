@@ -1,6 +1,6 @@
 ---@module 'diff.core'
----@brief Orchestration for the :Diff workflow.
----@description
+--- Orchestration for the :Diff workflow.
+---
 --- Ties the resolution, render, and scratch layers together. `run()` parses raw
 --- command args, validates them, optionally shows an interactive target picker,
 --- and finally dispatches to the right renderer via `execute()`.
@@ -33,6 +33,7 @@ local CHOICE_BUFFER    = "buffer number …"
 ---When `range` is given (only meaningful for "current"), just the selected
 ---line span is returned instead of the whole buffer. Synchronous — url:// (@see
 ---`resolve_side_async`) specifiers never reach this function.
+---@internal
 ---@param spec DiffNvim.Source|DiffNvim.Target
 ---@param label string
 ---@param source_bufnr integer
@@ -65,6 +66,7 @@ end
 ---@param label string
 ---@param source_bufnr integer
 ---@param range DiffNvim.Range|nil
+---@internal
 ---@param callback fun(lines: string[]|nil, err: string|nil): nil
 ---@return nil
 local function resolve_side_async(spec, label, source_bufnr, range, callback)
@@ -83,6 +85,7 @@ end
 ---what's shown, so fetching/reading it separately would be wasted work (a
 ---discarded network round-trip for a url:// source, in the worst case).
 ---@see docs/three-way-diff.md
+---@internal
 ---@param opts DiffNvim.ResolvedOpts
 ---@param ctx DiffNvim.Context
 ---@return nil
@@ -191,6 +194,7 @@ function M.execute(opts, ctx)
   end)
 end
 
+---@internal
 ---Prompt for a file path and hand it back (nil on empty/cancel).
 ---@param callback fun(spec: string|nil): nil
 local function prompt_file(callback)
@@ -206,6 +210,7 @@ local function prompt_file(callback)
   })
 end
 
+---@internal
 ---Prompt for a buffer number and hand it back (nil on invalid/cancel).
 ---@param callback fun(spec: string|nil): nil
 local function prompt_buffer(callback)
@@ -228,6 +233,7 @@ end
 ---available. Returns nil when neither applies — callers supply their own
 ---last-resort fallback (kit.confirm's button row for pick_specifier's
 ---always-≤4 choices, kit.select for run_buffers' dynamic-length list).
+---@internal
 ---@return (fun(items: any[], opts: table, on_choice: fun(item: any, idx: integer|nil)): nil)|nil
 local function resolve_configured_select_fn()
   local cfg = config.get()
@@ -248,6 +254,7 @@ end
 ---vim.ui.select when nothing has overridden it. Used for run_buffers'
 ---dynamic-length buffer list, which isn't a good fit for kit_confirm_select's
 ---button row (see pick_specifier above).
+---@internal
 ---@param items string[]
 ---@param opts table  # { prompt?, format_item? }
 ---@param on_choice fun(choice: string|nil, idx: integer|nil): nil
@@ -272,6 +279,7 @@ end
 ---Resolve the effective picker function: an explicit select_fn always wins,
 ---otherwise pickers.nvim (if installed and not opted out), else kit.select
 ---(itself deferring to a real vim.ui.select override, if any).
+---@internal
 ---@return fun(items: any[], opts: table, on_choice: fun(item: any, idx: integer|nil)): nil
 local function resolve_select_fn()
   return resolve_configured_select_fn() or kit_select_select
@@ -281,6 +289,7 @@ end
 ---fallback for pick_specifier, whose choice lists are always ≤4 long (a
 ---natural fit for buttons, unlike run_buffers' dynamic-length buffer list
 ---which keeps the vim.ui.select fallback above).
+---@internal
 ---@param items string[]
 ---@param opts table  # { prompt? }
 ---@param on_choice fun(choice: string|nil, idx: integer|nil): nil
@@ -308,6 +317,7 @@ end
 ---specifier string, or nil on cancel. The source picker additionally offers
 ---"current buffer"; target and base do not (base is virtually never the
 ---current buffer in a three-way diff).
+---@internal
 ---@param kind "target"|"source"|"base"
 ---@param callback fun(spec: string|nil): nil
 ---@return nil
@@ -343,6 +353,7 @@ end
 
 ---Resolve+validate view/output from parsed args, notifying on an invalid
 ---value. Shared by run() and run_buffers().
+---@internal
 ---@param kv table<string, string>
 ---@param cfg DiffNvim.Config.Diff
 ---@return string|nil view, string|nil output  Both nil when validation failed

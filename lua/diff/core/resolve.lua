@@ -1,6 +1,6 @@
 ---@module 'diff.core.resolve'
----@brief Resolve a target/source specifier to a flat list of lines.
----@description
+--- Resolve a target/source specifier to a flat list of lines.
+---
 --- Pure resolution layer: takes a specifier ("clipboard", a buffer number, or a
 --- file path) and returns `(lines, err)`. Never notifies — callers decide how to
 --- surface errors. Also parses the raw `key=value` argument string.

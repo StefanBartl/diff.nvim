@@ -1,5 +1,5 @@
 ---@module 'diff.health'
----@brief :checkhealth diff provider.
+--- :checkhealth diff provider.
 
 local M = {}
 

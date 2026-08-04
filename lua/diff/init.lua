@@ -1,6 +1,6 @@
 ---@module 'diff'
----@brief Public entry point for diff.nvim.
----@description
+--- Public entry point for diff.nvim.
+---
 --- Bootstraps the diff subsystem: merges config, registers commands, sets up the
 --- exit feature and the VimLeavePre cleanup autocmd. Idempotent — the first call
 --- wins and later calls are no-ops.

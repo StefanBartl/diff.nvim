@@ -1,6 +1,6 @@
 ---@module 'diff.config'
----@brief Runtime configuration store for diff.nvim.
----@description
+--- Runtime configuration store for diff.nvim.
+---
 --- Merges user options over the immutable DEFAULTS and exposes the active
 --- config via `get()`. Keeps no global state — the active table is module-local.
 

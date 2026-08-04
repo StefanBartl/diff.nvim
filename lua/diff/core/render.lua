@@ -1,6 +1,6 @@
 ---@module 'diff.core.render'
----@brief Output renderers for diff.nvim (buffer / prompt / file / clipboard).
----@description
+--- Output renderers for diff.nvim (buffer / prompt / file / clipboard).
+---
 --- Each renderer takes already-resolved line arrays and produces a specific kind
 --- of output. The unified-diff computation is shared via `compute_unified`.
 --- Renderers may notify the user because this is the UI-facing layer.
@@ -100,6 +100,7 @@ function M.stat(a_lines, b_lines, a_label, b_label, algorithm, ctxlen)
   notify.info(string.format("%s -> %s  %s", a_label, b_label, M.format_stats(stats)))
 end
 
+---@internal
 ---Build the unified-diff header lines + body as a flat list.
 ---@param unified string
 ---@param a_label string
@@ -212,6 +213,7 @@ function M.three_way(origin_win, base_buf, target_buf, view)
   end
 end
 
+---@internal
 ---Open the given scratch buffer in a centered floating window and map `q`
 ---(plus <Esc>) to close it.
 ---@param buf integer
@@ -246,6 +248,7 @@ local WORD_DIFF_NS = api.nvim_create_namespace("diff_word_diff")
 ---based rather than UTF-8-codepoint-aware: on non-ASCII lines a multi-byte
 ---codepoint may straddle a highlighted/unhighlighted boundary — an accepted
 ---simplification, since extmark columns are byte offsets anyway.
+---@internal
 ---@param a string  Old line content (without the unified-diff "-" prefix)
 ---@param b string  New line content (without the unified-diff "+" prefix)
 ---@param algorithm string
@@ -292,6 +295,7 @@ end
 ---— a removed/added line's own text may start with "--"/"++") and any run
 ---where the removed/added counts differ (ambiguous pairing; still shown,
 ---just without word highlighting).
+---@internal
 ---@param buf integer
 ---@param lines string[]  The exact lines written into `buf` (from with_header)
 ---@param algorithm string

@@ -1,6 +1,6 @@
 ---@module 'diff.core.url'
----@brief Resolve a `http(s)://…` specifier to fetched content lines, async.
----@description
+--- Resolve a `http(s)://…` specifier to fetched content lines, async.
+---
 --- Fetches a URL via `curl` (a direct argv exec through `vim.system`, never a
 --- shell string) without blocking the editor, and enforces a timeout via a
 --- libuv timer since curl itself can hang past its own `--max-time` under

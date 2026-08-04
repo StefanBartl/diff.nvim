@@ -1,7 +1,6 @@
 ---@module 'diff.bindings.usrcmds'
----@brief User-command registration for :Diff, built via
---- lib.nvim.usercmd.composer.
----@description
+--- User-command registration for :Diff, built via lib.nvim.usercmd.composer.
+---
 --- Registers :Diff, :DiffClear, :DiffBuffers, :DiffOrig and :DiffExit using
 --- the configured command names -- five separate top-level commands (not a
 --- subcommand tree; each is independently name-configurable and has its own
@@ -33,6 +32,7 @@ local VALUE_LISTS = {
   base   = { "clipboard", "ask", "git:HEAD" },
 }
 
+---@internal
 ---@param key string
 ---@return table  KvSpec
 local function kv(key)
