@@ -1,6 +1,6 @@
 ---@module 'diff.features.origin'
----@brief :DiffOrig — diff the current buffer against its on-disk saved version.
----@description
+--- :DiffOrig — diff the current buffer against its on-disk saved version.
+---
 --- Reimplemented on top of the core scratch/diff machinery (no raw :read heredoc)
 --- so the snapshot buffer participates in `:DiffClear` and VimLeavePre cleanup.
 --- Shows "what changed since the last save".

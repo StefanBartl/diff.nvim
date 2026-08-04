@@ -1,6 +1,6 @@
 ---@module 'diff.features.exit'
----@brief :DiffExit logic and the context-aware "leave diffmode" behaviour.
----@description
+--- :DiffExit logic and the context-aware "leave diffmode" behaviour.
+---
 --- The original global `<Esc><Esc>` mapping noticeably delayed a normal <Esc>
 --- because Neovim had to wait for a possible second key everywhere. This module
 --- fixes that: by default the exit key is bound *buffer-locally* only on buffers

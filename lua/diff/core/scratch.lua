@@ -1,6 +1,6 @@
 ---@module 'diff.core.scratch'
----@brief Scratch-buffer lifecycle for diff.nvim.
----@description
+--- Scratch-buffer lifecycle for diff.nvim.
+---
 --- Owns every scratch buffer the plugin creates and provides a single
 --- `cleanup_all()` entry point. State is module-local (not a global) and the
 --- buffer list acts as a small registry so `:DiffClear` and VimLeavePre can tear

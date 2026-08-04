@@ -1,6 +1,6 @@
 ---@module 'diff.bindings.autocmds'
----@brief Autocommand registration for diff.nvim.
----@description
+--- Autocommand registration for diff.nvim.
+---
 --- The only autocmd diff.nvim ships: wipe tracked scratch buffers on exit
 --- without touching diffmode (native diffmode teardown on exit is Neovim's
 --- own responsibility, not ours).

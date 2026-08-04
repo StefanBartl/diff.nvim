@@ -1,7 +1,7 @@
 ---@module 'diff.features.native_diffthis'
----@brief Mirrors the buffer-local exit key onto buffers a *native* :diffthis
----puts into diffmode, not just diff.nvim's own scratch buffers.
----@description
+--- Mirrors the buffer-local exit key onto buffers a *native* :diffthis
+--- puts into diffmode, not just diff.nvim's own scratch buffers.
+---
 --- Opt-in via exit.native_diffthis (default false — see @types.lua for the
 --- rationale: it changes buffer-local keymaps outside diff.nvim's own
 --- workflow, which could surprise users who invoke :diffthis directly for

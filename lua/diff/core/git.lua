@@ -1,6 +1,6 @@
 ---@module 'diff.core.git'
----@brief Resolve a `git:<rev>` specifier to the file's content at that revision.
----@description
+--- Resolve a `git:<rev>` specifier to the file's content at that revision.
+---
 --- Pure-ish resolution layer for git-backed sources/targets. A specifier of the
 --- form `git:HEAD`, `git:HEAD~1`, `git:<sha>`, or `git:<branch>` resolves to the
 --- content of the *current file* at that revision. Uses `vim.system(...):wait()`
@@ -18,6 +18,7 @@ function M.is_git_spec(spec)
   return type(spec) == "string" and spec:sub(1, 4) == "git:"
 end
 
+---@internal
 ---Find the git repository root by walking up from `start_dir`.
 ---Handles both a `.git` directory and a `.git` file (submodules/worktrees).
 ---@param start_dir string

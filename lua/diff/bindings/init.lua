@@ -1,6 +1,6 @@
 ---@module 'diff.bindings'
----@brief Orchestrates diff.nvim's bindings: usrcmds, keymaps, autocmds.
----@description
+--- Orchestrates diff.nvim's bindings: usrcmds, keymaps, autocmds.
+---
 --- Single entry point `require("diff.init")` calls into. Registers the
 --- user commands, wires the exit keymap (global scope only — buffer scope is
 --- attached per-diff by `features/exit.lua`), and installs the VimLeavePre

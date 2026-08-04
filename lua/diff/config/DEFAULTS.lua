@@ -1,6 +1,6 @@
 ---@module 'diff.config.DEFAULTS'
----@brief Immutable default configuration for diff.nvim.
----@description
+--- Immutable default configuration for diff.nvim.
+---
 --- Single source of truth for every configurable value. `config/init.lua`
 --- deep-merges user options over a copy of this table, so this table is never
 --- mutated at runtime.

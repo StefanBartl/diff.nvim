@@ -1,6 +1,6 @@
 ---@module 'diff.util.notify'
----@brief Prefixed wrapper around lib.nvim.notify so every message is traceable.
----@description
+--- Prefixed wrapper around lib.nvim.notify so every message is traceable.
+---
 --- Only the UI layer should call this — keep low-level/core modules silent and
 --- let them return `(value, err)` instead.
 ---

@@ -1,6 +1,6 @@
 ---@module 'diff.util.validate'
----@brief Small, pure validation helpers shared across the core.
----@description
+--- Small, pure validation helpers shared across the core.
+---
 --- Pure functions only — no side effects, no notifications. Safe to call in
 --- any layer and trivial to unit-test. Delegates to lib.nvim.normalize
 --- (this module's own versions were exact reimplementations).

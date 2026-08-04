@@ -1,7 +1,7 @@
 ---@meta
 ---@module 'diff.@types'
----@brief Type definitions for diff.nvim.
----@description
+--- Type definitions for diff.nvim.
+---
 --- Central type catalog so the source files stay free of long annotation blocks.
 --- All `@types` modules return an empty table.
 
