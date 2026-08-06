@@ -9,6 +9,38 @@
 local dir = debug.getinfo(1, "S").source:sub(2):match("(.*[/\\])") or "./"
 local H = dofile(dir .. "harness.lua")
 
+-- resolve_spec.lua exercises the "+" register (target=clipboard). Relying on
+-- whatever clipboard provider (or lack of one) the host happens to have is
+-- exactly the kind of environment-dependent flakiness a test suite should not
+-- have: a bare headless runner (no xclip/xsel/wl-clipboard/pbcopy, e.g. CI's
+-- ubuntu image) has no provider at all, so getreg/setreg("+") silently no-op
+-- instead of behaving like a register, which reads as "clipboard is always
+-- empty" and fails the spec. An in-memory fake provider (the pattern from
+-- `:h g:clipboard`) makes "+" behave like a real register deterministically,
+-- everywhere, regardless of what's installed on the host.
+do
+  local fake_reg = { "" }
+  vim.g.clipboard = {
+    name = "FakeClipboardForTests",
+    copy = {
+      ["+"] = function(lines)
+        fake_reg = lines
+      end,
+      ["*"] = function(lines)
+        fake_reg = lines
+      end,
+    },
+    paste = {
+      ["+"] = function()
+        return fake_reg
+      end,
+      ["*"] = function()
+        return fake_reg
+      end,
+    },
+  }
+end
+
 -- diff.nvim depends on lib.nvim at runtime (util/notify.lua,
 -- util/validate.lua), so the suite needs it on the runtimepath.
 --
