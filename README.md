@@ -30,6 +30,13 @@ Cross-platform (Windows + Unix). All diffing goes through `vim.diff` (libvim)
 
 ---
 
+## Table of contents
+
+- [Quickstart](#quickstart)
+- [Documentation](#documentation)
+
+---
+
 ## Quickstart
 
 ```lua

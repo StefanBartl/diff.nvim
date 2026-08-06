@@ -24,7 +24,7 @@ lua/diff/
     exit.lua                    :DiffExit logic + exit-behaviour config
     native_diffthis.lua           Opt-in exit-key mirroring onto native :diffthis buffers
   bindings/
-    usrcmds.lua                 :Diff/:DiffClear/:DiffOrig/:DiffExit registration + completion
+    usrcmds.lua                 :Diff/:DiffClear/:DiffBuffers/:DiffOrig/:DiffExit registration + completion
     keymaps.lua                  Exit-keymap wiring (global + buffer-local)
     autocmds.lua                  VimLeavePre cleanup
     init.lua                       Orchestrates the three above
