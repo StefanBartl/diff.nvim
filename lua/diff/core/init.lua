@@ -7,13 +7,13 @@
 
 local api = vim.api
 
-local notify   = require("diff.util.notify")
+local notify = require("diff.util.notify")
 local validate = require("diff.util.validate")
-local config   = require("diff.config")
-local resolve  = require("diff.core.resolve")
-local render   = require("diff.core.render")
-local scratch  = require("diff.core.scratch")
-local url      = require("diff.core.url")
+local config = require("diff.config")
+local resolve = require("diff.core.resolve")
+local render = require("diff.core.render")
+local scratch = require("diff.core.scratch")
+local url = require("diff.core.url")
 
 local M = {}
 
@@ -24,10 +24,10 @@ local VALID_VIEWS = { "vsplit", "split", "inline", "tab", "float" }
 local VALID_OUTPUTS = { "buffer", "prompt", "file", "clipboard", "stat" }
 
 -- Picker choice labels (see pick_specifier).
-local CHOICE_CURRENT   = "current buffer"
+local CHOICE_CURRENT = "current buffer"
 local CHOICE_CLIPBOARD = "clipboard"
-local CHOICE_FILE      = "file path …"
-local CHOICE_BUFFER    = "buffer number …"
+local CHOICE_FILE = "file path …"
+local CHOICE_BUFFER = "buffer number …"
 
 ---Resolve a side to its lines, treating "current" as the snapshotted buffer.
 ---When `range` is given (only meaningful for "current"), just the selected
@@ -45,7 +45,7 @@ local function resolve_side(spec, label, source_bufnr, range)
       return nil, label .. " buffer is no longer valid"
     end
     local first = range and (range.line1 - 1) or 0
-    local last  = range and range.line2 or -1
+    local last = range and range.line2 or -1
     return api.nvim_buf_get_lines(source_bufnr, first, last, false), nil
   end
   -- `git:<rev>` resolves the current file at a git revision; it needs the name
@@ -71,7 +71,12 @@ end
 ---@return nil
 local function resolve_side_async(spec, label, source_bufnr, range, callback)
   if url.is_url_spec(spec) then
-    url.fetch(spec --[[@as string]], label, { timeout_ms = config.get().diff.url_timeout_ms }, callback)
+    url.fetch(
+      spec --[[@as string]],
+      label,
+      { timeout_ms = config.get().diff.url_timeout_ms },
+      callback
+    )
     return
   end
   callback(resolve_side(spec, label, source_bufnr, range))
@@ -103,11 +108,16 @@ local function execute_three_way(opts, ctx)
       end
 
       local base_label = tostring(opts.base)
-      local tgt_label  = tostring(opts.target)
+      local tgt_label = tostring(opts.target)
       local base_buf = scratch.create(base_lines, string.format("[Diff:base] %s", base_label))
-      local tgt_buf  = scratch.create(tgt_lines, string.format("[Diff:target] %s", tgt_label))
+      local tgt_buf = scratch.create(tgt_lines, string.format("[Diff:target] %s", tgt_label))
 
-      render.three_way(ctx.origin_win, base_buf, tgt_buf, opts.view --[[@as "vsplit"|"split"|"tab"]])
+      render.three_way(
+        ctx.origin_win,
+        base_buf,
+        tgt_buf,
+        opts.view --[[@as "vsplit"|"split"|"tab"]]
+      )
 
       local exit = require("diff.features.exit")
       exit.attach_buffer(base_buf)
@@ -132,66 +142,81 @@ function M.execute(opts, ctx)
   -- the buffer that was current when :Diff was invoked). Nested rather than
   -- parallel because a URL fetch is the one path that's genuinely async; every
   -- other specifier's callback fires synchronously within the same tick.
-  resolve_side_async(opts.source, "source", ctx.source_bufnr, ctx.range, function(src_lines, src_err)
-    if not src_lines then
-      notify.error(src_err or "could not resolve source")
-      return
+  resolve_side_async(
+    opts.source,
+    "source",
+    ctx.source_bufnr,
+    ctx.range,
+    function(src_lines, src_err)
+      if not src_lines then
+        notify.error(src_err or "could not resolve source")
+        return
+      end
+
+      resolve_side_async(opts.target, "target", ctx.source_bufnr, nil, function(tgt_lines, tgt_err)
+        if not tgt_lines then
+          notify.error(tgt_err or "could not resolve target")
+          return
+        end
+
+        local src_label
+        if opts.source == "current" then
+          src_label = "buf:" .. ctx.source_bufnr
+          if ctx.range then
+            src_label = src_label .. string.format("@%d-%d", ctx.range.line1, ctx.range.line2)
+          end
+        else
+          src_label = tostring(opts.source)
+        end
+        local tgt_label = tostring(opts.target)
+
+        if opts.output == "prompt" then
+          render.prompt(src_lines, tgt_lines, src_label, tgt_label, cfg.algorithm, cfg.ctxlen)
+          return
+        end
+        if opts.output == "file" then
+          render.file(src_lines, tgt_lines, src_label, tgt_label, cfg.algorithm, cfg.ctxlen)
+          return
+        end
+        if opts.output == "clipboard" then
+          render.clipboard(src_lines, tgt_lines, src_label, tgt_label, cfg.algorithm, cfg.ctxlen)
+          return
+        end
+        if opts.output == "stat" then
+          render.stat(src_lines, tgt_lines, src_label, tgt_label, cfg.algorithm, cfg.ctxlen)
+          return
+        end
+
+        -- output == "buffer"
+        local exit = require("diff.features.exit")
+
+        if opts.view == "inline" or opts.view == "float" then
+          local buf = render.inline(
+            ctx.origin_win,
+            src_lines,
+            tgt_lines,
+            src_label,
+            tgt_label,
+            cfg.algorithm,
+            cfg.ctxlen,
+            {
+              layout = (opts.view == "float") and "float" or "split",
+              word_diff = cfg.word_diff,
+            }
+          )
+          if buf then
+            exit.attach_buffer(buf)
+          end
+          return
+        end
+
+        -- view == "vsplit" | "split" | "tab"
+        local buf = scratch.create(tgt_lines, string.format("[Diff] %s", tgt_label))
+        render.side_by_side(ctx.origin_win, buf, opts.view)
+        exit.attach_buffer(buf)
+      end)
     end
-
-    resolve_side_async(opts.target, "target", ctx.source_bufnr, nil, function(tgt_lines, tgt_err)
-      if not tgt_lines then
-        notify.error(tgt_err or "could not resolve target")
-        return
-      end
-
-      local src_label
-      if opts.source == "current" then
-        src_label = "buf:" .. ctx.source_bufnr
-        if ctx.range then
-          src_label = src_label .. string.format("@%d-%d", ctx.range.line1, ctx.range.line2)
-        end
-      else
-        src_label = tostring(opts.source)
-      end
-      local tgt_label = tostring(opts.target)
-
-      if opts.output == "prompt" then
-        render.prompt(src_lines, tgt_lines, src_label, tgt_label, cfg.algorithm, cfg.ctxlen)
-        return
-      end
-      if opts.output == "file" then
-        render.file(src_lines, tgt_lines, src_label, tgt_label, cfg.algorithm, cfg.ctxlen)
-        return
-      end
-      if opts.output == "clipboard" then
-        render.clipboard(src_lines, tgt_lines, src_label, tgt_label, cfg.algorithm, cfg.ctxlen)
-        return
-      end
-      if opts.output == "stat" then
-        render.stat(src_lines, tgt_lines, src_label, tgt_label, cfg.algorithm, cfg.ctxlen)
-        return
-      end
-
-      -- output == "buffer"
-      local exit = require("diff.features.exit")
-
-      if opts.view == "inline" or opts.view == "float" then
-        local buf = render.inline(ctx.origin_win, src_lines, tgt_lines, src_label, tgt_label, cfg.algorithm, cfg.ctxlen, {
-          layout    = (opts.view == "float") and "float" or "split",
-          word_diff = cfg.word_diff,
-        })
-        if buf then
-          exit.attach_buffer(buf)
-        end
-        return
-      end
-
-      -- view == "vsplit" | "split" | "tab"
-      local buf = scratch.create(tgt_lines, string.format("[Diff] %s", tgt_label))
-      render.side_by_side(ctx.origin_win, buf, opts.view)
-      exit.attach_buffer(buf)
-    end)
-  end)
+  )
 end
 
 ---@internal
@@ -225,7 +250,9 @@ local function prompt_buffer(callback)
         callback(nil)
       end
     end,
-    on_cancel = function() callback(nil) end,
+    on_cancel = function()
+      callback(nil)
+    end,
   })
 end
 
@@ -326,17 +353,23 @@ local function pick_specifier(kind, callback)
 
   local choices, handlers
   if kind == "source" then
-    choices  = { CHOICE_CURRENT, CHOICE_CLIPBOARD, CHOICE_FILE, CHOICE_BUFFER }
+    choices = { CHOICE_CURRENT, CHOICE_CLIPBOARD, CHOICE_FILE, CHOICE_BUFFER }
     handlers = {
-      function(cb) cb("current") end,
-      function(cb) cb("clipboard") end,
+      function(cb)
+        cb("current")
+      end,
+      function(cb)
+        cb("clipboard")
+      end,
       prompt_file,
       prompt_buffer,
     }
   else
-    choices  = { CHOICE_CLIPBOARD, CHOICE_FILE, CHOICE_BUFFER }
+    choices = { CHOICE_CLIPBOARD, CHOICE_FILE, CHOICE_BUFFER }
     handlers = {
-      function(cb) cb("clipboard") end,
+      function(cb)
+        cb("clipboard")
+      end,
       prompt_file,
       prompt_buffer,
     }
@@ -360,12 +393,16 @@ end
 local function resolve_view_output(kv, cfg)
   local view = kv.view or cfg.default_view
   if not validate.is_one_of(view, VALID_VIEWS) then
-    notify.error(string.format("Unknown view=%q  (valid: %s)", view, table.concat(VALID_VIEWS, ", ")))
+    notify.error(
+      string.format("Unknown view=%q  (valid: %s)", view, table.concat(VALID_VIEWS, ", "))
+    )
     return nil, nil
   end
   local output = kv.output or cfg.default_output
   if not validate.is_one_of(output, VALID_OUTPUTS) then
-    notify.error(string.format("Unknown output=%q  (valid: %s)", output, table.concat(VALID_OUTPUTS, ", ")))
+    notify.error(
+      string.format("Unknown output=%q  (valid: %s)", output, table.concat(VALID_OUTPUTS, ", "))
+    )
     return nil, nil
   end
   return view, output
@@ -379,21 +416,24 @@ end
 function M.run(raw_args, range)
   ---@type DiffNvim.Range|nil
   local sel = nil
-  if type(range) == "table"
-    and type(range.line1) == "number" and type(range.line2) == "number"
-    and range.line2 >= range.line1 then
+  if
+    type(range) == "table"
+    and type(range.line1) == "number"
+    and type(range.line2) == "number"
+    and range.line2 >= range.line1
+  then
     sel = { line1 = range.line1, line2 = range.line2 }
   end
 
   ---@type DiffNvim.Context
   local ctx = {
     source_bufnr = api.nvim_get_current_buf(),
-    origin_win   = api.nvim_get_current_win(),
-    range        = sel,
+    origin_win = api.nvim_get_current_win(),
+    range = sel,
   }
 
   local cfg = config.get().diff
-  local kv  = resolve.parse_args(type(raw_args) == "string" and raw_args or "")
+  local kv = resolve.parse_args(type(raw_args) == "string" and raw_args or "")
 
   local view, output = resolve_view_output(kv, cfg)
   if not view then
@@ -406,12 +446,18 @@ function M.run(raw_args, range)
   local has_base = type(kv.base) == "string" and kv.base ~= ""
   if has_base then
     if output ~= "buffer" then
-      notify.error(string.format("base= (three-way diff) only supports output=buffer, got output=%q", output))
+      notify.error(
+        string.format("base= (three-way diff) only supports output=buffer, got output=%q", output)
+      )
       return
     end
     if view == "inline" or view == "float" then
-      notify.error(string.format(
-        "base= (three-way diff) does not support view=%q (use vsplit, split, or tab)", view))
+      notify.error(
+        string.format(
+          "base= (three-way diff) does not support view=%q (use vsplit, split, or tab)",
+          view
+        )
+      )
       return
     end
   end
@@ -420,15 +466,15 @@ function M.run(raw_args, range)
   local opts = {
     target = "",
     source = kv.source or cfg.default_source,
-    base   = has_base and kv.base or nil,
-    view   = view --[[@as DiffNvim.View]],
+    base = has_base and kv.base or nil,
+    view = view --[[@as DiffNvim.View]],
     output = output --[[@as DiffNvim.Output]],
   }
 
   -- A missing target, or an explicit "ask", forces the interactive picker.
   local need_target = (not kv.target) or kv.target == "" or kv.target == "ask"
   local need_source = kv.source == "ask"
-  local need_base   = has_base and kv.base == "ask"
+  local need_base = has_base and kv.base == "ask"
 
   local function pick_target_then_run()
     if not need_target then
@@ -485,11 +531,11 @@ function M.run_buffers(raw_args)
   ---@type DiffNvim.Context
   local ctx = {
     source_bufnr = api.nvim_get_current_buf(),
-    origin_win   = api.nvim_get_current_win(),
+    origin_win = api.nvim_get_current_win(),
   }
 
   local cfg = config.get().diff
-  local kv  = resolve.parse_args(type(raw_args) == "string" and raw_args or "")
+  local kv = resolve.parse_args(type(raw_args) == "string" and raw_args or "")
 
   local view, output = resolve_view_output(kv, cfg)
   if not view then
@@ -500,10 +546,12 @@ function M.run_buffers(raw_args)
   local items = {}
   local by_label = {}
   for _, b in ipairs(api.nvim_list_bufs()) do
-    if b ~= ctx.source_bufnr
+    if
+      b ~= ctx.source_bufnr
       and api.nvim_buf_is_loaded(b)
       and vim.bo[b].buflisted
-      and validate.buf_valid(b) then
+      and validate.buf_valid(b)
+    then
       local name = api.nvim_buf_get_name(b)
       local disp = (name ~= "") and vim.fn.fnamemodify(name, ":~:.") or "[No Name]"
       local label = string.format("buf %d  %s", b, disp)
@@ -527,7 +575,7 @@ function M.run_buffers(raw_args)
     M.execute({
       target = tostring(bufnr),
       source = "current",
-      view   = view --[[@as DiffNvim.View]],
+      view = view --[[@as DiffNvim.View]],
       output = output --[[@as DiffNvim.Output]],
     }, ctx)
   end)

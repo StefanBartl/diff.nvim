@@ -36,7 +36,8 @@ function M.resolve()
   end
 
   return function(items, opts, on_choice)
-    local prompt = (type(opts) == "table" and type(opts.prompt) == "string") and opts.prompt or "Select:"
+    local prompt = (type(opts) == "table" and type(opts.prompt) == "string") and opts.prompt
+      or "Select:"
     local call_ok = pcall(engine.pick_item, {
       items = items,
       prompt = prompt,

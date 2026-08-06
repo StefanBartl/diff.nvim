@@ -34,5 +34,8 @@ return function(H)
   local call_ok, result = pcall(bridge.resolve)
   vim.notify = saved_notify
   ok(call_ok, "resolve() does not throw when pickers.nvim has no usable engine")
-  ok(result == nil or type(result) == "function", "resolve() returns nil or a function, never anything else")
+  ok(
+    result == nil or type(result) == "function",
+    "resolve() returns nil or a function, never anything else"
+  )
 end

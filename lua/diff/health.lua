@@ -18,7 +18,7 @@ function M.check()
   else
     vim.health.error(
       "lib.nvim not found — :Diff/:DiffClear/:DiffBuffers/:DiffOrig/:DiffExit will fail to register",
-      { "Install \"StefanBartl/lib.nvim\" as a dependency" }
+      { 'Install "StefanBartl/lib.nvim" as a dependency' }
     )
   end
 

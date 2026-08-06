@@ -12,7 +12,7 @@
 
 local api = vim.api
 
-local notify   = require("diff.util.notify")
+local notify = require("diff.util.notify")
 local validate = require("diff.util.validate")
 
 local M = {}

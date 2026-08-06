@@ -6,6 +6,24 @@ on:
   pull_request:
 
 jobs:
+  lint:
+    name: stylua + luacheck
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: stylua --check
+        uses: JohnnyMorganz/stylua-action@v4
+        with:
+          version: latest
+          args: --check .
+
+      - name: Install luacheck
+        run: sudo apt-get update && sudo apt-get install -y luarocks && sudo luarocks install luacheck
+
+      - name: luacheck
+        run: luacheck lua plugin docs/TESTS
+
   tests:
     name: Headless spec suite
     runs-on: ubuntu-latest

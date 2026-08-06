@@ -34,7 +34,8 @@ end
 ---@return nil
 function M.fetch(url, label, opts, callback)
   local timeout_ms = (type(opts) == "table" and type(opts.timeout_ms) == "number")
-    and opts.timeout_ms or 10000
+      and opts.timeout_ms
+    or 10000
 
   if type(vim.system) ~= "function" then
     callback(nil, label .. ": URL sources require Neovim 0.10+ (vim.system)")
@@ -57,20 +58,26 @@ function M.fetch(url, label, opts, callback)
     end
     done = true
     if timer then
-      pcall(function() timer:stop() end)
-      pcall(function() timer:close() end)
+      pcall(function()
+        timer:stop()
+      end)
+      pcall(function()
+        timer:close()
+      end)
       timer = nil
     end
-    vim.schedule(function() callback(lines, err) end)
+    vim.schedule(function()
+      callback(lines, err)
+    end)
   end
 
-  local ok, result_or_err = pcall(vim.system,
+  local ok, result_or_err = pcall(
+    vim.system,
     { "curl", "--silent", "--show-error", "--fail", "--location", url },
     { text = true },
     function(res)
       if res.code ~= 0 then
-        local msg = (type(res.stderr) == "string" and res.stderr ~= "")
-          and vim.trim(res.stderr)
+        local msg = (type(res.stderr) == "string" and res.stderr ~= "") and vim.trim(res.stderr)
           or ("curl exited with code " .. tostring(res.code))
         finish(nil, label .. ": " .. msg)
         return
@@ -94,7 +101,9 @@ function M.fetch(url, label, opts, callback)
   if timer then
     timer:start(timeout_ms, 0, function()
       if proc then
-        pcall(function() proc:kill("sigkill") end)
+        pcall(function()
+          proc:kill("sigkill")
+        end)
       end
       finish(nil, string.format("%s: timed out after %dms fetching %s", label, timeout_ms, url))
     end)

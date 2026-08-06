@@ -39,14 +39,19 @@ return function(H)
     return #vim.api.nvim_get_autocmds({ group = "diff_native_diffthis" })
   end
 
-  local ok1, err1 = pcall(native.register, { key = "<C-x><C-x>", scope = "global", native_diffthis = true })
+  local ok1, err1 =
+    pcall(native.register, { key = "<C-x><C-x>", scope = "global", native_diffthis = true })
   ok(ok1, "register() does not throw for scope=global: " .. tostring(err1))
 
-  local ok2, err2 = pcall(native.register, { key = "<C-x><C-x>", scope = "buffer", native_diffthis = false })
+  local ok2, err2 =
+    pcall(native.register, { key = "<C-x><C-x>", scope = "buffer", native_diffthis = false })
   ok(ok2, "register() does not throw for native_diffthis=false: " .. tostring(err2))
 
   local ok3, count_err = pcall(autocmd_count)
-  ok((not ok3) or count_err == 0, "no autocmd registered when scope~=buffer or native_diffthis~=true")
+  ok(
+    (not ok3) or count_err == 0,
+    "no autocmd registered when scope~=buffer or native_diffthis~=true"
+  )
 
   -- register(): does create the OptionSet autocmd when both conditions hold
   native.register(cfg)

@@ -27,9 +27,9 @@ function M.create(lines, name, filetype)
   pcall(api.nvim_buf_set_name, bufnr, name)
   api.nvim_buf_set_lines(bufnr, 0, -1, false, lines)
 
-  vim.bo[bufnr].buftype    = "nofile"
-  vim.bo[bufnr].bufhidden  = "wipe"
-  vim.bo[bufnr].swapfile   = false
+  vim.bo[bufnr].buftype = "nofile"
+  vim.bo[bufnr].bufhidden = "wipe"
+  vim.bo[bufnr].swapfile = false
   if type(filetype) == "string" and filetype ~= "" then
     vim.bo[bufnr].filetype = filetype
   end

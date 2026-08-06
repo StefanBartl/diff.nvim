@@ -75,8 +75,7 @@ function M.resolve(spec, bufname, label)
     return nil, label .. ": git invocation failed: " .. tostring(res)
   end
   if res.code ~= 0 then
-    local msg = (type(res.stderr) == "string" and res.stderr ~= "")
-      and vim.trim(res.stderr)
+    local msg = (type(res.stderr) == "string" and res.stderr ~= "") and vim.trim(res.stderr)
       or ("git show " .. object .. " failed")
     return nil, label .. ": " .. msg
   end

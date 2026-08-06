@@ -6,12 +6,12 @@
 --- Renderers may notify the user because this is the UI-facing layer.
 
 local api = vim.api
-local fn  = vim.fn
+local fn = vim.fn
 
-local notify   = require("diff.util.notify")
+local notify = require("diff.util.notify")
 local validate = require("diff.util.validate")
-local scratch  = require("diff.core.scratch")
-local window   = require("lib.nvim.window")
+local scratch = require("diff.core.scratch")
+local window = require("lib.nvim.window")
 
 local M = {}
 
@@ -22,7 +22,8 @@ local M = {}
 ---@param ctxlen integer
 ---@return string|nil unified, string|nil err
 function M.compute_unified(a_lines, b_lines, algorithm, ctxlen)
-  local ok, result = pcall(vim.diff,
+  local ok, result = pcall(
+    vim.diff,
     table.concat(a_lines, "\n") .. "\n",
     table.concat(b_lines, "\n") .. "\n",
     { result_type = "unified", algorithm = algorithm, ctxlen = ctxlen }
@@ -75,8 +76,13 @@ end
 ---@param stats DiffNvim.Stats
 ---@return string
 function M.format_stats(stats)
-  return string.format("+%d -%d, %d hunk%s",
-    stats.added, stats.removed, stats.hunks, (stats.hunks == 1) and "" or "s")
+  return string.format(
+    "+%d -%d, %d hunk%s",
+    stats.added,
+    stats.removed,
+    stats.hunks,
+    (stats.hunks == 1) and "" or "s"
+  )
 end
 
 ---Report `+N -M, K hunks` for the diff as a notification.
@@ -220,17 +226,17 @@ end
 ---@param line_count integer  Number of lines in the buffer (for sizing)
 ---@return nil
 local function open_float(buf, line_count)
-  local width  = math.min(math.max(vim.o.columns - 8, 20), 120)
+  local width = math.min(math.max(vim.o.columns - 8, 20), 120)
   local height = math.min(math.max(line_count, 1), math.max(vim.o.lines - 6, 3))
   local win = api.nvim_open_win(buf, true, {
     relative = "editor",
-    width    = width,
-    height   = height,
-    row      = math.max((vim.o.lines - height) / 2 - 1, 0),
-    col      = math.max((vim.o.columns - width) / 2, 0),
-    style    = "minimal",
-    border   = "rounded",
-    title    = " Diff ",
+    width = width,
+    height = height,
+    row = math.max((vim.o.lines - height) / 2 - 1, 0),
+    col = math.max((vim.o.columns - width) / 2, 0),
+    style = "minimal",
+    border = "rounded",
+    title = " Diff ",
   })
   -- Floats want an obvious close key; the split/inline views rely on :q or
   -- :DiffClear instead, which is why this is float-local.
@@ -326,12 +332,24 @@ local function apply_word_diff(buf, lines, algorithm)
           local ranges = word_diff_ranges(a_line, b_line, algorithm)
           if ranges then
             for _, r in ipairs(ranges.a) do
-              pcall(api.nvim_buf_set_extmark, buf, WORD_DIFF_NS, del_start + off - 1, r[1],
-                { end_col = r[2], hl_group = "DiffText" })
+              pcall(
+                api.nvim_buf_set_extmark,
+                buf,
+                WORD_DIFF_NS,
+                del_start + off - 1,
+                r[1],
+                { end_col = r[2], hl_group = "DiffText" }
+              )
             end
             for _, r in ipairs(ranges.b) do
-              pcall(api.nvim_buf_set_extmark, buf, WORD_DIFF_NS, add_start + off - 1, r[1],
-                { end_col = r[2], hl_group = "DiffText" })
+              pcall(
+                api.nvim_buf_set_extmark,
+                buf,
+                WORD_DIFF_NS,
+                add_start + off - 1,
+                r[1],
+                { end_col = r[2], hl_group = "DiffText" }
+              )
             end
           end
         end
@@ -406,7 +424,8 @@ function M.prompt(a_lines, b_lines, a_label, b_label, algorithm, ctxlen)
   end
   api.nvim_echo(
     { { string.format("--- %s\n+++ %s\n", a_label, b_label) .. unified, "Normal" } },
-    true, {}
+    true,
+    {}
   )
 end
 

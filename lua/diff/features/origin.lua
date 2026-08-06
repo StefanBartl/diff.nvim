@@ -6,12 +6,12 @@
 --- Shows "what changed since the last save".
 
 local api = vim.api
-local fn  = vim.fn
+local fn = vim.fn
 
-local notify   = require("diff.util.notify")
+local notify = require("diff.util.notify")
 local validate = require("diff.util.validate")
-local scratch  = require("diff.core.scratch")
-local config   = require("diff.config")
+local scratch = require("diff.core.scratch")
+local config = require("diff.config")
 
 local M = {}
 
@@ -41,7 +41,8 @@ function M.run()
   local disk_lines = fn.readfile(path)
 
   -- Snapshot of the saved version as a tracked, read-only scratch buffer.
-  local snap = scratch.create(disk_lines, string.format("[DiffOrig] %s (saved)", fn.fnamemodify(path, ":t")))
+  local snap =
+    scratch.create(disk_lines, string.format("[DiffOrig] %s (saved)", fn.fnamemodify(path, ":t")))
 
   -- Open the snapshot beside the working buffer and enable diffmode in both.
   if not validate.win_valid(origin_win) then
