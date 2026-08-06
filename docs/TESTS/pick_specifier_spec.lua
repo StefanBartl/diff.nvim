@@ -28,13 +28,22 @@ return function(H)
 
     local diff_core = fresh_core()
     local executed
-    diff_core.execute = function(opts) executed = opts end
+    diff_core.execute = function(opts)
+      executed = opts
+    end
 
     diff_core.run("target=ask source=current")
 
     ok(captured ~= nil, "default fallback opens lib.nvim.ui.kit.confirm")
-    eq(captured.choices[1], "clipboard", "target choices start with 'clipboard' (no 'current buffer' for target)")
-    ok(executed ~= nil and executed.target == "clipboard", "the chosen answer reaches M.execute as target")
+    eq(
+      captured.choices[1],
+      "clipboard",
+      "target choices start with 'clipboard' (no 'current buffer' for target)"
+    )
+    ok(
+      executed ~= nil and executed.target == "clipboard",
+      "the chosen answer reaches M.execute as target"
+    )
 
     package.loaded["lib.nvim.ui.kit.confirm"] = nil
   end
@@ -52,7 +61,9 @@ return function(H)
 
     local diff_core = fresh_core()
     local executed
-    diff_core.execute = function(opts) executed = opts end
+    diff_core.execute = function(opts)
+      executed = opts
+    end
 
     diff_core.run("target=ask source=current")
 

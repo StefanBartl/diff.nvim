@@ -92,7 +92,8 @@ function M.status(opts)
   if n == 0 then
     return ""
   end
-  local prefix = (type(opts) == "table" and type(opts.prefix) == "string") and opts.prefix or "diff:"
+  local prefix = (type(opts) == "table" and type(opts.prefix) == "string") and opts.prefix
+    or "diff:"
   return prefix .. n
 end
 

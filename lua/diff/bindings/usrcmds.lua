@@ -25,11 +25,11 @@ local M = {}
 
 ---@type table<string, string[]>  Static value lists per completion key
 local VALUE_LISTS = {
-  view   = { "vsplit", "split", "inline", "tab", "float" },
+  view = { "vsplit", "split", "inline", "tab", "float" },
   output = { "buffer", "prompt", "file", "clipboard", "stat" },
   source = { "current", "clipboard", "ask", "git:HEAD" },
   target = { "clipboard", "ask", "git:HEAD" },
-  base   = { "clipboard", "ask", "git:HEAD" },
+  base = { "clipboard", "ask", "git:HEAD" },
 }
 
 ---@internal
@@ -50,29 +50,43 @@ function M.register(cfg)
       desc = "Diff sources  :[range]Diff [target=…] [source=…] [base=…] [view=…] [output=…]",
       range = true,
       routes = {
-        { path = {},
+        {
+          path = {},
           kv = { kv("target"), kv("source"), kv("base"), kv("view"), kv("output") },
           run = function(ctx)
             -- ctx.range.range is 0 when no real range was given; only then
             -- are line1/line2 meaningless (both default to the cursor line).
             local range = (ctx.range.range and ctx.range.range > 0)
-              and { line1 = ctx.range.line1, line2 = ctx.range.line2 } or nil
+                and { line1 = ctx.range.line1, line2 = ctx.range.line2 }
+              or nil
             core.run(ctx.raw.args or "", range)
-          end },
+          end,
+        },
       },
     })
 
     composer.verb(names.diff_clear, {
       desc = "Close all :Diff windows and disable diffmode",
-      routes = { { path = {}, run = function() core.clear() end } },
+      routes = {
+        {
+          path = {},
+          run = function()
+            core.clear()
+          end,
+        },
+      },
     })
 
     composer.verb(names.diff_buffers, {
       desc = "Diff current buffer against another open buffer (picker)  :DiffBuffers [view=…] [output=…]",
       routes = {
-        { path = {},
+        {
+          path = {},
           kv = { kv("view"), kv("output") },
-          run = function(ctx) core.run_buffers(ctx.raw.args or "") end },
+          run = function(ctx)
+            core.run_buffers(ctx.raw.args or "")
+          end,
+        },
       },
     })
   end
@@ -80,14 +94,28 @@ function M.register(cfg)
   if cfg.features.diff_origin then
     composer.verb(names.diff_orig, {
       desc = "Diff current buffer against its on-disk saved version",
-      routes = { { path = {}, run = function() require("diff.features.origin").run() end } },
+      routes = {
+        {
+          path = {},
+          run = function()
+            require("diff.features.origin").run()
+          end,
+        },
+      },
     })
   end
 
   if cfg.features.diff_exit then
     composer.verb(names.diff_exit, {
       desc = "Leave diff mode (diffoff!) from anywhere",
-      routes = { { path = {}, run = function() require("diff.features.exit").exit() end } },
+      routes = {
+        {
+          path = {},
+          run = function()
+            require("diff.features.exit").exit()
+          end,
+        },
+      },
     })
   end
 end

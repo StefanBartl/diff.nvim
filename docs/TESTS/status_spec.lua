@@ -2,7 +2,7 @@
 
 return function(H)
   local eq = H.eq
-  local diff    = require("diff")
+  local diff = require("diff")
   local scratch = require("diff.core.scratch")
 
   -- No diff active yet -> empty status, zero count.

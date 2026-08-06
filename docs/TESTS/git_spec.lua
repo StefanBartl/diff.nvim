@@ -36,7 +36,8 @@ return function(H)
   ok(buf_err ~= nil, "git:HEAD without a file reports an error")
 
   -- unknown revision -----------------------------------------------------
-  local bad, bad_err = git.resolve("git:def0000000000000000000000000000000000000", abspath, "target")
+  local bad, bad_err =
+    git.resolve("git:def0000000000000000000000000000000000000", abspath, "target")
   eq(bad, nil, "unknown revision resolves to nil")
   ok(bad_err ~= nil, "unknown revision reports an error")
 end

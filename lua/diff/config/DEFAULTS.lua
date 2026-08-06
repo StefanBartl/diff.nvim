@@ -8,28 +8,28 @@
 ---@type DiffNvim.Config
 local DEFAULTS = {
   features = {
-    diff        = true,
+    diff = true,
     diff_origin = true,
-    diff_exit   = true,
+    diff_exit = true,
   },
   diff = {
-    default_view      = "vsplit",
-    default_output     = "buffer",
-    default_source     = "current",
+    default_view = "vsplit",
+    default_output = "buffer",
+    default_source = "current",
     -- Split direction used by :DiffOrig ("vsplit" for side-by-side, "split"
     -- for stacked). Kept separate from `default_view` because :DiffOrig is
     -- always a native diffmode split, never "inline".
-    default_orig_view  = "vsplit",
-    algorithm           = "histogram",
-    ctxlen              = 3,
+    default_orig_view = "vsplit",
+    algorithm = "histogram",
+    ctxlen = 3,
     -- Word/char-level highlighting of changed spans in view=inline/float
     -- (DiffText extmarks over paired -/+ line runs). Set false to disable.
-    word_diff           = true,
+    word_diff = true,
     -- Timeout (ms) for http(s):// sources/targets — see docs/url-sources.md.
-    url_timeout_ms       = 10000,
+    url_timeout_ms = 10000,
   },
   exit = {
-    key   = "<Esc><Esc>",
+    key = "<Esc><Esc>",
     scope = "buffer",
     -- Also mirror the exit key onto buffers a *native* :diffthis puts into
     -- diffmode (scope="buffer" only), not just diff.nvim's own diffs. Off
@@ -38,11 +38,11 @@ local DEFAULTS = {
     native_diffthis = false,
   },
   commands = {
-    diff         = "Diff",
-    diff_clear   = "DiffClear",
+    diff = "Diff",
+    diff_clear = "DiffClear",
     diff_buffers = "DiffBuffers",
-    diff_orig    = "DiffOrig",
-    diff_exit    = "DiffExit",
+    diff_orig = "DiffOrig",
+    diff_exit = "DiffExit",
   },
   select_fn = nil,
   -- Auto-detect pickers.nvim (StefanBartl/pickers.nvim) and use its fuzzy

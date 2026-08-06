@@ -21,7 +21,9 @@ return function(H)
     url.fetch(u, "target", opts or {}, function(l, e)
       lines, err, done = l, e, true
     end)
-    vim.wait(15000, function() return done end, 20)
+    vim.wait(15000, function()
+      return done
+    end, 20)
     return lines, err, done
   end
 
@@ -32,12 +34,17 @@ return function(H)
   vim.system = saved_system
   ok(done1, "fetch() calls back synchronously when vim.system is missing")
   eq(lines1, nil, "vim.system missing: no lines")
-  ok(err1 and err1:find("vim.system", 1, true) ~= nil, "vim.system missing: error mentions vim.system")
+  ok(
+    err1 and err1:find("vim.system", 1, true) ~= nil,
+    "vim.system missing: error mentions vim.system"
+  )
 
   -- guard: curl not on PATH -------------------------------------------------
   local saved_executable = vim.fn.executable
   vim.fn.executable = function(name)
-    if name == "curl" then return 0 end
+    if name == "curl" then
+      return 0
+    end
     return saved_executable(name)
   end
   local lines2, err2, done2 = await_fetch("https://example.com")
