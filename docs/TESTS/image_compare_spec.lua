@@ -11,8 +11,14 @@ return function(H)
   ok(not image_compare.is_image_file_spec("clipboard"), "clipboard is never an image spec")
   ok(not image_compare.is_image_file_spec("42"), "a bufnr-looking string is never an image spec")
   ok(not image_compare.is_image_file_spec("git:HEAD"), "a git: spec is never an image spec")
-  ok(not image_compare.is_image_file_spec("https://example.com/x.png"), "a URL is never an image spec (fetched, not a local path)")
-  ok(not image_compare.is_image_file_spec("/does/not/exist.png"), "an unreadable path is never an image spec")
+  ok(
+    not image_compare.is_image_file_spec("https://example.com/x.png"),
+    "a URL is never an image spec (fetched, not a local path)"
+  )
+  ok(
+    not image_compare.is_image_file_spec("/does/not/exist.png"),
+    "an unreadable path is never an image spec"
+  )
 
   -- A readable non-image file (this spec file itself) is not an image spec.
   local this_file = debug.getinfo(1, "S").source:sub(2)
@@ -46,7 +52,10 @@ return function(H)
   -- meaningless text diff of binary bytes) -- verified without requiring
   -- images.nvim as a test dependency by checking the return value only.
   local handled = image_compare.maybe_compare(png, png)
-  ok(handled, "maybe_compare claims the diff when both sides are image files, regardless of images.nvim availability")
+  ok(
+    handled,
+    "maybe_compare claims the diff when both sides are image files, regardless of images.nvim availability"
+  )
 
   -- diff.image_compare = false disables the whole feature -----------------
   local config = require("diff.config")
