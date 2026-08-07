@@ -24,7 +24,7 @@ Machine-readable overview of every keymap, user command, and autocommand defined
 
 | default name | args | desc | feature flag |
 | --- | --- | --- | --- |
-| `:Diff` | `:[range]Diff [target=…] [source=…] [base=…] [view=…] [output=…]` | Compare a source (left) with a target (right); a range restricts the `current` source to the selection; `base=` opens a three-window three-way diff | `features.diff` |
+| `:Diff` | `:[range]Diff [target=…] [source=…] [base=…] [view=…] [output=…]` | Compare a source (left) with a target (right); a range restricts the `current` source to the selection; `base=` opens a three-window three-way diff; two raster-image paths show side by side via images.nvim instead (`diff.image_compare`) | `features.diff` |
 | `:DiffClear` | — | Close every scratch buffer and disable diffmode | `features.diff` |
 | `:DiffBuffers` | `[view=…] [output=…]` | Diff the current buffer against another open buffer (picker) | `features.diff` |
 | `:DiffOrig` | — | Diff current buffer against its on-disk saved version | `features.diff_origin` |
