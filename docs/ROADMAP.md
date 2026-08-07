@@ -3,6 +3,22 @@
 Planned and potential features. Nothing here is a promise; it is a backlog of
 ideas, not ordered by priority.
 
+## Done
+
+- **Image-file comparison** (`diff.image_compare`, `lua/diff/features/
+  image_compare.lua`) — `:Diff target=a.png source=b.png` used to
+  text-diff raw binary bytes via `vim.fn.readfile`, producing meaningless
+  output. Both sides being raster-image paths (`.svg` excluded — it's
+  text) now shows them side by side via images.nvim's `gallery` instead,
+  with a clear warning if images.nvim isn't installed rather than a
+  silent fallback to the meaningless text diff. From images.nvim's
+  `docs/ROADMAP/CROSS-PLUGIN.md`. No relative scaling between the two
+  images (unlike images.nvim's own `:Image compare`, which needs
+  `lib.nvim.ui.kit.compare`'s directory-scan-and-pick flow to get both
+  images known at once) — `:Diff` already has both exact paths from its
+  own arguments, so `images.gallery({a, b}, 2)` is the right primitive,
+  no new API needed in either dependency.
+
 ## Ideas
 
 - UTF-8 codepoint-aware word diff. `apply_word_diff` in

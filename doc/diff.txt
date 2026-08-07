@@ -94,6 +94,7 @@ vim-plug: >vim
       ctxlen            = 3,           -- context lines per hunk
       word_diff         = true,        -- word/char DiffText highlighting in view=inline/float
       url_timeout_ms    = 10000,       -- fetch timeout for http(s):// sources/targets
+      image_compare     = true,        -- show two raster-image paths via images.nvim
     },
     exit = {
       key             = "<Esc><Esc>", -- exit mapping
@@ -155,6 +156,20 @@ diff.url_timeout_ms ~
   Timeout in milliseconds for `http(s)://` sources/targets before the fetch
   is cancelled and reported as an error. See |diff-url-sources|.
   Default: `10000`.
+
+diff.image_compare ~
+  When both `source=` and `target=` are readable raster-image file paths
+  (png/jpg/jpeg/gif/webp/bmp — not svg, which is text and diffs fine as
+  text), show them side by side via images.nvim
+  (https://github.com/StefanBartl/images.nvim, `images.gallery`) instead of
+  text-diffing raw bytes, which produces meaningless output. Every
+  `view=`/`output=` value is ignored in this case. Without images.nvim
+  installed, a clear warning is shown instead of silently falling through
+  to the meaningless text diff. Set to `false` to restore the old
+  behavior unconditionally. No relative scaling between the two images,
+  unlike images.nvim's own `:Image compare` — see
+  `lua/diff/features/image_compare.lua`'s moduledoc for why.
+  Default: `true`.
 
 select_fn ~
   Optional replacement for `vim.ui.select`, injected for the target/source
@@ -267,6 +282,15 @@ source= ~
     it. Requires Neovim 0.10+ (`vim.system`) and a `curl` executable on
     PATH. See |diff-url-sources| for the timeout setting and examples.
 
+Image files ~
+  When both source= and target= are readable raster-image file paths
+  (png/jpg/jpeg/gif/webp/bmp; svg is excluded — it's text and diffs fine as
+  text), :Diff shows them side by side via images.nvim instead of
+  text-diffing raw bytes — every view=/output= value is ignored in this
+  case. Without images.nvim installed, a clear warning is shown instead of
+  silently falling through to a meaningless text diff. See |diff-config|
+  (`diff.image_compare`) to disable this.
+
 base= ~
   Optional — turns :Diff into a three-way diff. Accepts the same grammar as
   target= (clipboard, ask, git:{rev}, http(s)://{url}, a file path, or a
@@ -335,6 +359,7 @@ Examples: >
   :Diff target=git:HEAD~1 output=stat
   :Diff target=https://raw.githubusercontent.com/user/repo/main/f.lua
   :Diff target=git:MERGE_HEAD base=git:HEAD
+  :Diff target=new.png source=old.png
 <
 
 ------------------------------------------------------------------------------

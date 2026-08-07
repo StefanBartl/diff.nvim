@@ -18,6 +18,7 @@ require("diff").setup({
     ctxlen            = 3,           -- context lines per hunk
     word_diff         = true,        -- word/char-level DiffText highlighting in view=inline/float
     url_timeout_ms    = 10000,       -- fetch timeout for http(s):// sources/targets
+    image_compare     = true,        -- show two raster-image paths side by side via images.nvim
   },
   exit = {
     key             = "<Esc><Esc>", -- exit mapping
@@ -49,6 +50,15 @@ pairing); set to `false` to disable.
 to fetch before it's cancelled and reported as an error. See
 [URL sources](url-sources.md) for the full picture (requirements, how the
 async fetch works, and usage examples).
+
+`diff.image_compare` (default `true`): when both `source` and `target` are
+readable raster-image file paths (`.png`/`.jpg`/`.jpeg`/`.gif`/`.webp`/
+`.bmp` — not `.svg`, which is text and diffs fine as text), `:Diff` shows
+them side by side via [images.nvim](https://github.com/StefanBartl/images.nvim)
+(`images.gallery`) instead of text-diffing raw bytes, which produces
+meaningless output. Without images.nvim installed, a clear warning is shown
+instead of silently falling through to that meaningless text diff. Set to
+`false` to restore the old behavior unconditionally.
 
 ## Picker resolution
 

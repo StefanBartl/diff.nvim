@@ -78,6 +78,7 @@
 ---@field ctxlen            integer  Context lines around each hunk in unified output
 ---@field word_diff         boolean  Word/char-level DiffText highlighting in view=inline/float
 ---@field url_timeout_ms    integer  Timeout for http(s):// sources/targets in ms — @see docs/url-sources.md
+---@field image_compare     boolean  Show two raster-image file paths side by side via images.nvim instead of text-diffing their bytes (default true; svg excluded — it's text)
 
 ---@alias DiffNvim.Config.ExitScope
 ---| '"buffer"'  # Buffer-local mapping on plugin-created diff buffers (default)

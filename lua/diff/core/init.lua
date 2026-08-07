@@ -136,6 +136,15 @@ function M.execute(opts, ctx)
     return
   end
 
+  -- Both sides look like raster-image files: show them side by side via
+  -- images.nvim instead of text-diffing raw bytes (see
+  -- diff.features.image_compare's moduledoc for why). "current" (a live
+  -- buffer) never matches this, so it never fires for the common
+  -- current-vs-target case.
+  if require("diff.features.image_compare").maybe_compare(opts.source, opts.target) then
+    return
+  end
+
   local cfg = config.get().diff
 
   -- The visual range applies to the source side only (the selection lives in

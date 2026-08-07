@@ -68,6 +68,7 @@ Omitting `target=` opens an interactive picker (`vim.ui.select`).
 :'<,'>Diff target=clipboard            " compare only the visual selection
 :Diff target=https://example.com/f.lua " current buffer vs. a URL (async)
 :Diff target=git:MERGE_HEAD base=git:HEAD " three-way merge-conflict view
+:Diff target=new.png source=old.png    " image files -> side by side via images.nvim
 ```
 
 ---

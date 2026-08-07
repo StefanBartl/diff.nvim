@@ -100,6 +100,7 @@ local specs = {
   "native_diffthis_spec.lua",
   "url_spec.lua",
   "three_way_spec.lua",
+  "image_compare_spec.lua",
 }
 
 local failed = 0

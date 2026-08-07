@@ -48,6 +48,18 @@ Requires Neovim 0.10+ (`vim.system`) and a `curl` executable on PATH. See
 [URL sources](url-sources.md) for the timeout setting, requirements, and
 usage examples.
 
+**Image files** — when both `source=` and `target=` are readable
+raster-image paths (`.png`/`.jpg`/`.jpeg`/`.gif`/`.webp`/`.bmp`; `.svg` is
+excluded, it's text and diffs fine as text), `:Diff` shows them side by
+side via [images.nvim](https://github.com/StefanBartl/images.nvim) instead
+of text-diffing raw bytes — every `view=`/`output=` value is ignored in
+this case, since none of them mean anything for a pair of binary images.
+Without images.nvim installed, a clear warning is shown instead of
+silently falling through to a meaningless text diff. Set
+`diff.image_compare = false` to disable this and force the old text-diff
+behavior. No relative scaling between the two images (unlike images.nvim's
+own `:Image compare`) — see [Configuration](configuration.md).
+
 **`base=`** (optional — turns this into a three-way diff)
 
 Accepts the same grammar as `target=` (`clipboard`, `ask`, `git:{rev}`,
@@ -100,6 +112,7 @@ the full picture and merge-conflict-resolution examples.
 :Diff target=git:HEAD~1 output=stat     " summary vs. two commits back
 :Diff target=https://raw.githubusercontent.com/user/repo/main/f.lua  " current buffer vs. a URL
 :Diff target=git:MERGE_HEAD base=git:HEAD  " three-way merge-conflict view
+:Diff target=new.png source=old.png    " image files -> side by side via images.nvim
 ```
 
 ## `:DiffClear`

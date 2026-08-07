@@ -27,6 +27,12 @@ local DEFAULTS = {
     word_diff = true,
     -- Timeout (ms) for http(s):// sources/targets — see docs/url-sources.md.
     url_timeout_ms = 10000,
+    -- When both source and target are raster-image file paths (png/jpg/jpeg/
+    -- gif/webp/bmp — not svg, which is text and diffs fine as-is), show them
+    -- side by side via images.nvim instead of text-diffing raw bytes, which
+    -- produces meaningless output at best. Set false to restore the old
+    -- behavior (or install images.nvim to actually see something with it on).
+    image_compare = true,
   },
   exit = {
     key = "<Esc><Esc>",
