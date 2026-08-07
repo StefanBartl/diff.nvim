@@ -53,8 +53,10 @@ jobs:
         env:
           LIB_NVIM_PATH: ${{ github.workspace }}/lib.nvim
         run: |
+          set +e
           nvim --headless -u NONE \
             -c "set rtp+=." \
             -c "luafile docs/TESTS/run.lua" \
-            -c "qa!" | tee out.log
+            -c "qa!" > out.log 2>&1
+          cat out.log
           grep -q DIFF_NVIM_TESTS_OK out.log
