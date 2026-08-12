@@ -6,22 +6,6 @@ would only add navigation for its own sake. See
 [`docs/FEATURES_FORMAT.md`](https://github.com/StefanBartl/documentation.nvim/blob/main/docs/FEATURES_FORMAT.md)
 (in `documentation.nvim`) for the format this file follows.
 
-## NOCH AUFTEILEN!
-
-- **Image-file comparison** (`diff.image_compare`, `lua/diff/features/
-  image_compare.lua`) — `:Diff target=a.png source=b.png` used to
-  text-diff raw binary bytes via `vim.fn.readfile`, producing meaningless
-  output. Both sides being raster-image paths (`.svg` excluded — it's
-  text) now shows them side by side via images.nvim's `gallery` instead,
-  with a clear warning if images.nvim isn't installed rather than a
-  silent fallback to the meaningless text diff. From images.nvim's
-  `docs/ROADMAP/CROSS-PLUGIN.md`. No relative scaling between the two
-  images (unlike images.nvim's own `:Image compare`, which needs
-  `lib.nvim.ui.kit.compare`'s directory-scan-and-pick flow to get both
-  images known at once) — `:Diff` already has both exact paths from its
-  own arguments, so `images.gallery({a, b}, 2)` is the right primitive,
-  no new API needed in either dependency.
-
 ## `:Diff` — flexible source/target comparison
 
 Compares a **source** (left, default: the current buffer) against a
@@ -109,9 +93,14 @@ text-diffing raw bytes. Every `view=`/`output=` value is ignored in this
 case, since none of them mean anything for a pair of binary images.
 Without images.nvim installed, a clear warning is shown instead of
 silently falling through to a meaningless text diff. No relative scaling
-between the two images, unlike images.nvim's own `:Image compare`.
+between the two images, unlike images.nvim's own `:Image compare` (which
+needs `lib.nvim.ui.kit.compare`'s directory-scan-and-pick flow to get both
+images known at once) — `:Diff` already has both exact paths from its own
+arguments, so `images.gallery({a, b}, 2)` is the right primitive, no new
+API needed in either dependency.
 
-- **Module:** `lua/diff/core/init.lua`
+- **Module:** `lua/diff/features/image_compare.lua` (`M.maybe_compare`),
+  `lua/diff/core/init.lua` (call site)
 - **Config:** `opts.diff.image_compare` (default `true`)
 
 ## Three-way diff (`base=`)
