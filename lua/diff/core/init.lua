@@ -126,6 +126,39 @@ local function execute_three_way(opts, ctx)
   end)
 end
 
+---@internal
+---Resolve a raw target/source spec to a real quickfix/location-list
+---location, for `render.push_stat_list`'s optional navigation — mirrors
+---`resolve.resolve_lines`'s own buffer-number-vs-file-path dispatch, since
+---those are the only two specifier kinds with an on-disk/in-buffer identity
+---of their own. "current"/"clipboard"/`git:<rev>`/`http(s)://` specifiers
+---have none, so they resolve to `nil` (the entry is still listed, just not
+---jump-able — see `push_stat_list`'s own doc comment).
+---@param spec DiffNvim.Source|DiffNvim.Target
+---@return { filename: string }|{ bufnr: integer }|nil
+local function stat_list_target(spec)
+  if type(spec) ~= "string" then
+    return nil
+  end
+  local as_num = tonumber(spec)
+  if as_num ~= nil then
+    return { bufnr = math.floor(as_num) }
+  end
+  if
+    spec == "current"
+    or spec == "clipboard"
+    or url.is_url_spec(spec)
+    or require("diff.core.git").is_git_spec(spec)
+  then
+    return nil
+  end
+  local path = vim.fn.expand(spec)
+  if vim.fn.filereadable(path) == 1 then
+    return { filename = vim.fs.normalize(vim.fn.fnamemodify(path, ":p")) }
+  end
+  return nil
+end
+
 ---Run the diff with fully-resolved options.
 ---@param opts DiffNvim.ResolvedOpts
 ---@param ctx DiffNvim.Context
@@ -133,6 +166,24 @@ end
 function M.execute(opts, ctx)
   if opts.base then
     execute_three_way(opts, ctx)
+    return
+  end
+
+  -- source= and target= both resolving to real, existing directories: this
+  -- is a directory/recursive diff (a per-file summary), not a single
+  -- unified diff — dispatched to core.directory entirely, before the
+  -- image-compare check and the normal resolve_side_async pipeline below
+  -- (which would just fail with "file not readable" on a directory path).
+  local directory = require("diff.core.directory")
+  if directory.is_directory_spec(opts.source) and directory.is_directory_spec(opts.target) then
+    directory.run(
+      opts.source --[[@as string]],
+      opts.target --[[@as string]],
+      tostring(opts.source),
+      tostring(opts.target),
+      opts.output,
+      config.get().diff
+    )
     return
   end
 
@@ -192,7 +243,11 @@ function M.execute(opts, ctx)
           return
         end
         if opts.output == "stat" then
-          render.stat(src_lines, tgt_lines, src_label, tgt_label, cfg.algorithm, cfg.ctxlen)
+          render.stat(src_lines, tgt_lines, src_label, tgt_label, cfg.algorithm, cfg.ctxlen, {
+            list = cfg.stat_list,
+            mode = cfg.stat_list_mode,
+            target = stat_list_target(opts.target),
+          })
           return
         end
 
@@ -443,6 +498,21 @@ function M.run(raw_args, range)
 
   local cfg = config.get().diff
   local kv = resolve.parse_args(type(raw_args) == "string" and raw_args or "")
+
+  -- target=git:<rev1>..<rev2> is sugar for diffing the file directly between
+  -- two revisions, bypassing the working buffer entirely: expands to
+  -- source=git:<rev1> target=git:<rev2>, overriding any source= given
+  -- alongside it — the whole point is "two revisions", not "one revision
+  -- against whatever source= would otherwise resolve to" (see
+  -- docs/commands.md's git:<rev> section). Only target= is recognized: a
+  -- range in source= wouldn't have a second thing to pair it with.
+  do
+    local rev_a, rev_b = resolve.split_git_range(kv.target)
+    if rev_a then
+      kv.source = "git:" .. rev_a
+      kv.target = "git:" .. rev_b
+    end
+  end
 
   local view, output = resolve_view_output(kv, cfg)
   if not view then

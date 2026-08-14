@@ -79,6 +79,9 @@
 ---@field word_diff         boolean  Word/char-level DiffText highlighting in view=inline/float
 ---@field url_timeout_ms    integer  Timeout for http(s):// sources/targets in ms — @see docs/url-sources.md
 ---@field image_compare     boolean  Show two raster-image file paths side by side via images.nvim instead of text-diffing their bytes (default true; svg excluded — it's text)
+---@field stat_list         "off"|"qf"|"loc"  Also push output=stat's hunks to the quickfix/location list (default "off")
+---@field stat_list_mode    "add"|"replace"   "add" accumulates across :Diff invocations (default), "replace" resets the list each time
+---@field directory_max_files integer  Cap on files walked per side of a directory diff (default 2000) — see core/directory.lua
 
 ---@alias DiffNvim.Config.ExitScope
 ---| '"buffer"'  # Buffer-local mapping on plugin-created diff buffers (default)

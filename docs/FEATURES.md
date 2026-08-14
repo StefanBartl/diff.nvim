@@ -34,8 +34,18 @@ message area), `file` (unified diff written to a temp file), `clipboard`
 (unified diff copied to `+`), or `stat` (just `+N -M, K hunks` as a
 notification, no window opened at all).
 
-- **Module:** `lua/diff/core/render.lua`
-- **Config:** `opts.diff.default_output` (default `"buffer"`)
+`output=stat` can also push each hunk into the quickfix or location list
+(`opts.diff.stat_list`, `"off"` by default) instead of only ever showing the
+latest notification, so hunks from several `:Diff` invocations accumulate in
+one navigable list (`opts.diff.stat_list_mode`, `"add"` by default —
+`"replace"` resets the list each time). Entries carry a real
+`filename`/`bufnr` when the diffed side resolved to one; otherwise they're
+text-only.
+
+- **Module:** `lua/diff/core/render.lua` (`M.compute_hunks`, `M.push_stat_list`)
+- **Config:** `opts.diff.default_output` (default `"buffer"`),
+  `opts.diff.stat_list` (default `"off"`), `opts.diff.stat_list_mode`
+  (default `"add"`)
 
 ## View layout (`view=`, `output=buffer` only)
 
@@ -55,8 +65,13 @@ line get intra-line `DiffText` highlighting — the same highlight group
 native diffmode uses — instead of only whole-line coloring. Only applies
 where the removed and added line counts match within a hunk (an
 unambiguous 1:1 pairing); mismatched counts fall back to whole-line only.
+Computed at UTF-8 codepoint granularity, so a highlighted span always
+starts and ends on a codepoint boundary — a multi-byte character on a
+non-ASCII line is highlighted as one unit, never split across a
+highlighted/unhighlighted boundary. Falls back to byte granularity only
+when a line fails UTF-8 positioning (malformed byte sequences).
 
-- **Module:** `lua/diff/core/render.lua`
+- **Module:** `lua/diff/core/render.lua` (`word_diff_ranges`)
 - **Config:** `opts.diff.word_diff` (default `true`)
 
 ## `git:{rev}` sources
@@ -67,8 +82,30 @@ Resolves the **current file** (not an arbitrary path) at a git revision —
 0.10+ (`vim.system`), `git` on `PATH`, and a file-backed buffer inside a
 git repository.
 
-- **Module:** `lua/diff/core/git.lua`
+`target=git:{rev1}..{rev2}` diffs the file directly between two revisions
+instead of one revision against the working buffer: sugar for
+`source=git:{rev1} target=git:{rev2}`, overriding any `source=` given
+alongside it. Only recognized in `target=`.
+
+- **Module:** `lua/diff/core/git.lua`, `lua/diff/core/resolve.lua`
+  (`M.split_git_range`)
 - **Config:** none — checked by `:checkhealth diff`
+
+## Directory diff (`source=`/`target=` both directories)
+
+When both sides resolve to real, existing directories, `:Diff` compares the
+two trees file-by-file and produces a per-file summary (`M`/`A`/`D` +
+`+added -removed` + path) instead of a single, meaningless unified diff over
+two trees' concatenated bytes. Hidden path segments (`.git`, `.hg`, …) are
+always excluded. `view=` is ignored; `output=` gets its own handling:
+`buffer` (default, one scratch buffer with the summary), `prompt`, `file`,
+`clipboard` (the same summary delivered differently), or `stat` (just the
+rolled-up file-count + `+N -M` total — and, with `opts.diff.stat_list` set,
+one real jump-able quickfix/location-list entry per changed file).
+
+- **Module:** `lua/diff/core/directory.lua`
+- **Config:** `opts.diff.directory_max_files` (default `2000`) — caps files
+  walked per side
 
 ## `http(s)://` URL sources
 
