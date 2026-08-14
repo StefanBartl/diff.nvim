@@ -34,4 +34,20 @@ function H.scratch(ft)
   return buf
 end
 
+--- Create a fresh, empty scratch directory under vim.fn.tempname().
+---@return string dir  Absolute path with a trailing slash.
+function H.tmpdir()
+  local dir = vim.fn.tempname()
+  vim.fn.mkdir(dir, "p")
+  return vim.fn.fnamemodify(dir, ":p")
+end
+
+--- Write `content` (a list of lines) to `path`, creating parent directories.
+---@param path string
+---@param lines string[]
+function H.write_file(path, lines)
+  vim.fn.mkdir(vim.fn.fnamemodify(path, ":h"), "p")
+  vim.fn.writefile(lines, path)
+end
+
 return H

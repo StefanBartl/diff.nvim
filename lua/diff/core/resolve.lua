@@ -28,6 +28,26 @@ function M.parse_args(raw)
   return out
 end
 
+---Split a `git:<rev1>..<rev2>` range specifier into its two revisions.
+---Not itself a git operation — pure string splitting, so it stays testable
+---without a git executable and reusable anywhere a target= spec needs
+---checking (currently just `core.init`'s `M.run`, which expands a matching
+---target= into `source=git:<rev1> target=git:<rev2>`, bypassing whatever
+---source= would otherwise resolve to). The first `..` is the split point,
+---since a revision name could itself contain further dots (e.g. `v1.2.3`).
+---@param spec any
+---@return string|nil rev_a, string|nil rev_b  Both nil when `spec` isn't a git range
+function M.split_git_range(spec)
+  if type(spec) ~= "string" then
+    return nil, nil
+  end
+  local rev_a, rev_b = spec:match("^git:(.-)%.%.(.+)$")
+  if rev_a and rev_b and rev_a ~= "" and rev_b ~= "" then
+    return rev_a, rev_b
+  end
+  return nil, nil
+end
+
 ---Resolve a specifier to its content lines.
 ---@param spec string|integer  "clipboard", a file path, or a buffer number
 ---@param label string         "target"|"source" — used only in error text

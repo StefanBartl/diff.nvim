@@ -85,15 +85,109 @@ function M.format_stats(stats)
   )
 end
 
----Report `+N -M, K hunks` for the diff as a notification.
+---@class DiffNvim.Hunk
+---@field old_start integer  1-based start line in `a` (the "-" side)
+---@field old_count integer
+---@field new_start integer  1-based start line in `b` (the "+" side)
+---@field new_count integer
+---@field header    string   The raw `@@ -old,count +new,count @@` line
+
+---Parse a unified diff's hunk headers into structured `{old_*, new_*}`
+---entries. Pure — like `compute_stats`, computes the unified diff internally
+---and never notifies. A `@@ -N +N @@` header (count omitted when it's 1) is
+---handled the same as `@@ -N,1 +N,1 @@`.
+---@param a_lines string[]
+---@param b_lines string[]
+---@param algorithm string
+---@param ctxlen integer
+---@return DiffNvim.Hunk[]|nil hunks, string|nil err
+function M.compute_hunks(a_lines, b_lines, algorithm, ctxlen)
+  local unified, err = M.compute_unified(a_lines, b_lines, algorithm, ctxlen)
+  if not unified then
+    return nil, err
+  end
+
+  local hunks = {}
+  for _, line in ipairs(vim.split(unified, "\n", { plain = true })) do
+    if line:sub(1, 2) == "@@" then
+      local old_start, old_count, new_start, new_count =
+        line:match("^@@ %-(%d+),?(%d*) %+(%d+),?(%d*) @@")
+      if old_start then
+        hunks[#hunks + 1] = {
+          old_start = tonumber(old_start),
+          old_count = (old_count ~= "" and tonumber(old_count)) or 1,
+          new_start = tonumber(new_start),
+          new_count = (new_count ~= "" and tonumber(new_count)) or 1,
+          header = line,
+        }
+      end
+    end
+  end
+  return hunks, nil
+end
+
+---Push each hunk of an `output=stat` diff into the quickfix or location
+---list, so hunks from several `:Diff` invocations can be navigated in one
+---list (`list_opts.mode == "add"`, the default — entries accumulate across
+---calls) or the list can be reset to just this diff (`mode == "replace"`).
+---Entries carry a real `filename`/`bufnr` when `list_opts.target` resolved
+---to one (see `core/init.lua`'s `stat_list_target`); otherwise they're
+---text-only — still listed, just not jump-able (e.g. a `clipboard` or
+---`git:<rev>` side has no on-disk location of its own).
 ---@param a_lines string[]
 ---@param b_lines string[]
 ---@param a_label string
 ---@param b_label string
 ---@param algorithm string
 ---@param ctxlen integer
+---@param list_opts { list: "qf"|"loc", mode: ("add"|"replace")?, target: ({filename: string}|{bufnr: integer})? }
 ---@return nil
-function M.stat(a_lines, b_lines, a_label, b_label, algorithm, ctxlen)
+function M.push_stat_list(a_lines, b_lines, a_label, b_label, algorithm, ctxlen, list_opts)
+  local hunks = M.compute_hunks(a_lines, b_lines, algorithm, ctxlen)
+  if not hunks or #hunks == 0 then
+    return
+  end
+
+  local target = list_opts.target or {}
+  local items = {}
+  for _, h in ipairs(hunks) do
+    ---@type table
+    local item = {
+      lnum = h.new_start,
+      text = string.format("%s -> %s  %s", a_label, b_label, h.header),
+    }
+    if target.filename then
+      item.filename = target.filename
+    elseif target.bufnr then
+      item.bufnr = target.bufnr
+    end
+    items[#items + 1] = item
+  end
+
+  local action = (list_opts.mode == "replace") and " " or "a"
+  local what = { title = string.format("diff.nvim: %s -> %s", a_label, b_label), items = items }
+
+  if list_opts.list == "loc" then
+    fn.setloclist(0, {}, action, what)
+    vim.cmd("silent! lopen")
+  else
+    fn.setqflist({}, action, what)
+    vim.cmd("silent! copen")
+  end
+end
+
+---Report `+N -M, K hunks` for the diff as a notification, and optionally
+---push its hunks to the quickfix/location list via `M.push_stat_list` (see
+---`opts.diff.stat_list`/`stat_list_mode` — off by default).
+---@param a_lines string[]
+---@param b_lines string[]
+---@param a_label string
+---@param b_label string
+---@param algorithm string
+---@param ctxlen integer
+---@param list_opts? { list: ("off"|"qf"|"loc")?, mode: ("add"|"replace")?, target: ({filename: string}|{bufnr: integer})? }
+---@return nil
+function M.stat(a_lines, b_lines, a_label, b_label, algorithm, ctxlen, list_opts)
   local stats, err = M.compute_stats(a_lines, b_lines, algorithm, ctxlen)
   if not stats then
     notify.error(err or "could not compute diff")
@@ -104,6 +198,10 @@ function M.stat(a_lines, b_lines, a_label, b_label, algorithm, ctxlen)
     return
   end
   notify.info(string.format("%s -> %s  %s", a_label, b_label, M.format_stats(stats)))
+
+  if list_opts and (list_opts.list == "qf" or list_opts.list == "loc") then
+    M.push_stat_list(a_lines, b_lines, a_label, b_label, algorithm, ctxlen, list_opts)
+  end
 end
 
 ---@internal
@@ -248,22 +346,47 @@ end
 ---@type integer  Extmark namespace for inline-view word-level diff highlights
 local WORD_DIFF_NS = api.nvim_create_namespace("diff_word_diff")
 
----Compute byte-range spans that changed between two single lines, using
----vim.diff at byte granularity (each byte of the line becomes one "line" of
----a synthetic multi-line document, fed through result_type="indices"). Byte-
----based rather than UTF-8-codepoint-aware: on non-ASCII lines a multi-byte
----codepoint may straddle a highlighted/unhighlighted boundary — an accepted
----simplification, since extmark columns are byte offsets anyway.
 ---@internal
----@param a string  Old line content (without the unified-diff "-" prefix)
----@param b string  New line content (without the unified-diff "+" prefix)
----@param algorithm string
----@return { a: [integer, integer][], b: [integer, integer][] }|nil  0-based [start,end) byte ranges per side
-local function word_diff_ranges(a, b, algorithm)
-  if a == b then
-    return { a = {}, b = {} }
+---Byte-offset table for each UTF-8 codepoint in `s`: `pos[i]` is the 1-based
+---Lua-string byte index where codepoint `i` starts. `nil` when
+---`vim.str_utf_pos` errors — malformed byte sequences — so callers can fall
+---back to byte granularity instead of propagating the error.
+---@param s string
+---@return integer[]|nil
+local function utf8_positions(s)
+  local ok, pos = pcall(vim.str_utf_pos, s)
+  if not ok or type(pos) ~= "table" then
+    return nil
   end
+  return pos
+end
 
+---@internal
+---Explode `s` into one `vim.diff` "line" per UTF-8 codepoint (using `pos`
+---from `utf8_positions`), so a multi-byte codepoint moves as one unit
+---instead of straddling a highlight boundary the way one-line-per-byte does.
+---@param s string
+---@param pos integer[]
+---@return string
+local function explode_codepoints(s, pos)
+  local n = #pos
+  local chars = {}
+  for i = 1, n do
+    local from = pos[i]
+    local to = (i < n) and (pos[i + 1] - 1) or #s
+    chars[i] = s:sub(from, to)
+  end
+  return table.concat(chars, "\n")
+end
+
+---@internal
+---Byte-granularity `word_diff_ranges` — the original behavior, kept as the
+---fallback for lines that fail UTF-8 positioning (malformed byte sequences).
+---@param a string
+---@param b string
+---@param algorithm string
+---@return { a: [integer, integer][], b: [integer, integer][] }|nil
+local function word_diff_ranges_bytes(a, b, algorithm)
   local function explode(s)
     local bytes = {}
     for i = 1, #s do
@@ -288,6 +411,64 @@ local function word_diff_ranges(a, b, algorithm)
     end
     if count_b > 0 then
       ranges.b[#ranges.b + 1] = { start_b - 1, start_b - 1 + count_b }
+    end
+  end
+  return ranges
+end
+
+---Compute byte-range spans that changed between two single lines, using
+---vim.diff at UTF-8 codepoint granularity: each codepoint becomes one "line"
+---of a synthetic multi-line document (fed through result_type="indices"),
+---and the resulting codepoint-index hunks are mapped back to byte offsets via
+---`utf8_positions` — so a highlighted span always starts and ends on a
+---codepoint boundary, never mid-codepoint the way byte granularity could on
+---a non-ASCII line. Falls back to `word_diff_ranges_bytes` (the original,
+---byte-granularity behavior) when either line fails UTF-8 positioning.
+---@internal
+---@param a string  Old line content (without the unified-diff "-" prefix)
+---@param b string  New line content (without the unified-diff "+" prefix)
+---@param algorithm string
+---@return { a: [integer, integer][], b: [integer, integer][] }|nil  0-based [start,end) byte ranges per side
+local function word_diff_ranges(a, b, algorithm)
+  if a == b then
+    return { a = {}, b = {} }
+  end
+
+  local pos_a, pos_b = utf8_positions(a), utf8_positions(b)
+  if not pos_a or not pos_b then
+    return word_diff_ranges_bytes(a, b, algorithm)
+  end
+
+  local ok, hunks = pcall(vim.diff, explode_codepoints(a, pos_a), explode_codepoints(b, pos_b), {
+    result_type = "indices",
+    algorithm = algorithm,
+  })
+  if not ok or type(hunks) ~= "table" then
+    return word_diff_ranges_bytes(a, b, algorithm)
+  end
+
+  ---@internal Map a 1-based [start, start+count) codepoint run to a 0-based
+  ---[byte_start, byte_end) range using `pos`.
+  ---@param pos integer[]
+  ---@param s string
+  ---@param start integer
+  ---@param count integer
+  ---@return [integer, integer]
+  local function to_byte_range(pos, s, start, count)
+    local byte_start = pos[start] - 1
+    local last = start + count -- one past the run, still 1-based codepoint index
+    local byte_end = (last <= #pos) and (pos[last] - 1) or #s
+    return { byte_start, byte_end }
+  end
+
+  local ranges = { a = {}, b = {} }
+  for _, h in ipairs(hunks) do
+    local start_a, count_a, start_b, count_b = h[1], h[2], h[3], h[4]
+    if count_a > 0 then
+      ranges.a[#ranges.a + 1] = to_byte_range(pos_a, a, start_a, count_a)
+    end
+    if count_b > 0 then
+      ranges.b[#ranges.b + 1] = to_byte_range(pos_b, b, start_b, count_b)
     end
   end
   return ranges
@@ -331,14 +512,22 @@ local function apply_word_diff(buf, lines, algorithm)
           local b_line = lines[add_start + off]:sub(2)
           local ranges = word_diff_ranges(a_line, b_line, algorithm)
           if ranges then
+            -- +1 to every column: `ranges` was computed over a_line/b_line
+            -- with the "-"/"+" prefix already stripped, but the extmark is
+            -- placed on the actual buffer line, which still has that one
+            -- prefix byte at column 0. Without the shift, every highlight
+            -- lands one byte before the text it's meant to mark (e.g.
+            -- "world" -> "there" highlighted " w"/" th" instead of
+            -- "world"/"there") — caught by render_spec.lua asserting the
+            -- extmark's own highlighted substring, not just that one exists.
             for _, r in ipairs(ranges.a) do
               pcall(
                 api.nvim_buf_set_extmark,
                 buf,
                 WORD_DIFF_NS,
                 del_start + off - 1,
-                r[1],
-                { end_col = r[2], hl_group = "DiffText" }
+                r[1] + 1,
+                { end_col = r[2] + 1, hl_group = "DiffText" }
               )
             end
             for _, r in ipairs(ranges.b) do
@@ -347,8 +536,8 @@ local function apply_word_diff(buf, lines, algorithm)
                 buf,
                 WORD_DIFF_NS,
                 add_start + off - 1,
-                r[1],
-                { end_col = r[2], hl_group = "DiffText" }
+                r[1] + 1,
+                { end_col = r[2] + 1, hl_group = "DiffText" }
               )
             end
           end

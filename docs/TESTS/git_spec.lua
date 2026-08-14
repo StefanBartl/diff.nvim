@@ -40,4 +40,33 @@ return function(H)
     git.resolve("git:def0000000000000000000000000000000000000", abspath, "target")
   eq(bad, nil, "unknown revision resolves to nil")
   ok(bad_err ~= nil, "unknown revision reports an error")
+
+  -- end-to-end: target=git:<rev1>..<rev2> bypasses the working buffer -----
+  -- core.run()'s split_git_range expansion (docs/TESTS/resolve_spec.lua unit-
+  -- tests the split itself) wired all the way through to a real diff: the
+  -- current buffer holds content that appears in NEITHER revision, so a
+  -- successful stat proves the range — not the buffer — was diffed, and a
+  -- "current"-ish source= alongside it must be silently overridden.
+  do
+    local core = require("diff.core")
+    local buf = vim.api.nvim_create_buf(false, true)
+    vim.api.nvim_set_current_buf(buf)
+    vim.api.nvim_buf_set_lines(buf, 0, -1, false, { "this text is in neither git revision" })
+    vim.api.nvim_buf_set_name(buf, abspath)
+
+    local out = {}
+    local saved_notify = vim.notify
+    vim.notify = function(m)
+      out[#out + 1] = m
+    end
+    core.run("target=git:HEAD~1..HEAD source=clipboard output=stat")
+    vim.notify = saved_notify
+
+    ok(#out > 0, "git range end-to-end: produced a notification")
+    local last = out[#out]
+    ok(
+      not last:find("could not resolve", 1, true) and not last:find("clipboard is empty", 1, true),
+      "git range end-to-end: no resolution error (got: " .. tostring(last) .. ")"
+    )
+  end
 end

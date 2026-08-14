@@ -42,11 +42,42 @@ When `target=` is omitted, an interactive picker is shown.
 inside a git repository. Runs `git show <rev>:<relpath>` synchronously — no
 shell is spawned.
 
+**`target=git:{rev1}..{rev2}`** — diffs the current file directly between
+two revisions, instead of one revision against the working buffer: sugar for
+`source=git:{rev1} target=git:{rev2}`, and it overrides any `source=` given
+alongside it (there are two revisions to compare, not a revision and
+whatever `source=` would otherwise resolve to). The split point is the
+first `..`, so a revision name that itself contains a dot (`v1.2.3`) is
+still parsed correctly. Only recognized in `target=` — a range in `source=`
+has no second thing to pair it with.
+
 **`http(s)://{url}`** — fetches the URL's content asynchronously via `curl`
 (the editor stays responsive while it's in flight) and diffs against it.
 Requires Neovim 0.10+ (`vim.system`) and a `curl` executable on PATH. See
 [URL sources](url-sources.md) for the timeout setting, requirements, and
 usage examples.
+
+**Directory diff** — when both `source=` and `target=` resolve to real,
+existing directories, `:Diff` compares the two trees file-by-file instead of
+computing a single unified diff (which wouldn't mean anything over two
+whole trees' concatenated bytes). Hidden path segments (`.git`, `.hg`, …)
+are always excluded. `view=` is ignored — there is no native-diffmode
+notion of "diff these two trees" — and `output=` gets its own, smaller
+handling:
+
+| `output=` | Directory-diff behavior |
+|---|---|
+| `buffer` (default) | One scratch buffer listing every changed file: `M`/`A`/`D` + `+added -removed` + path |
+| `prompt` | The same summary, echoed to the message area |
+| `file` | The same summary, written to a temp file |
+| `clipboard` | The same summary, copied to the clipboard (`+`) |
+| `stat` | Just the rolled-up total: file count + `+N -M` |
+
+Capped at `opts.diff.directory_max_files` (default 2000) per side — errors
+rather than silently walking an unexpectedly huge tree. See
+[Configuration](configuration.md) for `directory_max_files` and how
+directory-diff `output=stat` also feeds `stat_list` (below) with one
+real, jump-able entry per changed file.
 
 **Image files** — when both `source=` and `target=` are readable
 raster-image paths (`.png`/`.jpg`/`.jpeg`/`.gif`/`.webp`/`.bmp`; `.svg` is
@@ -91,7 +122,14 @@ the full picture and merge-conflict-resolution examples.
 | `prompt` | Unified diff echoed to the message area |
 | `file` | Unified diff written to a temp file |
 | `clipboard` | Unified diff copied to the clipboard (`+`) |
-| `stat` | Report `+N -M, K hunks` as a notification only (no window) |
+| `stat` | Report `+N -M, K hunks` as a notification only (no window by default — see `stat_list` below) |
+
+`output=stat` can also push each hunk into the quickfix or location list via
+`opts.diff.stat_list` (`"off"` by default, or `"qf"`/`"loc"`) so hunks from
+several `:Diff` invocations accumulate in one navigable list instead of only
+ever showing the latest notification (`opts.diff.stat_list_mode`, `"add"` by
+default; `"replace"` resets the list to just the latest diff each time). See
+[Configuration](configuration.md).
 
 **Examples**
 
@@ -110,9 +148,11 @@ the full picture and merge-conflict-resolution examples.
 :Diff target=a.lua view=tab            " side-by-side diff in a new tab
 :Diff target=git:HEAD                   " current file vs. its last commit
 :Diff target=git:HEAD~1 output=stat     " summary vs. two commits back
+:Diff target=git:HEAD~5..HEAD           " the file directly between two revisions
 :Diff target=https://raw.githubusercontent.com/user/repo/main/f.lua  " current buffer vs. a URL
 :Diff target=git:MERGE_HEAD base=git:HEAD  " three-way merge-conflict view
 :Diff target=new.png source=old.png    " image files -> side by side via images.nvim
+:Diff source=./old_src target=./new_src output=stat  " directory diff: per-file summary
 ```
 
 ## `:DiffClear`

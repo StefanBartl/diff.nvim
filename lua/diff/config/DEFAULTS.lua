@@ -33,6 +33,21 @@ local DEFAULTS = {
     -- produces meaningless output at best. Set false to restore the old
     -- behavior (or install images.nvim to actually see something with it on).
     image_compare = true,
+    -- output=stat can also push its hunks into the quickfix ("qf") or
+    -- location ("loc") list, so hunks from several :Diff invocations can be
+    -- navigated in one list instead of only ever seeing the latest
+    -- notification. "off" (default) keeps output=stat notification-only.
+    stat_list = "off",
+    -- "add" (default) accumulates entries across invocations — the point of
+    -- stat_list existing at all; "replace" resets the list to just the
+    -- latest diff's hunks each time, for a single-diff "browse the hunks"
+    -- use instead of a running log.
+    stat_list_mode = "add",
+    -- source=/target= both resolving to real directories compares the two
+    -- trees file-by-file instead of a single unified diff — see
+    -- core/directory.lua. Caps the file count so pointing this at a huge
+    -- tree by mistake errors instead of hanging.
+    directory_max_files = 2000,
   },
   exit = {
     key = "<Esc><Esc>",

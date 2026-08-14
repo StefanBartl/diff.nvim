@@ -19,6 +19,9 @@ require("diff").setup({
     word_diff         = true,        -- word/char-level DiffText highlighting in view=inline/float
     url_timeout_ms    = 10000,       -- fetch timeout for http(s):// sources/targets
     image_compare     = true,        -- show two raster-image paths side by side via images.nvim
+    stat_list         = "off",       -- "off"|"qf"|"loc" — also push output=stat's hunks to a list
+    stat_list_mode    = "add",       -- "add"|"replace" — accumulate across :Diff calls, or reset each time
+    directory_max_files = 2000,      -- cap on files walked per side of a directory diff
   },
   exit = {
     key             = "<Esc><Esc>", -- exit mapping
@@ -59,6 +62,25 @@ them side by side via [images.nvim](https://github.com/StefanBartl/images.nvim)
 meaningless output. Without images.nvim installed, a clear warning is shown
 instead of silently falling through to that meaningless text diff. Set to
 `false` to restore the old behavior unconditionally.
+
+`diff.stat_list` (default `"off"`): `output=stat` can push each hunk into
+the quickfix (`"qf"`) or location (`"loc"`) list instead of only ever
+reporting the latest diff as a notification. `diff.stat_list_mode`
+(default `"add"`) accumulates entries across separate `:Diff` invocations,
+so hunks from several diffs end up navigable in one list; `"replace"` resets
+the list to just the latest diff each time. Entries carry a real
+`filename`/`bufnr` when the diffed side resolved to one (a file path or an
+open buffer) and are text-only otherwise (`clipboard`, `git:<rev>`, a URL —
+still listed, just not jump-able). A directory diff's own `output=stat`
+(see [Commands](commands.md)) feeds the same list with one entry per changed
+file, each carrying that file's real path.
+
+`diff.directory_max_files` (default `2000`): when `source=`/`target=` both
+resolve to real directories, `:Diff` walks both trees recursively to build
+the per-file summary (see [Commands](commands.md)) — this caps how many
+files it will walk per side before erroring instead of silently continuing
+on an unexpectedly huge tree. Hidden path segments (`.git`, `.hg`, …) are
+always excluded from the walk and don't count against the cap.
 
 ## Picker resolution
 
