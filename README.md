@@ -20,9 +20,10 @@
 > `use_pickers_nvim = false` to always use `vim.ui.select`.
 
 Flexible diffing for Neovim — a single `:Diff` command that compares arbitrary
-sources (the current buffer, a file, a buffer number, the clipboard) against
-each other and delivers the result however you like (side-by-side, inline,
-message prompt, file, or clipboard).
+sources (the current buffer, a file, a buffer number, the clipboard, a git
+revision, a URL, or two whole directory trees) against each other and
+delivers the result however you like (side-by-side, inline, message prompt,
+file, or clipboard).
 
 Cross-platform (Windows + Unix). All diffing goes through `vim.diff` (libvim)
 — no shell commands. Notifications go through
@@ -69,12 +70,14 @@ Omitting `target=` opens an interactive picker (`vim.ui.select`).
 :Diff target=https://example.com/f.lua " current buffer vs. a URL (async)
 :Diff target=git:MERGE_HEAD base=git:HEAD " three-way merge-conflict view
 :Diff target=new.png source=old.png    " image files -> side by side via images.nvim
+:Diff source=./old_src target=./new_src output=stat " directory diff: per-file summary
 ```
 
 ---
 
 ## Documentation
 
+- [Features](docs/FEATURES.md) — everything `diff.nvim` does, one section per capability.
 - [Installation](docs/installation.md) — requirements and setup for lazy.nvim, packer.nvim, and vim-plug.
 - [Configuration](docs/configuration.md) — full defaults, every option explained, and exit-key scope behaviour.
 - [Commands](docs/commands.md) — full `:Diff` argument grammar, examples, and tab completion.
