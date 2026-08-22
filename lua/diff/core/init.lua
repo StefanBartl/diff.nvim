@@ -31,8 +31,8 @@ local CHOICE_BUFFER = "buffer number …"
 
 ---Resolve a side to its lines, treating "current" as the snapshotted buffer.
 ---When `range` is given (only meaningful for "current"), just the selected
----line span is returned instead of the whole buffer. Synchronous — url:// (@see
----`resolve_side_async`) specifiers never reach this function.
+---line span is returned instead of the whole buffer. Synchronous — url:// and
+---git:<rev> (@see `resolve_side_async`) specifiers never reach this function.
 ---@internal
 ---@param spec DiffNvim.Source|DiffNvim.Target
 ---@param label string
@@ -48,20 +48,15 @@ local function resolve_side(spec, label, source_bufnr, range)
     local last = range and range.line2 or -1
     return api.nvim_buf_get_lines(source_bufnr, first, last, false), nil
   end
-  -- `git:<rev>` resolves the current file at a git revision; it needs the name
-  -- of the buffer :Diff was invoked from, which resolve.resolve_lines lacks.
-  local git = require("diff.core.git")
-  if git.is_git_spec(spec) then
-    local bufname = validate.buf_valid(source_bufnr) and api.nvim_buf_get_name(source_bufnr) or ""
-    return git.resolve(spec --[[@as string]], bufname, label)
-  end
+  -- `git:<rev>` is deliberately absent here: it resolves through a subprocess
+  -- and therefore lives in resolve_side_async below, next to the url path.
   return resolve.resolve_lines(spec, label)
 end
 
----Resolve a side to its lines and hand `(lines, err)` to `callback`. Async
----only for `http(s)://` specifiers (@see docs/url-sources.md); every other
----specifier resolves synchronously and calls back immediately, so callers
----never need to know which path was taken.
+---Resolve a side to its lines and hand `(lines, err)` to `callback`. Async for
+---`http(s)://` specifiers (@see docs/url-sources.md) and for `git:<rev>`, which
+---shells out to `git show`; every other specifier resolves synchronously and
+---calls back immediately, so callers never need to know which path was taken.
 ---@param spec DiffNvim.Source|DiffNvim.Target
 ---@param label string
 ---@param source_bufnr integer
@@ -79,6 +74,18 @@ local function resolve_side_async(spec, label, source_bufnr, range, callback)
     )
     return
   end
+
+  -- `git:<rev>` resolves the current file at a git revision; it needs the name
+  -- of the buffer :Diff was invoked from, which resolve.resolve_lines lacks.
+  -- `git show` is a subprocess, so this belongs on the async path -- a
+  -- three-way diff resolves two sides and would otherwise block twice.
+  local git = require("diff.core.git")
+  if git.is_git_spec(spec) then
+    local bufname = validate.buf_valid(source_bufnr) and api.nvim_buf_get_name(source_bufnr) or ""
+    git.resolve(spec --[[@as string]], bufname, label, callback)
+    return
+  end
+
   callback(resolve_side(spec, label, source_bufnr, range))
 end
 
