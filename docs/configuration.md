@@ -24,9 +24,17 @@ require("diff").setup({
     directory_max_files = 2000,      -- cap on files walked per side of a directory diff
   },
   exit = {
-    key             = "<Esc><Esc>", -- exit mapping
+    key             = "<Esc><Esc>", -- exit mapping; a list binds several, e.g. { "<Esc><Esc>", "<C-c>" }
     scope           = "buffer",     -- "buffer"|"global"|false
     native_diffthis = false,        -- also mirror the key onto native :diffthis buffers
+  },
+  keymaps = {                       -- optional shortcuts, none bound by default
+    -- diff         = "<leader>dd", -- :Diff (pick source and target)
+    -- diff_head    = "<leader>dh", -- :Diff target=git:HEAD
+    -- diff_merge   = "<leader>dm", -- :Diff base=git:HEAD target=git:MERGE_HEAD
+    -- diff_buffers = "<leader>db", -- :DiffBuffers
+    -- diff_orig    = "<leader>do", -- :DiffOrig
+    -- diff_clear   = "<leader>dc", -- :DiffClear
   },
   commands = {
     diff         = "Diff",

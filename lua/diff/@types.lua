@@ -88,8 +88,18 @@
 ---| '"global"'  # Global normal-mode mapping (legacy behaviour)
 ---| false       # No keymap; :DiffExit command only
 
+---Optional shortcuts for common invocations. All unset by default —
+---diff.nvim imposes no mappings. Each value is the lhs to bind.
+---@class DiffNvim.Config.Keymaps
+---@field diff?         string  `:Diff` (pick source and target)
+---@field diff_head?    string  `:Diff target=git:HEAD`
+---@field diff_merge?   string  `:Diff base=git:HEAD target=git:MERGE_HEAD`
+---@field diff_buffers? string  `:DiffBuffers`
+---@field diff_orig?    string  `:DiffOrig` (needs `features.diff_origin`)
+---@field diff_clear?   string  `:DiffClear`
+
 ---@class DiffNvim.Config.Exit
----@field key   string                   Left-hand side of the exit mapping
+---@field key   string|string[]          Left-hand side(s) of the exit mapping
 ---@field scope DiffNvim.Config.ExitScope How aggressively the mapping is set
 ---@field native_diffthis boolean  Also mirror the key onto buffers a native :diffthis puts into diffmode (scope="buffer" only). Off by default — see config/DEFAULTS.lua for the rationale.
 
@@ -104,6 +114,7 @@
 ---@field features  DiffNvim.Config.Features
 ---@field diff      DiffNvim.Config.Diff
 ---@field exit      DiffNvim.Config.Exit
+---@field keymaps   DiffNvim.Config.Keymaps  Optional shortcuts for common invocations (default: none)
 ---@field commands  DiffNvim.Config.Commands
 ---@field select_fn (fun(items: any[], opts: table, on_choice: fun(item: any, idx: integer|nil)): nil)|nil  Optional vim.ui.select replacement (dependency injection)
 ---@field use_pickers_nvim boolean  Auto-detect pickers.nvim as the picker engine when select_fn is unset (default true)

@@ -49,7 +49,23 @@ local DEFAULTS = {
     -- tree by mistake errors instead of hanging.
     directory_max_files = 2000,
   },
+  -- Optional shortcuts for common invocations. All unset by default —
+  -- diff.nvim imposes no mappings. Set any of these to an lhs:
+  --   diff          → :Diff (pick source and target)
+  --   diff_head     → :Diff target=git:HEAD
+  --   diff_merge    → :Diff base=git:HEAD target=git:MERGE_HEAD
+  --   diff_buffers  → :DiffBuffers
+  --   diff_orig     → :DiffOrig
+  --   diff_clear    → :DiffClear
+  -- A shortcut whose command is switched off via `features` is refused
+  -- rather than bound to something that would error when pressed.
+  keymaps = {},
+
   exit = {
+    -- A string, or a list of strings to bind several. <Esc><Esc> is a
+    -- reasonable default but collides with other plugins often enough that
+    -- being able to add a second key (e.g. { "<Esc><Esc>", "<C-c>" }) beats
+    -- having to replace it.
     key = "<Esc><Esc>",
     scope = "buffer",
     -- Also mirror the exit key onto buffers a *native* :diffthis puts into

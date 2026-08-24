@@ -226,7 +226,36 @@ always works regardless of scope.
   [BINDINGS.md](BINDINGS.md#keymaps))
 - **Usercmds:** `:DiffExit` ([BINDINGS.md](BINDINGS.md#user-commands))
 - **Config:** `opts.features.diff_exit` (default `true`), `opts.exit.key`
-  (default `<Esc><Esc>`), `opts.exit.scope` (default `"buffer"`)
+  (default `<Esc><Esc>`; a list binds several, so `<C-c>` can be added
+  alongside rather than replacing the default), `opts.exit.scope` (default
+  `"buffer"`)
+
+## Optional keymap shortcuts
+
+Fixed-invocation shortcuts for the invocations long enough to be worth a key:
+`:Diff target=git:HEAD` and the merge-conflict form
+(`base=git:HEAD target=git:MERGE_HEAD`), plus the three standalone commands.
+
+**Nothing is bound by default.** diff.nvim deliberately imposes no leader
+mappings, and that has not changed — the shortcuts exist so you don't have to
+write the `vim.keymap.set` yourself *if you want one*, not because the plugin
+thinks you should.
+
+The right-hand side is built from the configured command names, and a
+shortcut whose command is switched off via `features` is refused with a
+warning rather than bound to something that errors on first press.
+
+- **Module:** `lua/diff/bindings/keymaps.lua` (`register_shortcuts`,
+  `SHORTCUTS`)
+- **Keymaps:** `keymaps.{diff,diff_head,diff_merge,diff_buffers,diff_orig,diff_clear}`
+  ([BINDINGS.md](BINDINGS.md#optional-shortcuts))
+- **Config:** `opts.keymaps` (default `{}`)
+- **Tests:** `docs/TESTS/keymaps_spec.lua`
+
+Added 2026-08-24, closing the flag/option audit's entries about missing
+keymaps for the HEAD/merge-conflict invocations and for
+`:DiffBuffers`/`:DiffOrig`/`:DiffClear`, and about there being no way to add
+a second exit key.
 
 ## Native `:diffthis` exit-key mirroring
 

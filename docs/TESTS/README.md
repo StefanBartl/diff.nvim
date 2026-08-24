@@ -28,6 +28,7 @@ The runner prints one line per spec and exits non-zero on the first failure
 | `pickers_bridge_spec.lua` | `pickers_bridge.resolve()` nil-fallback (absent / no engine).|
 | `pick_specifier_spec.lua` | `pick_specifier`'s default fallback renders via `kit.confirm` (≤4 choices), and a configured `select_fn` still takes precedence. |
 | `native_diffthis_spec.lua` | `native_diffthis.sync()` attach/detach logic + `register()` gating. |
+| `keymaps_spec.lua` | `bindings.keymaps`: `exit.key` as a list (both keys bound, both removed again by `detach_buffer` — which used to delete `cfg.key` directly and so removed nothing once it could be a list), a plain string still working, empty/non-string keys binding nothing, and `scope` gating. Then `register_shortcuts`: an empty table binding nothing, each of the six shortcuts producing the right `<Cmd>…<CR>` rhs, the rhs following a renamed command rather than hardcoding `Diff`, a shortcut being refused when its `features` gate is off, and unknown/false/empty entries binding nothing. |
 | `url_spec.lua`     | `is_url_spec` + `fetch()` guard clauses; best-effort live round-trip (skipped, not failed, without network). |
 | `three_way_spec.lua` | `render.three_way()` layout (vsplit/tab/invalid window) + `core.run()`'s `base=` validation and end-to-end wiring. |
 | `image_compare_spec.lua` | `image_compare.maybe_compare()` extension detection + images.nvim-absent warning path. |

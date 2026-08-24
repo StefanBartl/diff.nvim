@@ -38,7 +38,7 @@ function M.sync(cfg, win)
   if vim.wo[win].diff then
     require("diff.bindings.keymaps").attach_buffer(cfg, buf)
   else
-    pcall(vim.keymap.del, "n", cfg.key, { buffer = buf })
+    require("diff.bindings.keymaps").detach_buffer(cfg, buf)
   end
 end
 

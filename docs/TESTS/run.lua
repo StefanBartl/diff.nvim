@@ -98,6 +98,7 @@ local specs = {
   "pick_specifier_spec.lua",
   "prompt_file_spec.lua",
   "native_diffthis_spec.lua",
+  "keymaps_spec.lua",
   "url_spec.lua",
   "three_way_spec.lua",
   "image_compare_spec.lua",
