@@ -1,4 +1,4 @@
--- docs/TESTS/validate_spec.lua — util.validate: pure helpers.
+-- TESTS/validate_spec.lua — util.validate: pure helpers.
 
 return function(H)
   local eq, ok = H.eq, H.ok

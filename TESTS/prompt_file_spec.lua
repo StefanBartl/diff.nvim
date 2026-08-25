@@ -1,4 +1,4 @@
--- docs/TESTS/prompt_file_spec.lua — core.init's prompt_file: migrated off
+-- TESTS/prompt_file_spec.lua — core.init's prompt_file: migrated off
 -- vim.ui.input({completion="file"}, cb) onto
 -- lib.nvim.ui.kit.input({completion="file", on_submit, on_cancel}) now that
 -- kit.input has a completion="file" equivalent (lib.nvim Phase 11). Same

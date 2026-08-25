@@ -23,7 +23,7 @@ jobs:
         run: sudo apt-get update && sudo apt-get install -y luarocks && sudo luarocks install luacheck
 
       - name: luacheck
-        run: luacheck lua plugin docs/TESTS
+        run: luacheck lua plugin TESTS
 
   tests:
     name: Headless spec suite
@@ -35,7 +35,7 @@ jobs:
           path: diff.nvim
 
       # diff.nvim depends on lib.nvim at runtime (util/notify, util/validate).
-      # The test runner picks it up via $LIB_NVIM_PATH (see docs/TESTS/run.lua).
+      # The test runner picks it up via $LIB_NVIM_PATH (see TESTS/run.lua).
       - name: Checkout lib.nvim
         uses: actions/checkout@v4
         with:
@@ -56,7 +56,7 @@ jobs:
           set +e
           nvim --headless -u NONE \
             -c "set rtp+=." \
-            -c "luafile docs/TESTS/run.lua" \
+            -c "luafile TESTS/run.lua" \
             -c "qa!" > out.log 2>&1
           cat out.log
           grep -q DIFF_NVIM_TESTS_OK out.log

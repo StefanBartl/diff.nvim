@@ -1,4 +1,4 @@
--- docs/TESTS/git_spec.lua — core.git: is_git_spec + resolve against HEAD.
+-- TESTS/git_spec.lua — core.git: is_git_spec + resolve against HEAD.
 --
 -- Runs from the repo root (see run.lua), so the working directory is a real
 -- git repository and a committed file can be resolved for real.
@@ -59,7 +59,7 @@ return function(H)
   ok(bad_err ~= nil, "unknown revision reports an error")
 
   -- end-to-end: target=git:<rev1>..<rev2> bypasses the working buffer -----
-  -- core.run()'s split_git_range expansion (docs/TESTS/resolve_spec.lua unit-
+  -- core.run()'s split_git_range expansion (TESTS/resolve_spec.lua unit-
   -- tests the split itself) wired all the way through to a real diff: the
   -- current buffer holds content that appears in NEITHER revision, so a
   -- successful stat proves the range — not the buffer — was diffed, and a

@@ -1,4 +1,4 @@
--- docs/TESTS/status_spec.lua — diff.status + scratch.active_count.
+-- TESTS/status_spec.lua — diff.status + scratch.active_count.
 
 return function(H)
   local eq = H.eq

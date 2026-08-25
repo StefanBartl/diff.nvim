@@ -1,4 +1,4 @@
--- docs/TESTS/keymaps_spec.lua — bindings.keymaps: multi-key exit binding and
+-- TESTS/keymaps_spec.lua — bindings.keymaps: multi-key exit binding and
 -- the optional cfg.keymaps shortcuts.
 --
 -- Both are about what does and does not get bound, so everything here reads

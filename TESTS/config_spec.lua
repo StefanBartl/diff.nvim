@@ -1,4 +1,4 @@
--- docs/TESTS/config_spec.lua — config merge (DEFAULTS + user options).
+-- TESTS/config_spec.lua — config merge (DEFAULTS + user options).
 ---@diagnostic disable: missing-fields
 
 return function(H)

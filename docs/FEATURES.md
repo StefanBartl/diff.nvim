@@ -250,7 +250,7 @@ warning rather than bound to something that errors on first press.
 - **Keymaps:** `keymaps.{diff,diff_head,diff_merge,diff_buffers,diff_orig,diff_clear}`
   ([BINDINGS.md](BINDINGS.md#optional-shortcuts))
 - **Config:** `opts.keymaps` (default `{}`)
-- **Tests:** `docs/TESTS/keymaps_spec.lua`
+- **Tests:** `TESTS/keymaps_spec.lua`
 
 Added 2026-08-24, closing the flag/option audit's entries about missing
 keymaps for the HEAD/merge-conflict invocations and for

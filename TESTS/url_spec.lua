@@ -1,4 +1,4 @@
--- docs/TESTS/url_spec.lua — core.url: is_url_spec + fetch() guard clauses and
+-- TESTS/url_spec.lua — core.url: is_url_spec + fetch() guard clauses and
 -- a best-effort live round-trip. See docs/url-sources.md for the feature.
 
 return function(H)

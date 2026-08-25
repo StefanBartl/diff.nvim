@@ -8,7 +8,7 @@ is trivially testable without a UI.
 From the repo root:
 
 ```sh
-nvim --headless -u NONE -c "set rtp+=." -c "luafile docs/TESTS/run.lua" -c "qa!"
+nvim --headless -u NONE -c "set rtp+=." -c "luafile TESTS/run.lua" -c "qa!"
 ```
 
 The runner prints one line per spec and exits non-zero on the first failure

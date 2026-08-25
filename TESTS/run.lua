@@ -1,7 +1,7 @@
--- docs/TESTS/run.lua — headless test runner for diff.nvim.
+-- TESTS/run.lua — headless test runner for diff.nvim.
 --
 -- Run from the repo root:
---   nvim --headless -u NONE -c "set rtp+=." -c "luafile docs/TESTS/run.lua" -c "qa!"
+--   nvim --headless -u NONE -c "set rtp+=." -c "luafile TESTS/run.lua" -c "qa!"
 --
 -- Loads every *_spec.lua listed below, runs it against the shared harness,
 -- prints a per-spec result, and exits non-zero on the first failing spec.

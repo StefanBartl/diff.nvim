@@ -1,4 +1,4 @@
--- docs/TESTS/pickers_bridge_spec.lua — core.pickers_bridge: optional
+-- TESTS/pickers_bridge_spec.lua — core.pickers_bridge: optional
 -- pickers.nvim adapter for select_fn.
 
 return function(H)

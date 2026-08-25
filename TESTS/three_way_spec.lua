@@ -1,4 +1,4 @@
--- docs/TESTS/three_way_spec.lua — render.three_way() layout + core.run()'s
+-- TESTS/three_way_spec.lua — render.three_way() layout + core.run()'s
 -- base= validation and end-to-end wiring. See docs/three-way-diff.md.
 
 return function(H)

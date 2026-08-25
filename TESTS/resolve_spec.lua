@@ -1,4 +1,4 @@
--- docs/TESTS/resolve_spec.lua — core.resolve: parse_args + resolve_lines.
+-- TESTS/resolve_spec.lua — core.resolve: parse_args + resolve_lines.
 
 return function(H)
   local eq, ok = H.eq, H.ok

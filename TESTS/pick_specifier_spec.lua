@@ -1,4 +1,4 @@
--- docs/TESTS/pick_specifier_spec.lua — core.init's pick_specifier: the
+-- TESTS/pick_specifier_spec.lua — core.init's pick_specifier: the
 -- default fallback (no configured select_fn, pickers.nvim unavailable/opted
 -- out) now renders via lib.nvim.ui.kit.confirm's button row instead of
 -- vim.ui.select, since pick_specifier's choice lists are always ≤4 long. An

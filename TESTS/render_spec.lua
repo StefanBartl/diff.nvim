@@ -1,4 +1,4 @@
--- docs/TESTS/render_spec.lua — core.render: compute_stats + format_stats.
+-- TESTS/render_spec.lua — core.render: compute_stats + format_stats.
 
 return function(H)
   local eq, ok = H.eq, H.ok

@@ -1,4 +1,4 @@
--- docs/TESTS/native_diffthis_spec.lua — features.native_diffthis: sync() logic
+-- TESTS/native_diffthis_spec.lua — features.native_diffthis: sync() logic
 -- and register()'s gating. sync() is tested directly (attach/detach against a
 -- real window's 'diff' state) rather than via the OptionSet event itself,
 -- since OptionSet does not reliably fire in this headless test environment

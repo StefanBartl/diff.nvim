@@ -1,4 +1,4 @@
--- docs/TESTS/directory_spec.lua — core.directory: source=/target= both real
+-- TESTS/directory_spec.lua — core.directory: source=/target= both real
 -- directories compares the two trees file-by-file instead of a single
 -- unified diff.
 

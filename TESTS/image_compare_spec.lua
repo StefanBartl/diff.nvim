@@ -1,4 +1,4 @@
--- docs/TESTS/image_compare_spec.lua — features.image_compare: spec
+-- TESTS/image_compare_spec.lua — features.image_compare: spec
 -- classification + the maybe_compare gate.
 
 return function(H)
