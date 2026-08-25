@@ -9,12 +9,15 @@ return function(H)
   -- is_directory_spec ------------------------------------------------------
   local dir = H.tmpdir()
   ok(directory.is_directory_spec(dir), "a real directory is a directory spec")
-  ok(not directory.is_directory_spec("current"), "\"current\" is never a directory spec")
-  ok(not directory.is_directory_spec("clipboard"), "\"clipboard\" is never a directory spec")
+  ok(not directory.is_directory_spec("current"), '"current" is never a directory spec')
+  ok(not directory.is_directory_spec("clipboard"), '"clipboard" is never a directory spec')
   ok(not directory.is_directory_spec("42"), "a buffer number is never a directory spec")
   ok(not directory.is_directory_spec("git:HEAD"), "git:<rev> is never a directory spec")
   ok(not directory.is_directory_spec("https://example.com/x"), "a URL is never a directory spec")
-  ok(not directory.is_directory_spec("/does/not/exist"), "a nonexistent path is not a directory spec")
+  ok(
+    not directory.is_directory_spec("/does/not/exist"),
+    "a nonexistent path is not a directory spec"
+  )
 
   -- Build two small trees:
   --   source: a.txt (2 lines), removed_only.txt
@@ -46,7 +49,10 @@ return function(H)
     local lines = vim.api.nvim_buf_get_lines(buf, 0, -1, false)
     local text = table.concat(lines, "\n")
     ok(text:match("M%s+%+1%s+%-1%s+a%.txt") ~= nil, "buffer summary: a.txt shown as modified +1 -1")
-    ok(text:match("A%s+%+1%s+%-0%s+added_only%.txt") ~= nil, "buffer summary: added_only.txt shown as added")
+    ok(
+      text:match("A%s+%+1%s+%-0%s+added_only%.txt") ~= nil,
+      "buffer summary: added_only.txt shown as added"
+    )
     ok(
       text:match("D%s+%+0%s+%-1%s+removed_only%.txt") ~= nil,
       "buffer summary: removed_only.txt shown as deleted"
@@ -90,7 +96,10 @@ return function(H)
     directory.run(same_dir, same_dir, "src", "tgt", "buffer", cfg)
     local buf = vim.api.nvim_get_current_buf()
     local lines = vim.api.nvim_buf_get_lines(buf, 0, -1, false)
-    ok(table.concat(lines, "\n"):match("No differences found") ~= nil, "identical trees: no differences")
+    ok(
+      table.concat(lines, "\n"):match("No differences found") ~= nil,
+      "identical trees: no differences"
+    )
     vim.cmd("silent! only")
   end
 

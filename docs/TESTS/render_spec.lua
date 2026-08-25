@@ -98,7 +98,8 @@ return function(H)
       3,
       { layout = "split", word_diff = true }
     )
-    local marks_pos = vim.api.nvim_buf_get_extmarks(buf_pos, WORD_DIFF_NS, 0, -1, { details = true })
+    local marks_pos =
+      vim.api.nvim_buf_get_extmarks(buf_pos, WORD_DIFF_NS, 0, -1, { details = true })
     ok(#marks_pos > 0, "word-diff position check: at least one extmark")
     local highlighted = {}
     for _, m in ipairs(marks_pos) do
@@ -107,7 +108,11 @@ return function(H)
       highlighted[#highlighted + 1] = line:sub(col + 1, details.end_col)
     end
     table.sort(highlighted)
-    eq(table.concat(highlighted, ","), "e,ld,the,wo", "word-diff highlights the changed text exactly")
+    eq(
+      table.concat(highlighted, ","),
+      "e,ld,the,wo",
+      "word-diff highlights the changed text exactly"
+    )
     vim.cmd("silent! only")
   end
 
@@ -126,7 +131,8 @@ return function(H)
       3,
       { layout = "split", word_diff = true }
     )
-    local marks_utf = vim.api.nvim_buf_get_extmarks(buf_utf, WORD_DIFF_NS, 0, -1, { details = true })
+    local marks_utf =
+      vim.api.nvim_buf_get_extmarks(buf_utf, WORD_DIFF_NS, 0, -1, { details = true })
     eq(#marks_utf, 2, "utf8 word-diff: one extmark per side")
     local by_row = {}
     for _, m in ipairs(marks_utf) do
