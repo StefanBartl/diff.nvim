@@ -14,7 +14,7 @@
 --- without depending on the OptionSet event actually firing.
 
 local validate = require("diff.util.validate")
-local autocmd = require("lib.nvim.autocmd")
+local autocmd = require("lib.nvim.bindings.autocmd")
 
 local M = {}
 
@@ -52,7 +52,7 @@ function M.register(cfg)
   end
 
   -- Created directly via nvim_create_augroup(..., { clear = true }) rather
-  -- than lib.nvim.autocmd.group(): that helper caches groups by name and
+  -- than lib.nvim.bindings.autocmd.group(): that helper caches groups by name and
   -- skips the clear on subsequent calls, which would stack duplicate
   -- autocmds if register() ever re-runs.
   local aug = vim.api.nvim_create_augroup(AUGROUP, { clear = true })

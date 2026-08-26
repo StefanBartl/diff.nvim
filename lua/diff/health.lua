@@ -13,7 +13,7 @@ function M.check()
     vim.health.warn("Neovim 0.9+ recommended")
   end
 
-  if pcall(require, "lib.nvim.usercmd.composer") then
+  if pcall(require, "lib.nvim.bindings.usercmd.composer") then
     vim.health.ok("lib.nvim detected (:Diff command layer available)")
   else
     vim.health.error(
@@ -68,7 +68,7 @@ function M.check()
     vim.health.warn("plugin guard not set — call require('diff').setup()")
   end
 
-  require("lib.nvim.usercmd.composer").checkhealth("Diff")
+  require("lib.nvim.bindings.usercmd.composer").checkhealth("Diff")
 end
 
 return M

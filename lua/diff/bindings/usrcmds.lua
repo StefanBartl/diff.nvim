@@ -1,5 +1,5 @@
 ---@module 'diff.bindings.usrcmds'
---- User-command registration for :Diff, built via lib.nvim.usercmd.composer.
+--- User-command registration for :Diff, built via lib.nvim.bindings.usercmd.composer.
 ---
 --- Registers :Diff, :DiffClear, :DiffBuffers, :DiffOrig and :DiffExit using
 --- the configured command names -- five separate top-level commands (not a
@@ -17,7 +17,7 @@
 --- KvSpec.values (soft, unenforced) rather than KvSpec.enum (which would
 --- reject any value not in the list -- a real behavior regression).
 
-local composer = require("lib.nvim.usercmd.composer")
+local composer = require("lib.nvim.bindings.usercmd.composer")
 
 local core = require("diff.core")
 

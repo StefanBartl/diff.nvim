@@ -397,7 +397,7 @@ Leave diff mode from anywhere (`diffoff!`). Works regardless of the configured
 6. TAB COMPLETION                                            *diff-completion*
 
 `:Diff` completes the `key=value` grammar context-sensitively, built via
-lib.nvim.usercmd.composer (Route.kv). The value lists below are completion
+lib.nvim.bindings.usercmd.composer (Route.kv). The value lists below are completion
 hints, not a closed set — any string is still accepted as target=/source=/
 base= (e.g. a literal file path); only view=/output= are drawn from a
 fixed set of modes: >
@@ -490,7 +490,7 @@ Checks:
       exit.lua                :DiffExit logic + exit-behaviour config
       native_diffthis.lua     Opt-in exit-key mirroring onto native :diffthis buffers
     bindings/
-      usrcmds.lua             :Diff/:DiffClear/:DiffBuffers/:DiffOrig/:DiffExit (lib.nvim.usercmd.composer) + completion
+      usrcmds.lua             :Diff/:DiffClear/:DiffBuffers/:DiffOrig/:DiffExit (lib.nvim.bindings.usercmd.composer) + completion
       keymaps.lua             Exit-keymap wiring (global + buffer-local)
       autocmds.lua            VimLeavePre cleanup
       init.lua                Orchestrates the three above

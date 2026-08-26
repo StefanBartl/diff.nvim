@@ -15,7 +15,7 @@
 --- because the plugin thinks you should have one.
 
 local validate = require("diff.util.validate")
-local map = require("lib.nvim.map")
+local map = require("lib.nvim.bindings.keymap")
 
 local M = {}
 
