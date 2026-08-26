@@ -148,6 +148,21 @@ local SHORTCUTS = {
 ---user set an lhs for it.
 ---@param cfg DiffNvim.Config
 ---@return nil
+---Declare and bind the `:Diff` shortcut keymaps.
+---
+--- Declared through `lib.nvim.bindings.keymap`'s registry, with the two
+--- rejection reasons kept *here* rather than delegated to it: an unknown name
+--- is answered with the full accepted list, and a name whose feature is
+--- switched off says so by name. Both are worth more than the registry's
+--- nearest-match guess, and a rejected name never reaches it, so nothing
+--- warns twice.
+---
+--- Every shortcut stays *declared* even when its feature is off -- it is
+--- forced to `false` instead of being left out -- because :checkhealth and the
+--- generated docs ask what exists, and "off because features.X is off" is a
+--- different answer from "there is no such shortcut".
+---@param cfg Diff.Config
+---@return Lib.Keymap.Registered[]|nil
 function M.register_shortcuts(cfg)
   local keymaps = cfg.keymaps
   if type(keymaps) ~= "table" then
@@ -155,12 +170,29 @@ function M.register_shortcuts(cfg)
   end
 
   local notify = require("lib.nvim.notify").create("[diff.keymaps]")
+  local keymap = require("lib.nvim.bindings.keymap")
 
   -- Sorted, so the "accepted" list in a warning reads the same every time
   -- rather than in whatever order `pairs` happens to walk the table.
   local accepted = vim.tbl_keys(SHORTCUTS)
   table.sort(accepted)
 
+  ---@type table<string, Lib.Keymap.Action>
+  local actions = {}
+  for name, spec in pairs(SHORTCUTS) do
+    local cmd = cfg.commands[spec.command]
+    if spec.args ~= "" then
+      cmd = cmd .. " " .. spec.args
+    end
+    actions[name] = {
+      rhs = ("<Cmd>%s<CR>"):format(cmd),
+      desc = spec.label,
+      opts = { silent = true },
+    }
+  end
+
+  ---@type table<string, string|false>
+  local user = {}
   for name, lhs in pairs(keymaps) do
     if lhs and lhs ~= "" then
       local spec = SHORTCUTS[name]
@@ -178,15 +210,14 @@ function M.register_shortcuts(cfg)
             spec.feature
           )
         )
+        user[name] = false
       else
-        local cmd = cfg.commands[spec.command]
-        if spec.args ~= "" then
-          cmd = cmd .. " " .. spec.args
-        end
-        map("n", lhs, ("<Cmd>%s<CR>"):format(cmd), { silent = true }, "[diff] " .. spec.label)
+        user[name] = lhs
       end
     end
   end
+
+  return keymap.register("diff", { order = accepted, actions = actions }, user)
 end
 
 return M
