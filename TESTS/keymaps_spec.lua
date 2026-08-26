@@ -114,9 +114,13 @@ return function(H)
   eq(global_map("<C-x>4").rhs, "<Cmd>DiffBuffers<CR>", "diff_buffers → :DiffBuffers")
   eq(global_map("<C-x>5").rhs, "<Cmd>DiffOrig<CR>", "diff_orig → :DiffOrig")
   eq(global_map("<C-x>6").rhs, "<Cmd>DiffClear<CR>", "diff_clear → :DiffClear")
-  ok(
-    global_map("<C-x>2").desc:find("[diff]", 1, true) == 1,
-    "shortcuts carry a [diff]-prefixed desc for which-key"
+  -- The prefix is now the plugin name, set by lib.nvim's keymap registry,
+  -- which is what every plugin here reads like since they moved onto it.
+  -- which-key takes this string as the label, so it is worth pinning.
+  eq(
+    global_map("<C-x>2").desc,
+    "diff: Diff against HEAD",
+    "shortcuts carry a plugin-prefixed desc for which-key"
   )
 
   for i = 1, 6 do
