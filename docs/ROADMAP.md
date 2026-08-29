@@ -1,4 +1,0 @@
-# Roadmap — diff.nvim
-
----
-

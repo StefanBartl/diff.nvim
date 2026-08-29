@@ -87,4 +87,3 @@ Omitting `target=` opens an interactive picker (`vim.ui.select`).
 - [Architecture](docs/architecture.md) — module layout and load order.
 - [Testing & health check](docs/testing.md) — `:checkhealth diff` and the headless spec suite.
 - [Bindings cheatsheet](docs/BINDINGS.md) — every keymap, user command, and autocommand.
-- [Roadmap](docs/ROADMAP.md) — planned features.
