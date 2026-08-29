@@ -15,6 +15,7 @@ local fn = vim.fn
 local notify = require("diff.util.notify")
 local render = require("diff.core.render")
 local scratch = require("diff.core.scratch")
+local list = require("lib.nvim.ui.list")
 
 local M = {}
 
@@ -210,16 +211,12 @@ function M.run(source_dir, target_dir, source_label, target_label, output, cfg)
       }
     end
     if #items > 0 then
-      local action = (cfg.stat_list_mode == "replace") and " " or "a"
-      local what =
-        { title = string.format("diff.nvim: %s -> %s", source_label, target_label), items = items }
-      if cfg.stat_list == "loc" then
-        vim.fn.setloclist(0, {}, action, what)
-        vim.cmd("silent! lopen")
-      else
-        vim.fn.setqflist({}, action, what)
-        vim.cmd("silent! copen")
-      end
+      list.set({
+        items = items,
+        title = string.format("diff.nvim: %s -> %s", source_label, target_label),
+        loclist = cfg.stat_list == "loc",
+        action = (cfg.stat_list_mode == "replace") and " " or "a",
+      })
     end
   end
 

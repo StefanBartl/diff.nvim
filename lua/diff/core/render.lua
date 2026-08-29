@@ -12,6 +12,7 @@ local notify = require("diff.util.notify")
 local validate = require("diff.util.validate")
 local scratch = require("diff.core.scratch")
 local window = require("lib.nvim.window")
+local list = require("lib.nvim.ui.list")
 
 local M = {}
 
@@ -164,16 +165,14 @@ function M.push_stat_list(a_lines, b_lines, a_label, b_label, algorithm, ctxlen,
     items[#items + 1] = item
   end
 
-  local action = (list_opts.mode == "replace") and " " or "a"
-  local what = { title = string.format("diff.nvim: %s -> %s", a_label, b_label), items = items }
-
-  if list_opts.list == "loc" then
-    fn.setloclist(0, {}, action, what)
-    vim.cmd("silent! lopen")
-  else
-    fn.setqflist({}, action, what)
-    vim.cmd("silent! copen")
-  end
+  list.set({
+    items = items,
+    title = string.format("diff.nvim: %s -> %s", a_label, b_label),
+    loclist = list_opts.list == "loc",
+    -- "replace" pushes a fresh list; anything else appends to the one that is
+    -- already there, so successive diffs accumulate.
+    action = (list_opts.mode == "replace") and " " or "a",
+  })
 end
 
 ---Report `+N -M, K hunks` for the diff as a notification, and optionally
