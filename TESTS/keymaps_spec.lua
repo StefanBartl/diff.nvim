@@ -1,3 +1,6 @@
+---@diagnostic disable: missing-fields
+-- The exit-config tables below carry only `key` and `scope`, the two fields
+-- attach_buffer reads; a resolved DiffNvim.Config.Exit per case would be noise.
 -- TESTS/keymaps_spec.lua — bindings.keymaps: multi-key exit binding and
 -- the optional cfg.keymaps shortcuts.
 --

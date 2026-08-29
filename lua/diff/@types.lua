@@ -119,4 +119,52 @@
 ---@field select_fn (fun(items: any[], opts: table, on_choice: fun(item: any, idx: integer|nil)): nil)|nil  Optional vim.ui.select replacement (dependency injection)
 ---@field use_pickers_nvim boolean  Auto-detect pickers.nvim as the picker engine when select_fn is unset (default true)
 
+-- #####################################################################
+-- setup() input
+-- #####################################################################
+
+--- What `setup()` accepts: the same shape as `DiffNvim.Config`, every field
+--- optional, nested tables included. `config.setup` merges it over
+--- `config/DEFAULTS.lua` and everything downstream reads the resolved
+--- `DiffNvim.Config`, which stays strict -- so a partial call is legal
+--- without every read of `cfg.diff.ctxlen` turning into a nil check.
+---@class DiffNvim.Opts
+---@field features?         DiffNvim.Opts.Features
+---@field diff?             DiffNvim.Opts.Diff
+---@field exit?             DiffNvim.Opts.Exit
+---@field keymaps?          DiffNvim.Config.Keymaps  Optional shortcuts for common invocations (default: none)
+---@field commands?         DiffNvim.Opts.Commands
+---@field select_fn?        (fun(items: any[], opts: table, on_choice: fun(item: any, idx: integer|nil)): nil)|nil  Optional vim.ui.select replacement (dependency injection)
+---@field use_pickers_nvim? boolean  Auto-detect pickers.nvim as the picker engine when select_fn is unset (default true)
+
+---@class DiffNvim.Opts.Features
+---@field diff?        boolean  Register the :Diff / :DiffClear commands
+---@field diff_origin? boolean  Register the :DiffOrig command
+---@field diff_exit?   boolean  Register the :DiffExit command + exit keymap
+
+---@class DiffNvim.Opts.Diff
+---@field default_view?        DiffNvim.View    Default layout when none is given
+---@field default_output?      DiffNvim.Output  Default delivery when none is given
+---@field default_source?      DiffNvim.Source  Default source when none is given
+---@field default_orig_view?   "vsplit"|"split" Split direction used by :DiffOrig
+---@field algorithm?           "myers"|"minimal"|"patience"|"histogram"  vim.diff algorithm
+---@field ctxlen?              integer  Context lines around each hunk in unified output
+---@field word_diff?           boolean  Word/char-level DiffText highlighting in view=inline/float
+---@field url_timeout_ms?      integer  Timeout for http(s):// sources/targets in ms — @see docs/url-sources.md
+---@field image_compare?       boolean  Show two raster-image file paths side by side via images.nvim instead of text-diffing their bytes (default true; svg excluded — it's text)
+---@field stat_list?           "off"|"qf"|"loc"  Also push output=stat's hunks to the quickfix/location list (default "off")
+---@field stat_list_mode?      "add"|"replace"   "add" accumulates across :Diff invocations (default), "replace" resets the list each time
+---@field directory_max_files? integer  Cap on files walked per side of a directory diff (default 2000) — see core/directory.lua
+
+---@class DiffNvim.Opts.Exit
+---@field key?             string|string[]          Left-hand side(s) of the exit mapping
+---@field scope?           DiffNvim.Config.ExitScope How aggressively the mapping is set
+---@field native_diffthis? boolean  Also mirror the key onto buffers a native :diffthis puts into diffmode (scope="buffer" only). Off by default — see config/DEFAULTS.lua for the rationale.
+
+---@class DiffNvim.Opts.Commands
+---@field diff?         string  Name of the main diff command
+---@field diff_clear?   string  Name of the clear command
+---@field diff_buffers? string  Name of the buffer-picker diff command
+---@field diff_orig?    string  Name of the origin command
+---@field diff_exit?    string  Name of the exit command
 return {}

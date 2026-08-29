@@ -21,7 +21,7 @@ local M = {}
 local _setup_done = false
 
 ---Configure and activate diff.nvim.
----@param user_opts? DiffNvim.Config|table
+---@param user_opts? DiffNvim.Opts
 ---@return nil
 function M.setup(user_opts)
   if _setup_done then
@@ -39,7 +39,7 @@ end
 
 ---Alias for setup() — mirrors the legacy `require("custom.diff").enable(opts)`
 ---signature so existing call-sites keep working.
----@param user_opts? DiffNvim.Config|table
+---@param user_opts? DiffNvim.Opts
 ---@return nil
 function M.enable(user_opts)
   M.setup(user_opts)

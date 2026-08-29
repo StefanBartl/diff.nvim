@@ -13,7 +13,7 @@ local _active = nil
 
 ---Merge user options over the defaults and store the result.
 ---Validates only the cheap, high-value fields; unknown keys are preserved.
----@param user_opts? DiffNvim.Config|table
+---@param user_opts? DiffNvim.Opts
 ---@return DiffNvim.Config
 function M.setup(user_opts)
   if type(user_opts) ~= "table" then
