@@ -28,6 +28,8 @@ return function(H)
 
     local diff_core = fresh_core()
     local executed
+    -- Test double over a typed surface; restored right after the case.
+    ---@diagnostic disable-next-line: duplicate-set-field
     diff_core.execute = function(opts)
       executed = opts
     end
@@ -61,6 +63,8 @@ return function(H)
 
     local diff_core = fresh_core()
     local executed
+    -- Test double over a typed surface; restored right after the case.
+    ---@diagnostic disable-next-line: duplicate-set-field
     diff_core.execute = function(opts)
       executed = opts
     end

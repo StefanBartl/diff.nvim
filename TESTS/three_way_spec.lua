@@ -55,6 +55,8 @@ return function(H)
   vim.cmd("silent! tabonly | silent! only")
   local msgs = {}
   local saved_notify = vim.notify
+  -- Test double over a typed surface; restored right after the case.
+  ---@diagnostic disable-next-line: duplicate-set-field
   vim.notify = function(m)
     msgs[#msgs + 1] = m
   end
@@ -78,6 +80,8 @@ return function(H)
   local function run_capturing(args)
     local out = {}
     local sn = vim.notify
+    -- Test double over a typed surface; restored right after the case.
+    ---@diagnostic disable-next-line: duplicate-set-field
     vim.notify = function(m)
       out[#out + 1] = m
     end
@@ -108,6 +112,8 @@ return function(H)
   vim.cmd("silent! tabonly | silent! only")
   local live_buf = H.scratch()
   vim.api.nvim_buf_set_lines(live_buf, 0, -1, false, { "local line" })
+  -- Test double over a typed surface; restored right after the case.
+  ---@diagnostic disable-next-line: duplicate-set-field
   vim.notify = function() end
   core.run(string.format("target=%s base=%s", target_file, base_file))
   vim.notify = saved_notify

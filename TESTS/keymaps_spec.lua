@@ -64,6 +64,7 @@ return function(H)
   -- Degenerate values must not raise or bind anything.
   keymaps.attach_buffer({ key = "", scope = "buffer" }, buf)
   keymaps.attach_buffer({ key = {}, scope = "buffer" }, buf)
+  ---@diagnostic disable-next-line: assign-type-mismatch
   keymaps.attach_buffer({ key = { "", 42 }, scope = "buffer" }, buf)
   eq(vim.tbl_count(buf_lhs(buf)), 0, "empty / non-string keys bind nothing")
 

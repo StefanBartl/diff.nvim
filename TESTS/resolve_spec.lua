@@ -15,6 +15,7 @@ return function(H)
   eq(kv.output, "prompt", "parse output")
 
   eq(next(resolve.parse_args("")), nil, "empty args parse to empty table")
+  ---@diagnostic disable-next-line: param-type-mismatch
   eq(next(resolve.parse_args(nil)), nil, "non-string args parse to empty table")
 
   -- resolve_lines: clipboard ----------------------------------------------

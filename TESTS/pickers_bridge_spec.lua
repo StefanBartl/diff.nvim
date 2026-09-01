@@ -30,6 +30,8 @@ return function(H)
   -- pickers.engines.load() notifies (by design) when it finds nothing; that
   -- notification is expected noise here, not a test failure — silence it.
   local saved_notify = vim.notify
+  -- Test double over a typed surface; restored right after the case.
+  ---@diagnostic disable-next-line: duplicate-set-field
   vim.notify = function() end
   local call_ok, result = pcall(bridge.resolve)
   vim.notify = saved_notify

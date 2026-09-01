@@ -144,10 +144,6 @@ local SHORTCUTS = {
   },
 }
 
----Register the optional `cfg.keymaps` shortcuts. Nothing is bound unless the
----user set an lhs for it.
----@param cfg DiffNvim.Config
----@return nil
 ---Declare and bind the `:Diff` shortcut keymaps.
 ---
 --- Declared through `lib.nvim.bindings.keymap`'s registry, with the two
@@ -161,7 +157,7 @@ local SHORTCUTS = {
 --- forced to `false` instead of being left out -- because :checkhealth and the
 --- generated docs ask what exists, and "off because features.X is off" is a
 --- different answer from "there is no such shortcut".
----@param cfg Diff.Config
+---@param cfg DiffNvim.Config
 ---@return Lib.Keymap.Registered[]|nil
 function M.register_shortcuts(cfg)
   local keymaps = cfg.keymaps

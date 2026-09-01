@@ -41,6 +41,8 @@ return function(H)
 
   -- guard: curl not on PATH -------------------------------------------------
   local saved_executable = vim.fn.executable
+  -- Test double over a typed surface; restored right after the case.
+  ---@diagnostic disable-next-line: duplicate-set-field
   vim.fn.executable = function(name)
     if name == "curl" then
       return 0

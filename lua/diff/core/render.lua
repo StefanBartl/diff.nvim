@@ -16,6 +16,15 @@ local list = require("lib.nvim.ui.list")
 
 local M = {}
 
+---@internal
+--- The diff primitive, resolved once.
+---
+--- `vim.text.diff` is the current name; `vim.diff` is deprecated but is the
+--- only one that exists on the Neovim 0.9/0.10 the README still supports. The
+--- suppression below is for the fallback arm, not for the call sites.
+---@diagnostic disable-next-line: deprecated
+local diff_fn = (vim.text and vim.text.diff) or vim.diff
+
 ---Compute a unified diff between two line arrays.
 ---@param a_lines string[]
 ---@param b_lines string[]
@@ -24,13 +33,13 @@ local M = {}
 ---@return string|nil unified, string|nil err
 function M.compute_unified(a_lines, b_lines, algorithm, ctxlen)
   local ok, result = pcall(
-    vim.diff,
+    diff_fn,
     table.concat(a_lines, "\n") .. "\n",
     table.concat(b_lines, "\n") .. "\n",
     { result_type = "unified", algorithm = algorithm, ctxlen = ctxlen }
   )
   if not ok or type(result) ~= "string" then
-    return nil, "vim.diff failed: " .. tostring(result)
+    return nil, "diff failed: " .. tostring(result)
   end
   return result, nil
 end
@@ -141,7 +150,7 @@ end
 ---@param b_label string
 ---@param algorithm string
 ---@param ctxlen integer
----@param list_opts { list: "qf"|"loc", mode: ("add"|"replace")?, target: ({filename: string}|{bufnr: integer})? }
+---@param list_opts DiffNvim.StatList.Wanted
 ---@return nil
 function M.push_stat_list(a_lines, b_lines, a_label, b_label, algorithm, ctxlen, list_opts)
   local hunks = M.compute_hunks(a_lines, b_lines, algorithm, ctxlen)
@@ -184,7 +193,7 @@ end
 ---@param b_label string
 ---@param algorithm string
 ---@param ctxlen integer
----@param list_opts? { list: ("off"|"qf"|"loc")?, mode: ("add"|"replace")?, target: ({filename: string}|{bufnr: integer})? }
+---@param list_opts? DiffNvim.StatList.Opts
 ---@return nil
 function M.stat(a_lines, b_lines, a_label, b_label, algorithm, ctxlen, list_opts)
   local stats, err = M.compute_stats(a_lines, b_lines, algorithm, ctxlen)
@@ -199,9 +208,26 @@ function M.stat(a_lines, b_lines, a_label, b_label, algorithm, ctxlen, list_opts
   notify.info(string.format("%s -> %s  %s", a_label, b_label, M.format_stats(stats)))
 
   if list_opts and (list_opts.list == "qf" or list_opts.list == "loc") then
+    ---@cast list_opts DiffNvim.StatList.Wanted
     M.push_stat_list(a_lines, b_lines, a_label, b_label, algorithm, ctxlen, list_opts)
   end
 end
+
+---@class DiffNvim.StatList.Target
+---@field filename? string
+---@field bufnr? integer
+
+--- What `M.stat` was asked to do with the stat line. `list = "off"` (and a
+--- missing `list_opts` entirely) means "do not list".
+---@class DiffNvim.StatList.Opts
+---@field list? "off"|"qf"|"loc"
+---@field mode? "add"|"replace"
+---@field target? DiffNvim.StatList.Target
+
+--- The same, once the caller has established that a list was actually asked
+--- for -- which is the only shape `push_stat_list` accepts.
+---@class DiffNvim.StatList.Wanted : DiffNvim.StatList.Opts
+---@field list "qf"|"loc"
 
 ---@internal
 ---Build the unified-diff header lines + body as a flat list.
@@ -394,7 +420,7 @@ local function word_diff_ranges_bytes(a, b, algorithm)
     return table.concat(bytes, "\n")
   end
 
-  local ok, hunks = pcall(vim.diff, explode(a), explode(b), {
+  local ok, hunks = pcall(diff_fn, explode(a), explode(b), {
     result_type = "indices",
     algorithm = algorithm,
   })
@@ -438,7 +464,7 @@ local function word_diff_ranges(a, b, algorithm)
     return word_diff_ranges_bytes(a, b, algorithm)
   end
 
-  local ok, hunks = pcall(vim.diff, explode_codepoints(a, pos_a), explode_codepoints(b, pos_b), {
+  local ok, hunks = pcall(diff_fn, explode_codepoints(a, pos_a), explode_codepoints(b, pos_b), {
     result_type = "indices",
     algorithm = algorithm,
   })

@@ -22,10 +22,15 @@ function M.check()
     )
   end
 
-  if type(vim.diff) == "function" then
-    vim.health.ok("vim.diff is available")
+  ---@diagnostic disable-next-line: deprecated
+  local diff_fn = (vim.text and vim.text.diff) or vim.diff
+  if type(diff_fn) == "function" then
+    vim.health.ok(
+      vim.text and vim.text.diff and "vim.text.diff is available"
+        or "vim.diff is available (pre-0.11 name)"
+    )
   else
-    vim.health.error("vim.diff is missing — prompt/file/clipboard/inline output will fail")
+    vim.health.error("no diff primitive — prompt/file/clipboard/inline output will fail")
   end
 
   if type(vim.ui) == "table" and type(vim.ui.select) == "function" then

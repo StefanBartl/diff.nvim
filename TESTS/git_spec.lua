@@ -73,6 +73,8 @@ return function(H)
 
     local out = {}
     local saved_notify = vim.notify
+    -- Test double over a typed surface; restored right after the case.
+    ---@diagnostic disable-next-line: duplicate-set-field
     vim.notify = function(m)
       out[#out + 1] = m
     end

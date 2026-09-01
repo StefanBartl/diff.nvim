@@ -57,30 +57,36 @@ return function(H)
   local WORD_DIFF_NS = vim.api.nvim_get_namespaces()["diff_word_diff"]
   ok(type(WORD_DIFF_NS) == "number", "word-diff namespace is registered")
 
-  local buf_off = render.inline(
-    0,
-    { "hello world" },
-    { "hello there" },
-    "a",
-    "b",
-    "histogram",
-    3,
-    { layout = "split", word_diff = false }
+  local buf_off = assert(
+    render.inline(
+      0,
+      { "hello world" },
+      { "hello there" },
+      "a",
+      "b",
+      "histogram",
+      3,
+      { layout = "split", word_diff = false }
+    ),
+    "render.inline() must return a buffer"
   )
   ok(type(buf_off) == "number", "inline() returns a buffer with word_diff=false")
   local marks_off = vim.api.nvim_buf_get_extmarks(buf_off, WORD_DIFF_NS, 0, -1, {})
   eq(#marks_off, 0, "word_diff=false places no extmarks")
   vim.cmd("silent! only")
 
-  local buf_on = render.inline(
-    0,
-    { "hello world" },
-    { "hello there" },
-    "a",
-    "b",
-    "histogram",
-    3,
-    { layout = "split", word_diff = true }
+  local buf_on = assert(
+    render.inline(
+      0,
+      { "hello world" },
+      { "hello there" },
+      "a",
+      "b",
+      "histogram",
+      3,
+      { layout = "split", word_diff = true }
+    ),
+    "render.inline() must return a buffer"
   )
   ok(type(buf_on) == "number", "inline() returns a buffer with word_diff=true")
   local marks_on = vim.api.nvim_buf_get_extmarks(buf_on, WORD_DIFF_NS, 0, -1, {})
@@ -92,15 +98,18 @@ return function(H)
   -- (regression check: every extmark used to land one byte too early, e.g.
   -- highlighting " w"/"rl" instead of "world").
   do
-    local buf_pos = render.inline(
-      0,
-      { "hello world" },
-      { "hello there" },
-      "a",
-      "b",
-      "histogram",
-      3,
-      { layout = "split", word_diff = true }
+    local buf_pos = assert(
+      render.inline(
+        0,
+        { "hello world" },
+        { "hello there" },
+        "a",
+        "b",
+        "histogram",
+        3,
+        { layout = "split", word_diff = true }
+      ),
+      "render.inline() must return a buffer"
     )
     local marks_pos =
       vim.api.nvim_buf_get_extmarks(buf_pos, WORD_DIFF_NS, 0, -1, { details = true })
@@ -125,15 +134,18 @@ return function(H)
   -- straddles it (regression check for the byte-granularity version, which
   -- would highlight a partial multi-byte sequence on a line like this).
   do
-    local buf_utf = render.inline(
-      0,
-      { "héllo wörld" },
-      { "hXllo wörld" },
-      "a",
-      "b",
-      "histogram",
-      3,
-      { layout = "split", word_diff = true }
+    local buf_utf = assert(
+      render.inline(
+        0,
+        { "héllo wörld" },
+        { "hXllo wörld" },
+        "a",
+        "b",
+        "histogram",
+        3,
+        { layout = "split", word_diff = true }
+      ),
+      "render.inline() must return a buffer"
     )
     local marks_utf =
       vim.api.nvim_buf_get_extmarks(buf_utf, WORD_DIFF_NS, 0, -1, { details = true })
