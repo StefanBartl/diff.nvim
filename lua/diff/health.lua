@@ -73,6 +73,15 @@ function M.check()
     vim.health.warn("plugin guard not set — call require('diff').setup()")
   end
 
+  -- The declared external tools (docs/install.json), reported out of the
+  -- spec rather than listed a second time by hand. Silent when lib.nvim.deps
+  -- is absent (an older lib.nvim) or this plugin ships no spec.
+  local ok_deps, deps_health = pcall(require, "lib.nvim.deps.health")
+  if ok_deps then
+    vim.health.start("diff.nvim: declared tools (lib.nvim.deps)")
+    deps_health.report_for("diff.nvim")
+  end
+
   require("lib.nvim.bindings.usercmd.composer").checkhealth("Diff")
 end
 

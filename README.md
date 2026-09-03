@@ -91,6 +91,7 @@ Omitting `target=` opens an interactive picker (`vim.ui.select`).
 - [Lua API](docs/api.md) — the `require("diff")` module surface.
 - [Architecture](docs/architecture.md) — module layout and load order.
 - [Testing & health check](docs/testing.md) — `:checkhealth diff` and the headless spec suite.
+- [Declared external tools](docs/install.json) — the optional CLI tools (`curl`, for URL sources) with why each matters. `:Lib deps show diff.nvim` reports what's missing here, `:Lib deps install diff.nvim` offers to install it — via [lib.nvim.deps](https://github.com/StefanBartl/lib.nvim/blob/main/lua/lib/nvim/deps/README.md), which asks before it installs anything. A popup shows this once, the first time `setup()` runs after installing. Turn it off with `vim.g.lib_nvim_deps_disable_first_run = true` (every plugin) or `vim.g.lib_nvim_deps_disabled_plugins = { "diff.nvim" }` (just this one).
 - [Bindings cheatsheet](docs/BINDINGS.md) — every keymap, user command, and autocommand.
 
 ## License
