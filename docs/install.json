@@ -1,0 +1,20 @@
+{
+  "tools": [
+    {
+      "bin": "curl",
+      "required": false,
+      "why": "Enables URL sources — diffing a buffer against `http(s)://…` content, fetched asynchronously through `vim.system`. Without it every other source (files, git revisions, registers) still works; only URL specifiers report an error. Usually already present.",
+      "pkg": {
+        "apt": "curl",
+        "dnf": "curl",
+        "pacman": "curl",
+        "zypper": "curl",
+        "apk": "curl",
+        "brew": "curl",
+        "winget": "cURL.cURL",
+        "scoop": "curl",
+        "choco": "curl"
+      }
+    }
+  ]
+}

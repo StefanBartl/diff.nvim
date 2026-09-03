@@ -42,7 +42,14 @@ function M.fetch(url, label, opts, callback)
     return
   end
   if vim.fn.executable("curl") ~= 1 then
-    callback(nil, label .. ": curl executable not found on PATH")
+    -- The reason and this host's install command come out of
+    -- docs/install.json. `lines`, not `check`: this module never notifies
+    -- (see the header) -- the error travels back through `callback`, and a
+    -- notification next to it would say the same thing twice.
+    local ok_rt, rt = pcall(require, "lib.nvim.deps.require_tool")
+    local why = ok_rt and table.concat(rt.lines("diff.nvim", "curl"), " ")
+      or "curl executable not found on PATH"
+    callback(nil, label .. ": " .. why)
     return
   end
 
