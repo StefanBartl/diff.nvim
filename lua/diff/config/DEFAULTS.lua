@@ -27,6 +27,12 @@ local DEFAULTS = {
     word_diff = true,
     -- Timeout (ms) for http(s):// sources/targets — see docs/url-sources.md.
     url_timeout_ms = 10000,
+    -- Byte cap for http(s):// sources/targets, enforced by curl itself
+    -- (`--max-filesize`) so a huge or unexpected response can't be read
+    -- entirely into memory before diffing -- same reasoning as
+    -- directory_max_files below, applied to network content instead of a
+    -- file tree. 10 MiB comfortably covers real source files/JSON schemas.
+    url_max_bytes = 10 * 1024 * 1024,
     -- When both source and target are raster-image file paths (png/jpg/jpeg/
     -- gif/webp/bmp — not svg, which is text and diffs fine as-is), show them
     -- side by side via images.nvim instead of text-diffing raw bytes, which

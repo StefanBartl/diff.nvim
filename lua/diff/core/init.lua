@@ -69,7 +69,10 @@ local function resolve_side_async(spec, label, source_bufnr, range, callback)
     url.fetch(
       spec --[[@as string]],
       label,
-      { timeout_ms = config.get().diff.url_timeout_ms },
+      {
+        timeout_ms = config.get().diff.url_timeout_ms,
+        max_bytes = config.get().diff.url_max_bytes,
+      },
       callback
     )
     return

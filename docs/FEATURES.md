@@ -117,8 +117,10 @@ Non-2xx responses (`curl --fail`) are reported as errors rather than
 diffed as error-page content.
 
 - **Module:** `lua/diff/core/url.lua`
-- **Config:** `opts.diff.url_timeout_ms` (default `10000`) — checked by
-  `:checkhealth diff` (requires Neovim 0.10+ and `curl` on `PATH`)
+- **Config:** `opts.diff.url_timeout_ms` (default `10000`) and
+  `opts.diff.url_max_bytes` (default 10 MiB, enforced via `curl
+  --max-filesize`) — checked by `:checkhealth diff` (requires Neovim 0.10+
+  and `curl` on `PATH`)
 
 ## Image comparison via images.nvim
 

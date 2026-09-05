@@ -20,6 +20,9 @@ one specifier type that talks to the network, hence its own page.
   upper bound via a libuv timer, independent of `curl`'s own timeout — a
   stalled TLS handshake or hung connection is killed rather than left
   hanging indefinitely.
+- **Size-bounded**: `diff.url_max_bytes` (default 10 MiB) is passed straight
+  to `curl --max-filesize`, so a response far larger than any real source
+  file/schema is aborted instead of being read entirely into memory.
 - Non-2xx HTTP responses are treated as failures (`curl --fail`) and reported
   as errors, not silently diffed as empty/error-page content.
 
@@ -35,7 +38,8 @@ Both are checked by `:checkhealth diff`.
 ```lua
 require("diff").setup({
   diff = {
-    url_timeout_ms = 10000, -- fetch timeout in ms
+    url_timeout_ms = 10000,        -- fetch timeout in ms
+    url_max_bytes  = 10 * 1024 * 1024, -- byte cap, enforced via curl --max-filesize
   },
 })
 ```

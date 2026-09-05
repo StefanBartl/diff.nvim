@@ -18,6 +18,7 @@ require("diff").setup({
     ctxlen            = 3,           -- context lines per hunk
     word_diff         = true,        -- word/char-level DiffText highlighting in view=inline/float
     url_timeout_ms    = 10000,       -- fetch timeout for http(s):// sources/targets
+    url_max_bytes     = 10485760,    -- byte cap for http(s):// sources/targets (curl --max-filesize)
     image_compare     = true,        -- show two raster-image paths side by side via images.nvim
     stat_list         = "off",       -- "off"|"qf"|"loc" — also push output=stat's hunks to a list
     stat_list_mode    = "add",       -- "add"|"replace" — accumulate across :Diff calls, or reset each time
@@ -58,9 +59,11 @@ runs where the removed and added line counts match (an unambiguous 1:1
 pairing); set to `false` to disable.
 
 `diff.url_timeout_ms` bounds how long an `http(s)://` source/target is given
-to fetch before it's cancelled and reported as an error. See
-[URL sources](url-sources.md) for the full picture (requirements, how the
-async fetch works, and usage examples).
+to fetch before it's cancelled and reported as an error. `diff.url_max_bytes`
+(default 10 MiB) bounds how large the fetched response may be, enforced by
+`curl --max-filesize` so an unexpectedly huge response is aborted rather than
+read entirely into memory. See [URL sources](url-sources.md) for the full
+picture (requirements, how the async fetch works, and usage examples).
 
 `diff.image_compare` (default `true`): when both `source` and `target` are
 readable raster-image file paths (`.png`/`.jpg`/`.jpeg`/`.gif`/`.webp`/

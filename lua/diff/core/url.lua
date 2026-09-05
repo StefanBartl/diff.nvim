@@ -29,13 +29,21 @@ end
 ---notify/API functions from it directly.
 ---@param url string
 ---@param label string  "target"|"source" — used only in error text
----@param opts { timeout_ms: integer }
+---@param opts { timeout_ms: integer, max_bytes: integer }
 ---@param callback fun(lines: string[]|nil, err: string|nil): nil
 ---@return nil
 function M.fetch(url, label, opts, callback)
   local timeout_ms = (type(opts) == "table" and type(opts.timeout_ms) == "number")
       and opts.timeout_ms
     or 10000
+  -- A download needs both a timeout (above) and a byte limit, so an
+  -- unexpectedly huge response can't be read entirely into memory. `curl`
+  -- enforces this itself via `--max-filesize` (checked against a known
+  -- Content-Length upfront where the server sends one -- true for every
+  -- documented use case: raw.githubusercontent.com, gists, JSON APIs).
+  local max_bytes = (type(opts) == "table" and type(opts.max_bytes) == "number")
+      and opts.max_bytes
+    or (10 * 1024 * 1024)
 
   if type(vim.system) ~= "function" then
     callback(nil, label .. ": URL sources require Neovim 0.10+ (vim.system)")
@@ -80,12 +88,27 @@ function M.fetch(url, label, opts, callback)
 
   local ok, result_or_err = pcall(
     vim.system,
-    { "curl", "--silent", "--show-error", "--fail", "--location", url },
+    {
+      "curl",
+      "--silent",
+      "--show-error",
+      "--fail",
+      "--location",
+      "--max-filesize",
+      tostring(max_bytes),
+      url,
+    },
     { text = true },
     function(res)
       if res.code ~= 0 then
-        local msg = (type(res.stderr) == "string" and res.stderr ~= "") and vim.trim(res.stderr)
-          or ("curl exited with code " .. tostring(res.code))
+        local msg
+        if res.code == 63 then
+          msg = string.format("response exceeds max_bytes limit (%d bytes)", max_bytes)
+        elseif type(res.stderr) == "string" and res.stderr ~= "" then
+          msg = vim.trim(res.stderr)
+        else
+          msg = "curl exited with code " .. tostring(res.code)
+        end
         finish(nil, label .. ": " .. msg)
         return
       end
