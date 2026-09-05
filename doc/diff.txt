@@ -222,7 +222,7 @@ Native :diffthis ~
   By default the buffer-local exit key is only attached to buffers diff.nvim
   itself puts into diffmode — a plain `:diffthis` on some other buffer (outside
   diff.nvim's workflow) won't have it. Set `exit.native_diffthis = true`
-  (requires `scope = "buffer"`) to mirror the key onto *any* buffer that
+  (requires `scope = "buffer"`) to mirror the key onto any buffer that
   enters or leaves diffmode, native `:diffthis`/`:diffoff!` included, via an
   `OptionSet` watcher on the window-local 'diff' option.
 
@@ -327,7 +327,7 @@ URL sources ~                                             *diff-url-sources*
 
 Three-way diff ~                                              *diff-three-way*
   `base=` opens a native *three-window* diffmode instead of two — the layout
-  merge-conflict tools use. The current buffer stays the *local* side, live
+  merge-conflict tools use. The current buffer stays the local side, live
   and editable, in the origin window (:diffget/:diffput write straight into
   the file you'll save). `base=` (the common ancestor) and `target=` (the
   remote/incoming version) each get a read-only scratch buffer. Neovim's
