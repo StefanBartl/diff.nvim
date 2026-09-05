@@ -41,8 +41,7 @@ function M.fetch(url, label, opts, callback)
   -- enforces this itself via `--max-filesize` (checked against a known
   -- Content-Length upfront where the server sends one -- true for every
   -- documented use case: raw.githubusercontent.com, gists, JSON APIs).
-  local max_bytes = (type(opts) == "table" and type(opts.max_bytes) == "number")
-      and opts.max_bytes
+  local max_bytes = (type(opts) == "table" and type(opts.max_bytes) == "number") and opts.max_bytes
     or (10 * 1024 * 1024)
 
   if type(vim.system) ~= "function" then
@@ -86,42 +85,37 @@ function M.fetch(url, label, opts, callback)
     end)
   end
 
-  local ok, result_or_err = pcall(
-    vim.system,
-    {
-      "curl",
-      "--silent",
-      "--show-error",
-      "--fail",
-      "--location",
-      "--max-filesize",
-      tostring(max_bytes),
-      url,
-    },
-    { text = true },
-    function(res)
-      if res.code ~= 0 then
-        local msg
-        if res.code == 63 then
-          msg = string.format("response exceeds max_bytes limit (%d bytes)", max_bytes)
-        elseif type(res.stderr) == "string" and res.stderr ~= "" then
-          msg = vim.trim(res.stderr)
-        else
-          msg = "curl exited with code " .. tostring(res.code)
-        end
-        finish(nil, label .. ": " .. msg)
-        return
+  local ok, result_or_err = pcall(vim.system, {
+    "curl",
+    "--silent",
+    "--show-error",
+    "--fail",
+    "--location",
+    "--max-filesize",
+    tostring(max_bytes),
+    url,
+  }, { text = true }, function(res)
+    if res.code ~= 0 then
+      local msg
+      if res.code == 63 then
+        msg = string.format("response exceeds max_bytes limit (%d bytes)", max_bytes)
+      elseif type(res.stderr) == "string" and res.stderr ~= "" then
+        msg = vim.trim(res.stderr)
+      else
+        msg = "curl exited with code " .. tostring(res.code)
       end
-      local out = res.stdout or ""
-      local lines = vim.split(out, "\n", { plain = true })
-      -- curl output ends with a trailing newline for text content; drop the
-      -- empty final element so line counts match readfile()/buffer content.
-      if lines[#lines] == "" then
-        lines[#lines] = nil
-      end
-      finish(lines, nil)
+      finish(nil, label .. ": " .. msg)
+      return
     end
-  )
+    local out = res.stdout or ""
+    local lines = vim.split(out, "\n", { plain = true })
+    -- curl output ends with a trailing newline for text content; drop the
+    -- empty final element so line counts match readfile()/buffer content.
+    if lines[#lines] == "" then
+      lines[#lines] = nil
+    end
+    finish(lines, nil)
+  end)
   if not ok then
     finish(nil, label .. ": failed to start curl: " .. tostring(result_or_err))
     return

@@ -16,7 +16,9 @@ jobs:
         uses: JohnnyMorganz/stylua-action@v4
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
-          version: latest
+          # Pinned, not "latest": stylua's formatting rules shift between
+          # releases and silently turn CI red on every push. Bump deliberately.
+          version: v2.5.2
           args: --check .
 
       - name: Install luacheck
