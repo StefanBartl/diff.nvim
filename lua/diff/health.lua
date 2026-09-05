@@ -10,7 +10,7 @@ function M.check()
   if vim.fn.has("nvim-0.9") == 1 then
     vim.health.ok("Neovim >= 0.9")
   else
-    vim.health.warn("Neovim 0.9+ recommended")
+    vim.health.warn("Neovim 0.9+ recommended", { "Upgrade Neovim to 0.9+" })
   end
 
   if pcall(require, "lib.nvim.bindings.usercmd.composer") then
@@ -30,7 +30,10 @@ function M.check()
         or "vim.diff is available (pre-0.11 name)"
     )
   else
-    vim.health.error("no diff primitive — prompt/file/clipboard/inline output will fail")
+    vim.health.error(
+      "no diff primitive — prompt/file/clipboard/inline output will fail",
+      { "Upgrade Neovim" }
+    )
   end
 
   if type(vim.ui) == "table" and type(vim.ui.select) == "function" then
@@ -42,23 +45,38 @@ function M.check()
   if vim.fn.has("clipboard") == 1 then
     vim.health.ok("clipboard provider present (target=clipboard / output=clipboard)")
   else
-    vim.health.warn("no clipboard provider — clipboard source/output unavailable")
+    vim.health.warn(
+      "no clipboard provider — clipboard source/output unavailable",
+      { "Install a clipboard provider (xclip, xsel, wl-clipboard, or a GUI Neovim)" }
+    )
   end
 
   if type(vim.system) == "function" and vim.fn.executable("git") == 1 then
     vim.health.ok("git + vim.system available (target=git:<rev> / source=git:<rev>)")
   elseif type(vim.system) ~= "function" then
-    vim.health.warn("vim.system missing (Neovim 0.10+) — git:<rev> source/target unavailable")
+    vim.health.warn(
+      "vim.system missing (Neovim 0.10+) — git:<rev> source/target unavailable",
+      { "Upgrade Neovim to 0.10+" }
+    )
   else
-    vim.health.warn("git executable not on PATH — git:<rev> source/target unavailable")
+    vim.health.warn(
+      "git executable not on PATH — git:<rev> source/target unavailable",
+      { "install git" }
+    )
   end
 
   if type(vim.system) == "function" and vim.fn.executable("curl") == 1 then
     vim.health.ok("curl + vim.system available (target=http(s):// / source=http(s)://)")
   elseif type(vim.system) ~= "function" then
-    vim.health.warn("vim.system missing (Neovim 0.10+) — http(s):// source/target unavailable")
+    vim.health.warn(
+      "vim.system missing (Neovim 0.10+) — http(s):// source/target unavailable",
+      { "Upgrade Neovim to 0.10+" }
+    )
   else
-    vim.health.warn("curl executable not on PATH — http(s):// source/target unavailable")
+    vim.health.warn(
+      "curl executable not on PATH — http(s):// source/target unavailable",
+      { "install curl" }
+    )
   end
 
   if type(require("diff.core.pickers_bridge").resolve()) == "function" then
@@ -70,7 +88,7 @@ function M.check()
   if vim.g.loaded_diff then
     vim.health.ok("plugin loaded (vim.g.loaded_diff = " .. tostring(vim.g.loaded_diff) .. ")")
   else
-    vim.health.warn("plugin guard not set — call require('diff').setup()")
+    vim.health.info("plugin guard not set (call require('diff').setup())")
   end
 
   -- The declared external tools (docs/install.json), reported out of the
