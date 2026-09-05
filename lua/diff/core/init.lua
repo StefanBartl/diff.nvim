@@ -66,15 +66,10 @@ end
 ---@return nil
 local function resolve_side_async(spec, label, source_bufnr, range, callback)
   if url.is_url_spec(spec) then
-    url.fetch(
-      spec --[[@as string]],
-      label,
-      {
-        timeout_ms = config.get().diff.url_timeout_ms,
-        max_bytes = config.get().diff.url_max_bytes,
-      },
-      callback
-    )
+    url.fetch(spec --[[@as string]], label, {
+      timeout_ms = config.get().diff.url_timeout_ms,
+      max_bytes = config.get().diff.url_max_bytes,
+    }, callback)
     return
   end
 
