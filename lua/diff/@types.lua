@@ -78,6 +78,7 @@
 ---@field ctxlen            integer  Context lines around each hunk in unified output
 ---@field word_diff         boolean  Word/char-level DiffText highlighting in view=inline/float
 ---@field url_timeout_ms    integer  Timeout for http(s):// sources/targets in ms — @see docs/url-sources.md
+---@field url_max_bytes     integer  Byte cap for http(s):// sources/targets, enforced via curl --max-filesize — @see docs/url-sources.md
 ---@field image_compare     boolean  Show two raster-image file paths side by side via images.nvim instead of text-diffing their bytes (default true; svg excluded — it's text)
 ---@field stat_list         "off"|"qf"|"loc"  Also push output=stat's hunks to the quickfix/location list (default "off")
 ---@field stat_list_mode    "add"|"replace"   "add" accumulates across :Diff invocations (default), "replace" resets the list each time
@@ -151,6 +152,7 @@
 ---@field ctxlen?              integer  Context lines around each hunk in unified output
 ---@field word_diff?           boolean  Word/char-level DiffText highlighting in view=inline/float
 ---@field url_timeout_ms?      integer  Timeout for http(s):// sources/targets in ms — @see docs/url-sources.md
+---@field url_max_bytes?       integer  Byte cap for http(s):// sources/targets, enforced via curl --max-filesize — @see docs/url-sources.md
 ---@field image_compare?       boolean  Show two raster-image file paths side by side via images.nvim instead of text-diffing their bytes (default true; svg excluded — it's text)
 ---@field stat_list?           "off"|"qf"|"loc"  Also push output=stat's hunks to the quickfix/location list (default "off")
 ---@field stat_list_mode?      "add"|"replace"   "add" accumulates across :Diff invocations (default), "replace" resets the list each time
