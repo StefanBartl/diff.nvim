@@ -77,10 +77,10 @@ when a line fails UTF-8 positioning (malformed byte sequences).
 ## `git:{rev}` sources
 
 Resolves the **current file** (not an arbitrary path) at a git revision —
-`git:HEAD`, `git:HEAD~1`, a SHA, or a branch name — via a synchronous
-`git show <rev>:<relpath>`, no shell string involved. Requires Neovim
-0.10+ (`vim.system`), `git` on `PATH`, and a file-backed buffer inside a
-git repository.
+`git:HEAD`, `git:HEAD~1`, a SHA, or a branch name — via `git show
+<rev>:<relpath>` run off the main loop (async), no shell string involved.
+Requires Neovim 0.10+ (`vim.system`), `git` on `PATH`, and a file-backed
+buffer inside a git repository.
 
 `target=git:{rev1}..{rev2}` diffs the file directly between two revisions
 instead of one revision against the working buffer: sugar for
@@ -281,12 +281,13 @@ The target/source/base picker (shown when a specifier is omitted or set to
 [pickers.nvim](https://github.com/StefanBartl/pickers.nvim) if installed
 and `use_pickers_nvim` isn't `false` (its fuzzy engine — telescope.nvim,
 fzf-lua, or snacks.nvim, whichever pickers.nvim resolved — used
-automatically, no config needed), then `vim.ui.select` as the always-
-available fallback. Detection is soft: nothing errors if pickers.nvim
-isn't installed or has no engine available. pickers.nvim's engines have no
-reliable cross-engine cancel signal, so cancelling that picker doesn't
-show the usual "Diff cancelled" message the way cancelling `vim.ui.select`
-does.
+automatically, no config needed), then `lib.nvim.ui.kit`'s own chooser as
+the always-available fallback (it still defers to a real `vim.ui.select`
+override if one is installed). Detection is soft: nothing errors if
+pickers.nvim isn't installed or has no engine available. pickers.nvim's
+engines have no reliable cross-engine cancel signal, so cancelling that
+picker doesn't show the usual "Diff cancelled" message the way cancelling
+the kit / `vim.ui.select` picker does.
 
 - **Module:** `lua/diff/core/pickers_bridge.lua`
 - **Config:** `opts.select_fn` (default `nil`), `opts.use_pickers_nvim`

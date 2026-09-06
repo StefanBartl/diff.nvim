@@ -14,8 +14,8 @@ one specifier type that talks to the network, hence its own page.
   never a shell string, so URLs are never subject to shell quoting/injection.
 - **Asynchronous**: the fetch runs in the background: the editor stays
   responsive while it's in flight, and the diff renders once it completes.
-  Compare with `git:<rev>` sources, which resolve synchronously (a local
-  `git show` is fast enough not to need this).
+  `git:<rev>` sources are async in the same way (a three-way diff resolves
+  two sides, and `git show` is still a subprocess).
 - **Timeout-bounded**: `diff.url_timeout_ms` (default `10000`) enforces an
   upper bound via a libuv timer, independent of `curl`'s own timeout — a
   stalled TLS handshake or hung connection is killed rather than left

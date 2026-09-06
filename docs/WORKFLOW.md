@@ -30,11 +30,10 @@ the expensive interactive step.
 
 ## `git:{rev}` vs. actually checking out — the trap this exists to prevent
 
-`:Diff target=git:HEAD~3` resolves the **current file only**, synchronously,
-via `git show` — no `git checkout`, no `git stash`, no changed working
-tree. The trap: it is tempting to reach for `git stash` + manual `:e` +
-`git stash pop` to compare against an old revision, all to see one file's
-drift. `target=git:<rev>` (or `base=git:<rev>` in a three-way) replaces
+`:Diff target=git:HEAD~3` resolves the **current file only**, via `git show`
+— no `git checkout`, no `git stash`, no changed working tree. The trap: it is
+tempting to reach for `git stash` + manual `:e` + `git stash pop` to compare
+against an old revision, all to see one file's drift. `target=git:<rev>` (or `base=git:<rev>` in a three-way) replaces
 that whole dance for the common case — anything that only needs to *look*
 at an old revision of *this* file, not check it out.
 
@@ -142,8 +141,9 @@ all:
 
 ## Picker cancellation looks different depending on the engine
 
-Cancelling the default `vim.ui.select` picker (`<Esc>`) shows a "Diff
-cancelled" notification. Cancelling a pickers.nvim-backed picker (when
+Cancelling the default picker (`lib.nvim.ui.kit`'s chooser, or a real
+`vim.ui.select` override) with `<Esc>` shows a "Diff cancelled"
+notification. Cancelling a pickers.nvim-backed picker (when
 `use_pickers_nvim` is on and pickers.nvim is installed) may not — its
 underlying engines (telescope.nvim/fzf-lua/snacks.nvim) have no reliable
 cross-engine cancel signal diff.nvim can hook into. Silence after `<Esc>`

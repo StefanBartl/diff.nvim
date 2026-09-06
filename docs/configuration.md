@@ -103,13 +103,15 @@ The target/source picker (shown when `target=`/`source=` is omitted or set to
    and `use_pickers_nvim` isn't `false` — its fuzzy engine (telescope.nvim,
    fzf-lua, or snacks.nvim, whichever pickers.nvim already resolved) is used
    automatically. No configuration needed on diff.nvim's side.
-3. `vim.ui.select` — the built-in fallback, always available.
+3. `lib.nvim.ui.kit`'s own chooser — the always-available fallback. It still
+   defers to a real `vim.ui.select` override (telescope-ui-select, dressing.nvim,
+   …) when one is installed.
 
 Detection is soft: if pickers.nvim isn't installed, or has no picker engine
-available, diff.nvim silently falls back to `vim.ui.select` — nothing errors.
+available, diff.nvim silently falls back to the kit chooser — nothing errors.
 Note that pickers.nvim's engines have no reliable cross-engine cancel signal,
 so cancelling that picker (e.g. `<Esc>`) does not show the usual
-"Diff cancelled" message the way cancelling `vim.ui.select` does.
+"Diff cancelled" message the way cancelling the kit / `vim.ui.select` picker does.
 
 ## Exit scope
 
