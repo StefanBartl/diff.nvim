@@ -10,7 +10,7 @@ jobs:
     name: stylua + luacheck
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: stylua --check
         uses: JohnnyMorganz/stylua-action@v4
@@ -22,7 +22,7 @@ jobs:
           args: --check .
 
       - name: Install luacheck
-        run: sudo apt-get update && sudo apt-get install -y luarocks && sudo luarocks install luacheck
+        run: sudo apt-get update && sudo apt-get install -y luarocks && sudo luarocks install luacheck 1.2.0
 
       - name: luacheck
         run: luacheck lua plugin TESTS
@@ -32,14 +32,14 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout diff.nvim
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           path: diff.nvim
 
       # diff.nvim depends on lib.nvim at runtime (util/notify, util/validate).
       # The test runner picks it up via $LIB_NVIM_PATH (see TESTS/run.lua).
       - name: Checkout lib.nvim
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           repository: StefanBartl/lib.nvim
           path: lib.nvim
