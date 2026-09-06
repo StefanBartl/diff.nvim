@@ -39,8 +39,8 @@ When `target=` is omitted, an interactive picker is shown.
 **`git:{rev}`** — resolves the **current file** at a git revision, e.g.
 `git:HEAD`, `git:HEAD~1`, `git:<sha>`, or `git:<branch>`. Requires Neovim
 0.10+ (`vim.system`), a `git` executable on PATH, and a file-backed buffer
-inside a git repository. Runs `git show <rev>:<relpath>` synchronously — no
-shell is spawned.
+inside a git repository. Runs `git show <rev>:<relpath>` off the main loop
+(async); no shell is spawned.
 
 **`target=git:{rev1}..{rev2}`** — diffs the current file directly between
 two revisions, instead of one revision against the working buffer: sugar for
