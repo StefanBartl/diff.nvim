@@ -1,13 +1,12 @@
 # diff.nvim — Binding Cheatsheet
 
-Machine-readable overview of every keymap, user command, and autocommand defined by `diff.nvim`. This file is documentation only and mirrors the source of truth in `lua/diff/bindings/usrcmds.lua`, `lua/diff/bindings/keymaps.lua`, and `lua/diff/bindings/autocmds.lua`. Any change there must be reflected here.
+Every keymap, user command, and autocommand `diff.nvim` defines. Kept in sync with `lua/diff/bindings/`.
 
 ## Table of content
 
   - [Keymaps](#keymaps)
   - [User Commands](#user-commands)
   - [Autocommands](#autocommands)
-  - [which-key](#which-key)
 
 ---
 
@@ -79,17 +78,3 @@ Note: the command name column shows the default; every command is renameable via
 | --- | --- | --- |
 | `VimLeavePre` | `diff_cleanup` | Wipe tracked scratch buffers on exit without touching diffmode |
 | `OptionSet diff` | `diff_native_diffthis` | Opt-in (`exit.native_diffthis = true`, `exit.scope = "buffer"`): mirror the buffer-local exit key onto any buffer entering/leaving diffmode, including native `:diffthis`/`:diffoff!` |
-
----
-
-## which-key
-
-diff.nvim binds only the exit key unless you opt into the shortcuts above,
-and defines no leader-prefixed group, so there is nothing to label with a
-which-key group. Every keymap it registers — buffer and global exit keys, and
-each shortcut — carries a `desc`, which
-[which-key.nvim](https://github.com/folke/which-key.nvim) picks up
-automatically — no extra wiring required.
-
----
-
