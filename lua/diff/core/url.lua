@@ -2,11 +2,11 @@
 --- Resolve a `http(s)://…` specifier to fetched content lines, async.
 ---
 --- Fetches a URL via `curl` (a direct argv exec through `vim.system`, never a
---- shell string) without blocking the editor, and enforces a timeout via a
---- libuv timer since curl itself can hang past its own `--max-time` under
---- some network conditions (e.g. a stalled TLS handshake). Never notifies —
---- callers get `(lines, err)` through a callback, exactly like the synchronous
---- resolvers in `core/resolve.lua` and `core/git.lua`, just delivered later.
+--- shell string) without blocking the editor, and enforces the timeout with a
+--- libuv timer that kills the process — not curl's own `--max-time`, which can
+--- still hang under some network conditions (e.g. a stalled TLS handshake).
+--- Never notifies — callers get `(lines, err)` through a callback, the same
+--- shape `core/git.lua` uses and `core/resolve.lua` returns synchronously.
 ---
 --- See docs/url-sources.md for requirements, configuration, and usage
 --- examples (this is the one specifier type that talks to the network, so

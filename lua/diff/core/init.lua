@@ -345,11 +345,10 @@ end
 
 ---vim.ui.select-shaped adapter over kit.select's respect_override: still
 ---defers to a real vim.ui.select override (telescope-ui-select,
----dressing.nvim, ...) exactly like the plain vim.ui.select fallback below
----did, but uses kit's own themed chooser instead of the plain builtin
----vim.ui.select when nothing has overridden it. Used for run_buffers'
----dynamic-length buffer list, which isn't a good fit for kit_confirm_select's
----button row (see pick_specifier above).
+---dressing.nvim, ...), but uses kit's own themed chooser instead of the
+---plain builtin vim.ui.select when nothing has overridden it. Used for
+---run_buffers' dynamic-length buffer list, which isn't a good fit for
+---kit_confirm_select's button row (see pick_specifier below).
 ---@internal
 ---@param items string[]
 ---@param opts table  # { prompt?, format_item? }
@@ -383,8 +382,8 @@ end
 
 ---vim.ui.select-shaped adapter over kit.confirm's button row — the default
 ---fallback for pick_specifier, whose choice lists are always ≤4 long (a
----natural fit for buttons, unlike run_buffers' dynamic-length buffer list
----which keeps the vim.ui.select fallback above).
+---natural fit for buttons, unlike run_buffers' dynamic-length buffer list,
+---which uses kit_select_select above).
 ---@internal
 ---@param items string[]
 ---@param opts table  # { prompt? }
@@ -673,6 +672,8 @@ function M.clear()
 end
 
 ---Expose validity lists for completion/health without re-declaring them.
+--- CDX: zero callers anywhere — health.lua and bindings/usrcmds.lua's
+--- VALUE_LISTS both re-declare these lists instead. Wire one to this, or drop it.
 ---@return string[] views, string[] outputs
 function M.valid_lists()
   return VALID_VIEWS, VALID_OUTPUTS

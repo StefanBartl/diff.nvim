@@ -4,18 +4,15 @@
 --- Registers :Diff, :DiffClear, :DiffBuffers, :DiffOrig and :DiffExit using
 --- the configured command names -- five separate top-level commands (not a
 --- subcommand tree; each is independently name-configurable and has its own
---- distinct grammar), each its own composer verb. :Diff/:DiffBuffers use
---- Route.kv for their bare `key=value` grammar (the case that originally
---- motivated Phase 7's kv support); dispatch bypasses composer's own bound
---- ctx.kv and calls the ORIGINAL, unmodified core.run(raw_args, range) /
---- core.run_buffers(raw_args) with ctx.raw.args (composer's untouched
---- nvim-callback opts table has the exact same .args string the old
---- nvim_create_user_command callback received) -- so the declared kv schema
---- exists purely to drive <Tab> completion; core's own key=value parsing is
---- unchanged. VALUE_LISTS are completion HINTS, not a closed set (a real
---- filename is also a valid target=/source=/base=), so they're wired as
---- KvSpec.values (soft, unenforced) rather than KvSpec.enum (which would
---- reject any value not in the list -- a real behavior regression).
+--- grammar), each its own composer verb.
+---
+--- :Diff/:DiffBuffers declare a `Route.kv` schema, but dispatch bypasses
+--- composer's parsed `ctx.kv` and hands `core.run` / `core.run_buffers` the
+--- raw `ctx.raw.args` string -- core does its own `key=value` parsing, so the
+--- kv schema exists purely to drive <Tab> completion. VALUE_LISTS are
+--- completion HINTS, not a closed set (a real filename is also a valid
+--- target=/source=/base=), so they are wired as `KvSpec.values` (soft) rather
+--- than `KvSpec.enum` (which would reject anything off the list).
 
 local composer = require("lib.nvim.bindings.usercmd.composer")
 
