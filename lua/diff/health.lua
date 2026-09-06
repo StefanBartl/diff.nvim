@@ -82,7 +82,10 @@ function M.check()
   if type(require("diff.core.pickers_bridge").resolve()) == "function" then
     vim.health.ok("pickers.nvim detected — used for the target/source picker")
   else
-    vim.health.ok("pickers.nvim not detected — using vim.ui.select for the target/source picker")
+    vim.health.ok(
+      "pickers.nvim not detected — using lib.nvim.ui.kit for the target/source picker"
+        .. " (a vim.ui.select override is still honored)"
+    )
   end
 
   if vim.g.loaded_diff then

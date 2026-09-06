@@ -20,8 +20,7 @@
 --- this module already has both exact paths from `:Diff`'s own arguments.
 --- `images.gallery({a, b}, 2)` is the right primitive for that (same one
 --- `:Image gallery` itself uses): no picker UI, no new API needed in either
---- dependency. `imports.graph.include_external`-style config
---- (`diff.image_compare`) turns this off entirely if ever wanted.
+--- dependency. `diff.image_compare = false` turns this off entirely.
 
 local M = {}
 

@@ -90,7 +90,8 @@ local DEFAULTS = {
   select_fn = nil,
   -- Auto-detect pickers.nvim (StefanBartl/pickers.nvim) and use its fuzzy
   -- engine for the target/source picker when select_fn is unset. Set false
-  -- to always use vim.ui.select instead, even if pickers.nvim is installed.
+  -- to always use the lib.nvim.ui.kit chooser instead (which still honors a
+  -- real vim.ui.select override), even if pickers.nvim is installed.
   use_pickers_nvim = true,
 }
 

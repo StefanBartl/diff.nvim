@@ -1,11 +1,12 @@
 ---@module 'diff.core.git'
 --- Resolve a `git:<rev>` specifier to the file's content at that revision.
 ---
---- Pure-ish resolution layer for git-backed sources/targets. A specifier of the
---- form `git:HEAD`, `git:HEAD~1`, `git:<sha>`, or `git:<branch>` resolves to the
---- content of the *current file* at that revision. Uses `vim.system(...):wait()`
---- (synchronous, cross-platform — no shell) so it slots into the otherwise
---- synchronous resolve pipeline. Never notifies — returns `(lines, err)`.
+--- Resolution layer for git-backed sources/targets. A specifier of the form
+--- `git:HEAD`, `git:HEAD~1`, `git:<sha>`, or `git:<branch>` resolves to the
+--- content of the *current file* at that revision. `git show` is a subprocess,
+--- so `M.resolve` runs `vim.system` with a callback (cross-platform, no shell)
+--- and delivers the result through `cb`, like `core/url.lua`; everything up to
+--- the spawn stays synchronous. Never notifies — hands back `(lines, err)`.
 
 local fn = vim.fn
 

@@ -9,9 +9,10 @@
 --- — no configuration required.
 ---
 --- Fully optional and soft-failing: pickers.nvim absence, a missing engine,
---- or an internal API mismatch all just resolve to nil so the caller falls
---- back to vim.ui.select. Nothing here is require()d eagerly — resolution
---- only happens when a picker is actually about to be shown.
+--- or an internal API mismatch all just resolve to nil, so the caller drops
+--- back to `lib.nvim.ui.kit`'s own chooser (which still defers to a real
+--- vim.ui.select override, if one is installed). Nothing here is require()d
+--- eagerly — resolution only happens when a picker is about to be shown.
 ---
 --- Note: pickers.nvim's engine picker has no reliable cross-engine "cancel"
 --- signal (Esc simply closes without invoking a callback on any of the three
