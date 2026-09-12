@@ -8,6 +8,7 @@ is the short version of all of it.
 | Page | Answers |
 | --- | --- |
 | [installation.md](installation.md) | What has to be there first, and a spec per plugin manager |
+| [quickstart.md](quickstart.md) | The first thing to run after installing |
 | [configuration.md](configuration.md) | Every option, with the full defaults printed out |
 | [testing.md](testing.md) | What `:checkhealth` asks, and how to run the suite |
 
@@ -27,6 +28,7 @@ is the short version of all of it.
 | Page | Answers |
 | --- | --- |
 | [FEATURES.md](FEATURES.md) | Everything this plugin does, in one file — deliberately one file, because it is a small single-purpose plugin |
+| [around-it.md](around-it.md) | Which sibling plugins it detects at runtime, and what changes when they're installed |
 | [architecture.md](architecture.md) | Which module does what |
 
 ## Here, but not prose

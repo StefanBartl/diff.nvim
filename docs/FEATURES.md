@@ -6,6 +6,22 @@ would only add navigation for its own sake. See
 [`docs/FEATURES_FORMAT.md`](https://github.com/StefanBartl/documentation.nvim/blob/main/docs/FEATURES_FORMAT.md)
 (in `documentation.nvim`) for the format this file follows.
 
+Neovim's own `:diffthis` compares two windows. Everything else you actually
+want to compare — what is on the clipboard, what is in the last commit, what
+a URL serves, what is in the directory next door — first has to be turned
+into a window, by hand, every time. `diff.nvim` removes that step: `target=`,
+`source=` and `base=` each accept any of the following, in any combination.
+
+| Source | Written as |
+| --- | --- |
+| The current buffer | the default `source=` |
+| A file | `target=src/old.lua` |
+| A buffer number | `target=42` |
+| The system clipboard | `target=clipboard` |
+| A git revision | `target=git:HEAD`, `target=git:MERGE_HEAD` |
+| A URL | `target=https://example.com/f.lua` — fetched asynchronously |
+| A directory tree | `source=./old_src target=./new_src` — a per-file summary |
+
 ## `:Diff` — flexible source/target comparison
 
 Compares a **source** (left, default: the current buffer) against a
