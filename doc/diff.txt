@@ -179,7 +179,7 @@ select_fn ~
 use_pickers_nvim ~
   Auto-detect pickers.nvim (https://github.com/StefanBartl/pickers.nvim) as
   the picker engine when `select_fn` is unset. Set `false` to always use the
-  lib.nvim.ui.kit chooser instead (which still honors a real `vim.ui.select`
+  ui.kit chooser instead (which still honors a real `vim.ui.select`
   override), even if pickers.nvim is installed. Default: `true`.
 
 ------------------------------------------------------------------------------
@@ -193,7 +193,7 @@ The target/source picker (shown when `target=`/`source=` is omitted or set to
      fuzzy engine (telescope.nvim, fzf-lua, or snacks.nvim, whichever
      pickers.nvim already resolved) is used automatically. No configuration
      needed on diff.nvim's side.
-  3. `lib.nvim.ui.kit`'s own chooser — the always-available fallback. It
+  3. `ui.kit`'s own chooser — the always-available fallback. It
      still defers to a real `vim.ui.select` override (telescope-ui-select,
      dressing.nvim, …) when one is installed.
 
@@ -464,7 +464,7 @@ Checks:
   - clipboard provider present
   - git + `vim.system` available (for `git:<rev>` sources/targets)
   - curl + `vim.system` available (for `http(s)://` sources/targets)
-  - pickers.nvim detected (informational — falls back to lib.nvim.ui.kit)
+  - pickers.nvim detected (informational — falls back to ui.kit)
   - plugin loaded (guard flag set)
 
 ==============================================================================
