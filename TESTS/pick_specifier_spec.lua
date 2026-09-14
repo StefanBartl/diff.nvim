@@ -1,6 +1,6 @@
 -- TESTS/pick_specifier_spec.lua — core.init's pick_specifier: the
 -- default fallback (no configured select_fn, pickers.nvim unavailable/opted
--- out) now renders via lib.nvim.ui.kit.confirm's button row instead of
+-- out) now renders via ui.kit.confirm's button row instead of
 -- vim.ui.select, since pick_specifier's choice lists are always ≤4 long. An
 -- explicit select_fn must still win — pick_specifier shares that pluggable
 -- resolution with run_buffers (dynamic-length buffer list, untouched here).
@@ -19,7 +19,7 @@ return function(H)
     config.setup({ select_fn = nil, use_pickers_nvim = false })
 
     local captured
-    package.loaded["lib.nvim.ui.kit.confirm"] = {
+    package.loaded["ui.kit.confirm"] = {
       open = function(opts)
         captured = opts
         opts.on_answer(opts.choices[1]) -- pick the first button ("clipboard")
@@ -36,7 +36,7 @@ return function(H)
 
     diff_core.run("target=ask source=current")
 
-    ok(captured ~= nil, "default fallback opens lib.nvim.ui.kit.confirm")
+    ok(captured ~= nil, "default fallback opens ui.kit.confirm")
     eq(
       captured.choices[1],
       "clipboard",
@@ -47,7 +47,7 @@ return function(H)
       "the chosen answer reaches M.execute as target"
     )
 
-    package.loaded["lib.nvim.ui.kit.confirm"] = nil
+    package.loaded["ui.kit.confirm"] = nil
   end
 
   -- An explicit select_fn still wins over the kit.confirm default.

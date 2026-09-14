@@ -149,7 +149,7 @@ case, since none of them mean anything for a pair of binary images.
 Without images.nvim installed, a clear warning is shown instead of
 silently falling through to a meaningless text diff. No relative scaling
 between the two images, unlike images.nvim's own `:Image compare` (which
-needs `lib.nvim.ui.kit.compare`'s directory-scan-and-pick flow to get both
+needs `ui.kit.compare`'s directory-scan-and-pick flow to get both
 images known at once) — `:Diff` already has both exact paths from its own
 arguments, so `images.gallery({a, b}, 2)` is the right primitive, no new
 API needed in either dependency.
@@ -297,7 +297,7 @@ The target/source/base picker (shown when a specifier is omitted or set to
 [pickers.nvim](https://github.com/StefanBartl/pickers.nvim) if installed
 and `use_pickers_nvim` isn't `false` (its fuzzy engine — telescope.nvim,
 fzf-lua, or snacks.nvim, whichever pickers.nvim resolved — used
-automatically, no config needed), then `lib.nvim.ui.kit`'s own chooser as
+automatically, no config needed), then `ui.kit`'s own chooser as
 the always-available fallback (it still defers to a real `vim.ui.select`
 override if one is installed). Detection is soft: nothing errors if
 pickers.nvim isn't installed or has no engine available. pickers.nvim's

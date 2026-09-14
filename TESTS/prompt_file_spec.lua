@@ -1,6 +1,6 @@
 -- TESTS/prompt_file_spec.lua — core.init's prompt_file: migrated off
 -- vim.ui.input({completion="file"}, cb) onto
--- lib.nvim.ui.kit.input({completion="file", on_submit, on_cancel}) now that
+-- ui.kit.input({completion="file", on_submit, on_cancel}) now that
 -- kit.input has a completion="file" equivalent (lib.nvim Phase 11). Same
 -- external contract either way: callback(path) on a non-empty submit,
 -- callback(nil) on cancel or an empty submit.
@@ -23,7 +23,7 @@ return function(H)
   -- non-empty submit -> the path reaches M.execute as target.
   do
     config.setup({ select_fn = pick_file_select_fn, use_pickers_nvim = false })
-    package.loaded["lib.nvim.ui.kit"] = {
+    package.loaded["ui.kit"] = {
       input = function(opts)
         opts.on_submit("/tmp/foo.lua")
       end,
@@ -46,7 +46,7 @@ return function(H)
   -- <Esc> (on_cancel) -> whole diff cancelled, M.execute never runs.
   do
     config.setup({ select_fn = pick_file_select_fn, use_pickers_nvim = false })
-    package.loaded["lib.nvim.ui.kit"] = {
+    package.loaded["ui.kit"] = {
       input = function(opts)
         opts.on_cancel()
       end,
@@ -68,7 +68,7 @@ return function(H)
   -- an empty submit (bare <CR>) behaves the same as a cancel.
   do
     config.setup({ select_fn = pick_file_select_fn, use_pickers_nvim = false })
-    package.loaded["lib.nvim.ui.kit"] = {
+    package.loaded["ui.kit"] = {
       input = function(opts)
         opts.on_submit("")
       end,
@@ -87,7 +87,7 @@ return function(H)
     ok(not executed, "an empty path submit aborts, same as a cancel")
   end
 
-  package.loaded["lib.nvim.ui.kit"] = nil
+  package.loaded["ui.kit"] = nil
   config.setup({ select_fn = nil, use_pickers_nvim = true })
   package.loaded["diff.core"] = nil
 end

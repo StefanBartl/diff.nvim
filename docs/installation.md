@@ -7,6 +7,7 @@
 - Optional: a `git` executable on `PATH` for `git:<rev>` sources/targets
 - Optional: a `curl` executable on `PATH` for `http(s)://` sources/targets — see [URL sources](url-sources.md)
 - Optional: [pickers.nvim](https://github.com/StefanBartl/pickers.nvim) — a fuzzy target/source picker instead of the plain `vim.ui.select` (see [Around it](around-it.md))
+- Optional: [ui.nvim](https://github.com/StefanBartl/ui.nvim) — `ui.kit` backs the target/source picker (when pickers.nvim is absent) and the file-path/buffer-number prompts; the rest of the plugin loads without it, but those specific actions need it to work
 - Optional: [images.nvim](https://github.com/StefanBartl/images.nvim) — when both `source`/`target` are raster-image files, `:Diff` shows them side by side through it instead of text-diffing raw bytes (`diff.image_compare`, default on; see [Configuration](configuration.md))
 
 `:Lib deps show diff.nvim` reports what of the above is missing;
