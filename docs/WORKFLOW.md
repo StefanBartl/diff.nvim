@@ -141,7 +141,7 @@ all:
 
 ## Picker cancellation looks different depending on the engine
 
-Cancelling the default picker (`lib.nvim.ui.kit`'s chooser, or a real
+Cancelling the default picker (`ui.kit`'s chooser, or a real
 `vim.ui.select` override) with `<Esc>` shows a "Diff cancelled"
 notification. Cancelling a pickers.nvim-backed picker (when
 `use_pickers_nvim` is on and pickers.nvim is installed) may not — its

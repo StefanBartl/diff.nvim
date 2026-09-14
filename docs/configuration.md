@@ -103,7 +103,7 @@ The target/source picker (shown when `target=`/`source=` is omitted or set to
    and `use_pickers_nvim` isn't `false` — its fuzzy engine (telescope.nvim,
    fzf-lua, or snacks.nvim, whichever pickers.nvim already resolved) is used
    automatically. No configuration needed on diff.nvim's side.
-3. `lib.nvim.ui.kit`'s own chooser — the always-available fallback. It still
+3. `ui.kit`'s own chooser — the always-available fallback. It still
    defers to a real `vim.ui.select` override (telescope-ui-select, dressing.nvim,
    …) when one is installed.
 

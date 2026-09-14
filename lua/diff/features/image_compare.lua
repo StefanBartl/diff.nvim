@@ -15,7 +15,7 @@
 --- the raster formats where "diff the bytes" is meaningless are covered.
 ---
 --- No relative scaling between the two images, unlike images.nvim's own
---- `:Image compare`: that needs `lib.nvim.ui.kit.compare`'s SEARCH-first
+--- `:Image compare`: that needs `ui.kit.compare`'s SEARCH-first
 --- flow to pick two items out of a directory scan, which doesn't fit here —
 --- this module already has both exact paths from `:Diff`'s own arguments.
 --- `images.gallery({a, b}, 2)` is the right primitive for that (same one

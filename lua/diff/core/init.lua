@@ -292,7 +292,7 @@ end
 ---Prompt for a file path and hand it back (nil on empty/cancel).
 ---@param callback fun(spec: string|nil): nil
 local function prompt_file(callback)
-  require("lib.nvim.ui.kit").input({
+  require("ui.kit").input({
     title = "File path: ",
     completion = "file",
     on_submit = function(path)
@@ -308,7 +308,7 @@ end
 ---Prompt for a buffer number and hand it back (nil on invalid/cancel).
 ---@param callback fun(spec: string|nil): nil
 local function prompt_buffer(callback)
-  require("lib.nvim.ui.kit").input({
+  require("ui.kit").input({
     title = "Buffer number: ",
     on_submit = function(raw)
       local n = tonumber(raw)
@@ -354,7 +354,7 @@ end
 ---@param opts table  # { prompt?, format_item? }
 ---@param on_choice fun(choice: string|nil, idx: integer|nil): nil
 local function kit_select_select(items, opts, on_choice)
-  require("lib.nvim.ui.kit").select({
+  require("ui.kit").select({
     items = items,
     title = opts and opts.prompt,
     format_item = opts and opts.format_item,
@@ -389,7 +389,7 @@ end
 ---@param opts table  # { prompt? }
 ---@param on_choice fun(choice: string|nil, idx: integer|nil): nil
 local function kit_confirm_select(items, opts, on_choice)
-  require("lib.nvim.ui.kit.confirm").open({
+  require("ui.kit.confirm").open({
     question = (opts and opts.prompt) or "Select",
     choices = items,
     on_answer = function(choice)

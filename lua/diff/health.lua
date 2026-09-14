@@ -83,7 +83,7 @@ function M.check()
     vim.health.ok("pickers.nvim detected — used for the target/source picker")
   else
     vim.health.ok(
-      "pickers.nvim not detected — using lib.nvim.ui.kit for the target/source picker"
+      "pickers.nvim not detected — using ui.kit for the target/source picker"
         .. " (a vim.ui.select override is still honored)"
     )
   end
