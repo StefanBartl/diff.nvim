@@ -107,14 +107,10 @@ function M.fetch(url, label, opts, callback)
       finish(nil, label .. ": " .. msg)
       return
     end
-    local out = res.stdout or ""
-    local lines = vim.split(out, "\n", { plain = true })
-    -- curl output ends with a trailing newline for text content; drop the
-    -- empty final element so line counts match readfile()/buffer content.
-    if lines[#lines] == "" then
-      lines[#lines] = nil
-    end
-    finish(lines, nil)
+    -- split_lines drops curl's trailing newline and any CR a CRLF-served
+    -- document carries, so line counts and contents match readfile()/buffer
+    -- content -- see resolve.split_lines.
+    finish(require("diff.core.resolve").split_lines(res.stdout or ""), nil)
   end)
   if not ok then
     finish(nil, label .. ": failed to start curl: " .. tostring(result_or_err))

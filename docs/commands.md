@@ -57,6 +57,17 @@ Requires Neovim 0.10+ (`vim.system`) and a `curl` executable on PATH. See
 [URL sources](url-sources.md) for the timeout setting, requirements, and
 usage examples.
 
+**Line endings** — a side that arrives as raw text (`clipboard`,
+`http(s)://`, `git:{rev}`) is normalized to the same shape a buffer or a file
+already has: a trailing CR is dropped from every line, and a trailing newline
+terminates the last line rather than starting an empty one. Without that, a
+clipboard filled by a Windows application, a URL serving a CRLF document, or a
+repository with `core.autocrlf=true` would make two identical sides differ in
+every single line — a believable-looking diff that is entirely an artifact.
+Line-ending differences are therefore not something `:Diff` reports; Neovim
+keeps that in `'fileformat'`, and a buffer side could never have shown it
+either.
+
 **Directory diff** — when both `source=` and `target=` resolve to real,
 existing directories, `:Diff` compares the two trees file-by-file instead of
 computing a single unified diff (which wouldn't mean anything over two

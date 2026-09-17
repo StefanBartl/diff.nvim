@@ -28,6 +28,37 @@ function M.parse_args(raw)
   return out
 end
 
+---Split raw text into diff lines, the way every other source in diff.nvim
+---already produces them.
+---
+---A buffer's lines (`nvim_buf_get_lines`) and a file's (`readfile`) carry
+---neither the line terminator nor a CR -- Neovim strips both and keeps the
+---line ending in `'fileformat'` instead. Raw text does carry them: a
+---clipboard register filled by a Windows application, a URL serving a
+---CRLF file, `git show` in a repository with `core.autocrlf=true`. Left
+---alone, a trailing "\r" makes two *identical* sides differ in every single
+---line, and the empty element a trailing newline leaves behind shows up as
+---one added blank line. Both render as a plausible diff rather than as a
+---bug, which is the worst way for this to fail, so raw text is normalized
+---to the same shape the other sources have.
+---@param raw string
+---@return string[]
+function M.split_lines(raw)
+  local lines = vim.split(raw, "\n", { plain = true })
+  for i = 1, #lines do
+    if lines[i]:sub(-1) == "\r" then
+      lines[i] = lines[i]:sub(1, -2)
+    end
+  end
+  -- A trailing newline terminates the last line, it does not begin a new one.
+  -- Guarded on #lines > 1 so empty input stays a one-empty-line list rather
+  -- than becoming an empty one.
+  if #lines > 1 and lines[#lines] == "" then
+    lines[#lines] = nil
+  end
+  return lines
+end
+
 ---Split a `git:<rev1>..<rev2>` range specifier into its two revisions.
 ---Not itself a git operation — pure string splitting, so it stays testable
 ---without a git executable and reusable anywhere a target= spec needs
@@ -75,7 +106,7 @@ function M.resolve_lines(spec, label)
     if type(raw) ~= "string" or raw == "" then
       return nil, "clipboard is empty"
     end
-    return vim.split(raw, "\n", { plain = true }), nil
+    return M.split_lines(raw), nil
   end
 
   -- buffer number ------------------------------------------------------------

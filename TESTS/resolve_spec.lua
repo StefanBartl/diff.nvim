@@ -72,4 +72,42 @@ return function(H)
 
   local empty_a = resolve.split_git_range("git:..HEAD")
   eq(empty_a, nil, "split_git_range: empty first revision is not a range")
+
+  -- split_lines ------------------------------------------------------------
+  -- Raw text (a clipboard register, a fetched URL, `git show`) is the only
+  -- kind of source that carries line terminators and CRs; buffers and
+  -- readfile() strip both. Left alone, a CRLF side makes two identical sides
+  -- differ in every line and a trailing newline adds a phantom blank line --
+  -- each of which renders as a believable diff rather than as a bug.
+  eq(
+    table.concat(resolve.split_lines("one\r\ntwo\r\n"), "|"),
+    "one|two",
+    "split_lines: CRLF text matches what a buffer/readfile would give"
+  )
+  eq(
+    table.concat(resolve.split_lines("one\ntwo\n"), "|"),
+    "one|two",
+    "split_lines: a trailing newline terminates the last line"
+  )
+  eq(
+    table.concat(resolve.split_lines("one\ntwo"), "|"),
+    "one|two",
+    "split_lines: content without a trailing newline is unchanged"
+  )
+  eq(#resolve.split_lines("a\n\n"), 2, "split_lines: a genuinely blank final line is kept")
+  eq(#resolve.split_lines(""), 1, "split_lines: empty input stays one empty line")
+  eq(
+    table.concat(resolve.split_lines("mid\rdle\nx"), "|"),
+    "mid\rdle|x",
+    "split_lines: a CR inside a line is left alone, only a trailing one goes"
+  )
+
+  -- clipboard goes through it, which is where this actually bit ------------
+  vim.fn.setreg("+", "alpha\r\nbeta\r\n")
+  local clip = resolve.resolve_lines("clipboard", "target")
+  eq(
+    clip and table.concat(clip, "|"),
+    "alpha|beta",
+    "resolve_lines: a CRLF clipboard yields the same lines as a buffer would"
+  )
 end
