@@ -242,9 +242,15 @@ local function with_header(unified, a_label, b_label)
 end
 
 ---Open a split (or a new tab), load the scratch buffer, enable native
----diffmode in both windows. Returns false (after notifying) when the layout
----could not be produced, so the caller can dispose of the scratch buffers it
----created instead of leaving them tracked but never displayed.
+---diffmode in both windows. Returns the windows it opened, or nil (after
+---notifying) when the layout could not be produced, so the caller can dispose
+---of the scratch buffers it created instead of leaving them tracked but never
+---displayed.
+---
+---Only windows *this function opened* are returned. When the origin window is
+---the left-hand side it is part of the diff but not part of the result: it is
+---the user's window, and a caller closing everything it was handed must not
+---close the window they were working in.
 ---
 ---The left-hand side is the origin window's own live buffer by default --
 ---that is what keeps `:diffget`/`:diffput` writing straight into the file the
@@ -260,7 +266,7 @@ end
 ---@param scratch_buf integer
 ---@param view DiffNvim.View  "vsplit"|"split"|"tab"
 ---@param source_buf? integer  Materialized left-hand side; nil = origin window's buffer
----@return boolean ok  false when nothing was rendered
+---@return integer[]|nil windows  Windows opened here; nil when nothing rendered
 function M.side_by_side(origin_win, scratch_buf, view, source_buf)
   -- A materialized source in a new tab needs nothing from the origin window:
   -- both sides are our own buffers and the tab is opened from scratch. Only
@@ -270,7 +276,7 @@ function M.side_by_side(origin_win, scratch_buf, view, source_buf)
   local needs_origin_win = not (view == "tab" and source_buf)
   if needs_origin_win and not validate.win_valid(origin_win) then
     notify.error("origin window is no longer valid")
-    return false
+    return nil
   end
 
   local split_cmd = (view == "split") and "split" or "vsplit"
@@ -304,16 +310,17 @@ function M.side_by_side(origin_win, scratch_buf, view, source_buf)
     local left = api.nvim_get_current_win()
     if not validate.win_valid(left) or api.nvim_win_get_buf(left) ~= left_buf then
       notify.error("could not open the left-hand side of the diff")
-      return false
+      return nil
     end
     local right = split_into("vsplit", scratch_buf)
     if not right then
       notify.error("could not open the right-hand side of the diff")
-      return false
+      return nil
     end
     diffmode.set(left, true)
     diffmode.set(right, true)
-    return true
+    -- Both of these are ours: `tabnew` created the window `left` lives in.
+    return { left, right }
   end
 
   api.nvim_set_current_win(origin_win)
@@ -321,25 +328,32 @@ function M.side_by_side(origin_win, scratch_buf, view, source_buf)
   -- With a materialized source the diff lives entirely in windows we opened;
   -- `left_win` is whichever of the two ends up holding the "-" side.
   local left_win = origin_win
+  local opened = {}
   if source_buf then
     left_win = split_into(split_cmd, source_buf)
     if not left_win then
       notify.error("could not open the left-hand side of the diff")
-      return false
+      return nil
     end
+    opened[#opened + 1] = left_win
   end
 
   local new_win = split_into(split_cmd, scratch_buf)
   if not new_win then
     notify.error("could not open the right-hand side of the diff")
-    return false
+    -- The source window, if we opened one, is ours to take back down.
+    for _, w in ipairs(opened) do
+      pcall(api.nvim_win_close, w, true)
+    end
+    return nil
   end
+  opened[#opened + 1] = new_win
 
   diffmode.set(new_win, true)
   api.nvim_set_current_win(left_win)
   diffmode.set(left_win, true)
   api.nvim_set_current_win(new_win)
-  return true
+  return opened
 end
 
 ---Open a three-way native diffmode: the origin window's live buffer (left,
@@ -353,11 +367,11 @@ end
 ---@param base_buf integer
 ---@param target_buf integer
 ---@param view "vsplit"|"split"|"tab"
----@return nil
+---@return integer[]|nil windows  Windows opened here; nil when nothing rendered
 function M.three_way(origin_win, base_buf, target_buf, view)
   if not validate.win_valid(origin_win) then
     notify.error("origin window is no longer valid")
-    return
+    return nil
   end
 
   local split_cmd = (view == "split") and "split" or "vsplit"
@@ -376,7 +390,8 @@ function M.three_way(origin_win, base_buf, target_buf, view)
         diffmode.set(w, true)
       end
     end
-    return
+    -- All three are ours here: `tabnew` created the one `left` lives in.
+    return { left, mid, right }
   end
 
   api.nvim_set_current_win(origin_win)
@@ -395,6 +410,10 @@ function M.three_way(origin_win, base_buf, target_buf, view)
   if validate.win_valid(origin_win) then
     api.nvim_set_current_win(origin_win)
   end
+
+  -- origin_win is the user's own window and stays out of the result, even
+  -- though it is part of the diff -- see DiffNvim.Result.
+  return { mid_win, right_win }
 end
 
 ---@internal
@@ -641,6 +660,7 @@ end
 ---@param ctxlen integer
 ---@param opts? { layout?: "split"|"float", word_diff?: boolean }
 ---@return integer|nil bufnr  The inline scratch buffer, or nil when nothing rendered
+---@return integer|nil winid  The window it was opened in
 function M.inline(origin_win, a_lines, b_lines, a_label, b_label, algorithm, ctxlen, opts)
   opts = opts or {}
 
@@ -663,14 +683,14 @@ function M.inline(origin_win, a_lines, b_lines, a_label, b_label, algorithm, ctx
 
   if opts.layout == "float" then
     open_float(buf, #lines)
-    return buf
+    return buf, api.nvim_get_current_win()
   end
 
   if validate.win_valid(origin_win) then
     api.nvim_set_current_win(origin_win)
   end
   vim.cmd(string.format("silent! split | buffer %d", buf))
-  return buf
+  return buf, api.nvim_get_current_win()
 end
 
 ---Echo the unified diff to the message area.
@@ -705,7 +725,7 @@ end
 ---@param b_label string
 ---@param algorithm string
 ---@param ctxlen integer
----@return nil
+---@return string|nil path  The file written, or nil when nothing was
 function M.file(a_lines, b_lines, a_label, b_label, algorithm, ctxlen)
   local unified, err = M.compute_unified(a_lines, b_lines, algorithm, ctxlen)
   if not unified then
@@ -720,9 +740,10 @@ function M.file(a_lines, b_lines, a_label, b_label, algorithm, ctxlen)
   local ok = pcall(fn.writefile, with_header(unified, a_label, b_label), tmp)
   if not ok then
     notify.error("could not write diff to: " .. tmp)
-    return
+    return nil
   end
   notify.info(string.format("Diff written to: %s", tmp))
+  return tmp
 end
 
 ---Copy the unified diff to the system clipboard register (+).

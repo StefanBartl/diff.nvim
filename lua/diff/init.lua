@@ -59,10 +59,33 @@ end
 -- Public API ------------------------------------------------------------------
 
 ---Run a diff. `raw_args` uses the same `key=value` grammar as `:Diff`.
+---
+---`opts.on_done` is called once when the diff has finished, with a
+---`DiffNvim.Result` describing the buffers and windows diff.nvim created --
+---or `nil` plus a reason when nothing was produced. It fires on the
+---asynchronous paths too (`http(s)://`, `git:<rev>`, the interactive picker),
+---which is why this is a callback and not a return value: a return value
+---could only be filled in for the synchronous specifiers, and would be
+---silently empty for the rest.
+---
+---Only what diff.nvim opened is reported -- the window `:Diff` was invoked
+---from is never in `result.windows`, even when it is part of the diff. See
+---docs/api.md.
+--- >lua
+---   require("diff").run("source=7 target=8 view=vsplit", {
+---     on_done = function(result, err)
+---       if not result then return end
+---       for _, win in ipairs(result.windows) do
+---         vim.api.nvim_win_close(win, true)
+---       end
+---     end,
+---   })
+--- <
 ---@param raw_args? string
+---@param opts? DiffNvim.RunOpts
 ---@return nil
-function M.run(raw_args)
-  require("diff.core").run(raw_args or "")
+function M.run(raw_args, opts)
+  require("diff.core").run(raw_args or "", nil, opts)
 end
 
 ---Close all diff windows and disable diffmode.
@@ -72,11 +95,13 @@ function M.clear()
 end
 
 ---Diff the current buffer against another open buffer chosen from a picker.
----`raw_args` accepts the same `view=`/`output=` grammar as `:Diff`.
+---`raw_args` accepts the same `view=`/`output=` grammar as `:Diff`;
+---`opts.on_done` works exactly as it does for `M.run`.
 ---@param raw_args? string
+---@param opts? DiffNvim.RunOpts
 ---@return nil
-function M.diff_buffers(raw_args)
-  require("diff.core").run_buffers(raw_args or "")
+function M.diff_buffers(raw_args, opts)
+  require("diff.core").run_buffers(raw_args or "", opts)
 end
 
 ---Diff the current buffer against its on-disk saved version.

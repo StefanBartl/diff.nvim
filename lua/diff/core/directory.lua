@@ -191,13 +191,22 @@ end
 ---@param target_label string
 ---@param output DiffNvim.Output
 ---@param cfg DiffNvim.Config.Diff
----@return nil
+---@return DiffNvim.Result|nil result, string|nil err
 function M.run(source_dir, target_dir, source_label, target_label, output, cfg)
+  ---A directory diff never opens a native-diffmode pair, so `view` stays nil
+  ---in its result -- see the moduledoc above for why `view=` is ignored here.
+  ---@param fields table
+  ---@return DiffNvim.Result
+  local function result(fields)
+    return vim.tbl_extend("force", { output = output, buffers = {}, windows = {} }, fields)
+  end
+
   local entries, err =
     diff_trees(source_dir, target_dir, cfg.algorithm, cfg.ctxlen, cfg.directory_max_files)
   if not entries then
-    notify.error(err or "could not diff directories")
-    return
+    err = err or "could not diff directories"
+    notify.error(err)
+    return nil, err
   end
 
   if cfg.stat_list and cfg.stat_list ~= "off" then
@@ -223,7 +232,7 @@ function M.run(source_dir, target_dir, source_label, target_label, output, cfg)
   if output == "stat" then
     if #entries == 0 then
       notify.info("No differences found")
-      return
+      return result({})
     end
     local total_added, total_removed = 0, 0
     for _, e in ipairs(entries) do
@@ -241,34 +250,36 @@ function M.run(source_dir, target_dir, source_label, target_label, output, cfg)
         total_removed
       )
     )
-    return
+    return result({})
   end
 
   local lines = format_summary(entries, source_label, target_label)
 
   if output == "prompt" then
     vim.api.nvim_echo({ { table.concat(lines, "\n"), "Normal" } }, true, {})
-    return
+    return result({})
   end
   if output == "file" then
     local tmp = fn.tempname() .. ".diffstat"
     local ok = pcall(fn.writefile, lines, tmp)
     if not ok then
-      notify.error("could not write directory diff to: " .. tmp)
-      return
+      local msg = "could not write directory diff to: " .. tmp
+      notify.error(msg)
+      return nil, msg
     end
     notify.info(string.format("Directory diff written to: %s", tmp))
-    return
+    return result({ path = tmp })
   end
   if output == "clipboard" then
     fn.setreg("+", table.concat(lines, "\n"))
     notify.info("Directory diff summary copied to clipboard")
-    return
+    return result({})
   end
 
   -- output == "buffer" (default) — one scratch buffer, no native diffmode.
   local buf = scratch.create(lines, string.format("[DirDiff] %s -> %s", source_label, target_label))
   vim.cmd(string.format("silent! split | buffer %d", buf))
+  return result({ buffers = { buf }, windows = { vim.api.nvim_get_current_win() } })
 end
 
 return M
