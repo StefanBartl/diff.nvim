@@ -128,6 +128,34 @@ local function side_label(spec)
   return one_line((type(short) == "string" and short ~= "") and short or name)
 end
 
+---Wrap a caller's `on_done` into a `(result, err)` pair of reporters that
+---are safe to call unconditionally and exactly once.
+---
+---Every terminal branch of a diff ends in one of these two, including the
+---ones that only notify, so a caller gets told the run is over on paths that
+---produce nothing to show (`output=stat`, or two identical sides) just as
+---much as on the ones that open windows. `on_done` runs inside pcall: it is
+---third-party code reached from our async callbacks, and an error thrown
+---there must not surface as an unhandled error inside a URL fetch.
+---@internal
+---@param on_done DiffNvim.RunOpts.OnDone|nil
+---@return fun(result: DiffNvim.Result): nil done, fun(err: string): nil fail
+local function reporters(on_done)
+  local fired = false
+  local function call(result, err)
+    if fired or type(on_done) ~= "function" then
+      return
+    end
+    fired = true
+    pcall(on_done, result, err)
+  end
+  return function(result)
+    call(result, nil)
+  end, function(err)
+    call(nil, err)
+  end
+end
+
 ---Run a three-way diff: the origin window keeps its live buffer (left/local
 ---— still editable, which is the point of the layout), `base`
 ---(middle/ancestor) and `target` (right/remote) each get a read-only scratch
@@ -142,17 +170,24 @@ end
 ---@internal
 ---@param opts DiffNvim.ResolvedOpts
 ---@param ctx DiffNvim.Context
+---@param on_done DiffNvim.RunOpts.OnDone|nil
 ---@return nil
-local function execute_three_way(opts, ctx)
+local function execute_three_way(opts, ctx, on_done)
+  local done, fail = reporters(on_done)
+
   resolve_side_async(opts.base, "base", ctx.source_bufnr, nil, function(base_lines, base_err)
     if not base_lines then
-      notify.error(base_err or "could not resolve base")
+      base_err = base_err or "could not resolve base"
+      notify.error(base_err)
+      fail(base_err)
       return
     end
 
     resolve_side_async(opts.target, "target", ctx.source_bufnr, nil, function(tgt_lines, tgt_err)
       if not tgt_lines then
-        notify.error(tgt_err or "could not resolve target")
+        tgt_err = tgt_err or "could not resolve target"
+        notify.error(tgt_err)
+        fail(tgt_err)
         return
       end
 
@@ -161,16 +196,30 @@ local function execute_three_way(opts, ctx)
       local base_buf = scratch.create(base_lines, string.format("[Diff:base] %s", base_label))
       local tgt_buf = scratch.create(tgt_lines, string.format("[Diff:target] %s", tgt_label))
 
-      render.three_way(
+      local windows = render.three_way(
         ctx.origin_win,
         base_buf,
         tgt_buf,
         opts.view --[[@as "vsplit"|"split"|"tab"]]
       )
+      if not windows then
+        -- Never displayed, so nothing will ever wipe these two.
+        scratch.discard(base_buf)
+        scratch.discard(tgt_buf)
+        fail("could not open the three-way diff")
+        return
+      end
 
       local exit = require("diff.features.exit")
       exit.attach_buffer(base_buf)
       exit.attach_buffer(tgt_buf)
+
+      done({
+        output = opts.output,
+        view = opts.view,
+        buffers = { base_buf, tgt_buf },
+        windows = windows,
+      })
     end)
   end)
 end
@@ -211,12 +260,15 @@ end
 ---Run the diff with fully-resolved options.
 ---@param opts DiffNvim.ResolvedOpts
 ---@param ctx DiffNvim.Context
+---@param on_done? DiffNvim.RunOpts.OnDone  Called once when the diff finishes
 ---@return nil
-function M.execute(opts, ctx)
+function M.execute(opts, ctx, on_done)
   if opts.base then
-    execute_three_way(opts, ctx)
+    execute_three_way(opts, ctx, on_done)
     return
   end
+
+  local done, fail = reporters(on_done)
 
   -- source= and target= both resolving to real, existing directories: this
   -- is a directory/recursive diff (a per-file summary), not a single
@@ -225,7 +277,7 @@ function M.execute(opts, ctx)
   -- (which would just fail with "file not readable" on a directory path).
   local directory = require("diff.core.directory")
   if directory.is_directory_spec(opts.source) and directory.is_directory_spec(opts.target) then
-    directory.run(
+    local dir_result, dir_err = directory.run(
       opts.source --[[@as string]],
       opts.target --[[@as string]],
       tostring(opts.source),
@@ -233,6 +285,11 @@ function M.execute(opts, ctx)
       opts.output,
       config.get().diff
     )
+    if dir_result then
+      done(dir_result)
+    else
+      fail(dir_err or "could not diff directories")
+    end
     return
   end
 
@@ -242,6 +299,8 @@ function M.execute(opts, ctx)
   -- buffer) never matches this, so it never fires for the common
   -- current-vs-target case.
   if require("diff.features.image_compare").maybe_compare(opts.source, opts.target) then
+    -- images.nvim owns whatever it opened; none of it is ours to report.
+    done({ output = opts.output, buffers = {}, windows = {} })
     return
   end
 
@@ -293,13 +352,17 @@ function M.execute(opts, ctx)
   -- within the same tick.
   resolve_source(function(src_lines, src_err)
     if not src_lines then
-      notify.error(src_err or "could not resolve source")
+      src_err = src_err or "could not resolve source"
+      notify.error(src_err)
+      fail(src_err)
       return
     end
 
     resolve_side_async(opts.target, "target", ctx.source_bufnr, nil, function(tgt_lines, tgt_err)
       if not tgt_lines then
-        notify.error(tgt_err or "could not resolve target")
+        tgt_err = tgt_err or "could not resolve target"
+        notify.error(tgt_err)
+        fail(tgt_err)
         return
       end
 
@@ -314,16 +377,24 @@ function M.execute(opts, ctx)
       end
       local tgt_label = side_label(opts.target)
 
+      -- The text outputs create nothing the caller could take down again, so
+      -- they all report the same empty result -- what matters to a caller is
+      -- that the run is over, which is just as true here as it is for a
+      -- window-opening view. output=file adds the path it wrote.
       if opts.output == "prompt" then
         render.prompt(src_lines, tgt_lines, src_label, tgt_label, cfg.algorithm, cfg.ctxlen)
+        done({ output = opts.output, buffers = {}, windows = {} })
         return
       end
       if opts.output == "file" then
-        render.file(src_lines, tgt_lines, src_label, tgt_label, cfg.algorithm, cfg.ctxlen)
+        local path =
+          render.file(src_lines, tgt_lines, src_label, tgt_label, cfg.algorithm, cfg.ctxlen)
+        done({ output = opts.output, buffers = {}, windows = {}, path = path })
         return
       end
       if opts.output == "clipboard" then
         render.clipboard(src_lines, tgt_lines, src_label, tgt_label, cfg.algorithm, cfg.ctxlen)
+        done({ output = opts.output, buffers = {}, windows = {} })
         return
       end
       if opts.output == "stat" then
@@ -332,6 +403,7 @@ function M.execute(opts, ctx)
           mode = cfg.stat_list_mode,
           target = stat_list_target(opts.target),
         })
+        done({ output = opts.output, buffers = {}, windows = {} })
         return
       end
 
@@ -339,7 +411,7 @@ function M.execute(opts, ctx)
       local exit = require("diff.features.exit")
 
       if opts.view == "inline" or opts.view == "float" then
-        local buf = render.inline(
+        local buf, win = render.inline(
           ctx.origin_win,
           src_lines,
           tgt_lines,
@@ -355,6 +427,15 @@ function M.execute(opts, ctx)
         if buf then
           exit.attach_buffer(buf)
         end
+        -- No buffer means render.inline found nothing to show (identical
+        -- sides) or could not compute the diff; the first is a result with
+        -- nothing in it, not a failure, and it already said so itself.
+        done({
+          output = opts.output,
+          view = opts.view,
+          buffers = buf and { buf } or {},
+          windows = win and { win } or {},
+        })
         return
       end
 
@@ -370,12 +451,14 @@ function M.execute(opts, ctx)
 
       local buf = scratch.create(tgt_lines, string.format("[Diff:target] %s", tgt_label))
 
-      if not render.side_by_side(ctx.origin_win, buf, opts.view, src_buf) then
+      local windows = render.side_by_side(ctx.origin_win, buf, opts.view, src_buf)
+      if not windows then
         -- Nothing was displayed, so nothing will ever wipe these two.
         if src_buf then
           scratch.discard(src_buf)
         end
         scratch.discard(buf)
+        fail("could not open the diff")
         return
       end
 
@@ -383,6 +466,13 @@ function M.execute(opts, ctx)
         exit.attach_buffer(src_buf)
       end
       exit.attach_buffer(buf)
+
+      done({
+        output = opts.output,
+        view = opts.view,
+        buffers = src_buf and { src_buf, buf } or { buf },
+        windows = windows,
+      })
     end)
   end)
 end
@@ -579,8 +669,12 @@ end
 ---When `target` is absent an interactive picker is shown first.
 ---@param raw_args string  Raw <args> delivered by nvim_create_user_command
 ---@param range? DiffNvim.Range  Selected line span (only when :Diff got a range)
+---@param run_opts? DiffNvim.RunOpts  Caller-side options (`on_done`)
 ---@return nil
-function M.run(raw_args, range)
+function M.run(raw_args, range, run_opts)
+  local on_done = type(run_opts) == "table" and run_opts.on_done or nil
+  local _, fail = reporters(on_done)
+
   ---@type DiffNvim.Range|nil
   local sel = nil
   if
@@ -619,6 +713,7 @@ function M.run(raw_args, range)
 
   local view, output = resolve_view_output(kv, cfg)
   if not view then
+    fail("invalid view= or output=")
     return
   end
 
@@ -628,18 +723,19 @@ function M.run(raw_args, range)
   local has_base = type(kv.base) == "string" and kv.base ~= ""
   if has_base then
     if output ~= "buffer" then
-      notify.error(
+      local msg =
         string.format("base= (three-way diff) only supports output=buffer, got output=%q", output)
-      )
+      notify.error(msg)
+      fail(msg)
       return
     end
     if view == "inline" or view == "float" then
-      notify.error(
-        string.format(
-          "base= (three-way diff) does not support view=%q (use vsplit, split, or tab)",
-          view
-        )
+      local msg = string.format(
+        "base= (three-way diff) does not support view=%q (use vsplit, split, or tab)",
+        view
       )
+      notify.error(msg)
+      fail(msg)
       return
     end
     -- The local side of a three-way diff is always the origin window's live
@@ -649,12 +745,12 @@ function M.run(raw_args, range)
     -- three-way diff fail, and "ask" would just pick something we then could
     -- not honour either.
     if type(kv.source) == "string" and kv.source ~= "" and kv.source ~= "current" then
-      notify.error(
-        string.format(
-          "base= (three-way diff) only supports source=current, got source=%q",
-          kv.source
-        )
+      local msg = string.format(
+        "base= (three-way diff) only supports source=current, got source=%q",
+        kv.source
       )
+      notify.error(msg)
+      fail(msg)
       return
     end
   end
@@ -673,19 +769,27 @@ function M.run(raw_args, range)
   local need_source = kv.source == "ask"
   local need_base = has_base and kv.base == "ask"
 
+  -- A cancelled picker is not an error, but it is still "nothing was
+  -- produced", and a caller waiting on on_done has to hear about it or it
+  -- waits forever.
+  local function cancelled()
+    notify.info("Diff cancelled")
+    fail("Diff cancelled")
+  end
+
   local function pick_target_then_run()
     if not need_target then
       opts.target = kv.target
-      M.execute(opts, ctx)
+      M.execute(opts, ctx, on_done)
       return
     end
     pick_specifier("target", function(chosen)
       if not chosen then
-        notify.info("Diff cancelled")
+        cancelled()
         return
       end
       opts.target = chosen
-      M.execute(opts, ctx)
+      M.execute(opts, ctx, on_done)
     end)
   end
 
@@ -696,7 +800,7 @@ function M.run(raw_args, range)
     end
     pick_specifier("base", function(chosen)
       if not chosen then
-        notify.info("Diff cancelled")
+        cancelled()
         return
       end
       opts.base = chosen
@@ -707,7 +811,7 @@ function M.run(raw_args, range)
   if need_source then
     pick_specifier("source", function(chosen)
       if not chosen then
-        notify.info("Diff cancelled")
+        cancelled()
         return
       end
       opts.source = chosen
@@ -723,8 +827,12 @@ end
 ---Convenience wrapper over `target=<bufnr>`; only `view=`/`output=` args apply
 ---(the source is always the current buffer).
 ---@param raw_args string  Raw <args> (view=/output= only)
+---@param run_opts? DiffNvim.RunOpts  Caller-side options (`on_done`)
 ---@return nil
-function M.run_buffers(raw_args)
+function M.run_buffers(raw_args, run_opts)
+  local on_done = type(run_opts) == "table" and run_opts.on_done or nil
+  local _, fail = reporters(on_done)
+
   ---@type DiffNvim.Context
   local ctx = {
     source_bufnr = api.nvim_get_current_buf(),
@@ -736,6 +844,7 @@ function M.run_buffers(raw_args)
 
   local view, output = resolve_view_output(kv, cfg)
   if not view then
+    fail("invalid view= or output=")
     return
   end
 
@@ -758,7 +867,9 @@ function M.run_buffers(raw_args)
   end
 
   if #items == 0 then
-    notify.warn("No other listed buffers to diff against")
+    local msg = "No other listed buffers to diff against"
+    notify.warn(msg)
+    fail(msg)
     return
   end
 
@@ -766,15 +877,15 @@ function M.run_buffers(raw_args)
     local bufnr = choice and by_label[choice]
     if not bufnr then
       notify.info("Diff cancelled")
+      fail("Diff cancelled")
       return
     end
-    ---@type DiffNvim.ResolvedOpts
     M.execute({
       target = tostring(bufnr),
       source = "current",
       view = view --[[@as DiffNvim.View]],
       output = output --[[@as DiffNvim.Output]],
-    }, ctx)
+    }, ctx, on_done)
   end)
 end
 

@@ -48,6 +48,36 @@
 ---@field view   DiffNvim.View
 ---@field output DiffNvim.Output
 
+---@class DiffNvim.Result
+--- What a completed diff produced, handed to `DiffNvim.RunOpts.on_done`.
+---
+--- `buffers`/`windows` list only what diff.nvim itself created, which is what
+--- an integrating plugin needs in order to take the diff down again. The
+--- origin window is deliberately never in `windows` even when it is part of
+--- the diff (`source=current` with a side-by-side view keeps the user's live
+--- buffer as the left-hand side): it belongs to the user, and a caller
+--- closing everything in `windows` must not close the window they were
+--- working in. Both lists are empty when there was nothing to show — a
+--- `output=stat` run, or two sides that turned out to be identical.
+---@field output  DiffNvim.Output   The delivery that produced this run
+---@field view    DiffNvim.View|nil The layout, when `output == "buffer"`
+---@field buffers integer[]         Scratch buffers diff.nvim created
+---@field windows integer[]         Windows diff.nvim opened
+---@field path    string|nil        The file written, when `output == "file"`
+
+---@alias DiffNvim.RunOpts.OnDone fun(result: DiffNvim.Result|nil, err: string|nil): nil
+
+---@class DiffNvim.RunOpts
+--- Caller-side options for the programmatic entry points, separate from the
+--- `key=value` argument string so the command grammar stays untouched.
+---@field on_done? DiffNvim.RunOpts.OnDone
+--- Called exactly once when the diff has finished, on every path including
+--- the asynchronous ones (`http(s)://` fetches, `git:<rev>`, the interactive
+--- picker). `result` is nil and `err` carries the reason when nothing was
+--- produced — an unresolvable side, a rejected option combination, or a
+--- cancelled picker. Errors are notified as before; `on_done` is in addition
+--- to that, not instead of it.
+
 ---@class DiffNvim.Range
 --- A 1-based, inclusive line span from a :Diff invoked with a visual range.
 ---@field line1 integer  First selected line (1-based)
