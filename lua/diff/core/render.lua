@@ -240,47 +240,85 @@ local function with_header(unified, a_label, b_label)
   return vim.split(header, "\n", { plain = true })
 end
 
+---Turn window-local diffmode on/off for `win`.
+---
+---`vim.wo[win].diff = v` behaves like `:set`, not `:setlocal`: for a
+---window-local option it writes the *global* value as well. 'diff' is
+---inherited from that global value by every window that is opened fresh or
+---switched to another buffer, so a plain `vim.wo[...].diff = true` left the
+---next `:tabnew` sitting in diffmode long after the diff it came from. Write
+---the local scope explicitly instead.
+---@internal
+---@param win integer
+---@param on boolean
+---@return nil
+local function set_win_diff(win, on)
+  pcall(api.nvim_set_option_value, "diff", on, { win = win, scope = "local" })
+end
+
 ---Open a split (or a new tab), load the scratch buffer, enable native
 ---diffmode in both windows.
+---
+---The left-hand side is the origin window's own live buffer by default --
+---that is what keeps `:diffget`/`:diffput` writing straight into the file the
+---user will save, the same convention `M.three_way` follows. `source_buf`
+---overrides it for the cases where the origin window is *not* showing the
+---source: an explicit `source=` specifier, or a range that covers only part
+---of the buffer (see `core.execute`). That buffer then gets a window of its
+---own instead of taking over the origin window -- the buffer the user was
+---editing is not part of this diff, and evicting it (only for `:DiffClear` to
+---wipe our scratch out from under that window again) would cost them their
+---working view for nothing. The origin window simply stays out of the diff.
 ---@param origin_win integer
 ---@param scratch_buf integer
 ---@param view DiffNvim.View  "vsplit"|"split"|"tab"
+---@param source_buf? integer  Materialized left-hand side; nil = origin window's buffer
 ---@return nil
-function M.side_by_side(origin_win, scratch_buf, view)
+function M.side_by_side(origin_win, scratch_buf, view, source_buf)
   if not validate.win_valid(origin_win) then
     notify.error("origin window is no longer valid")
     return
   end
 
-  -- "tab" opens a fresh tab showing the origin buffer beside the scratch, so
+  local split_cmd = (view == "split") and "split" or "vsplit"
+
+  -- "tab" opens a fresh tab showing the left-hand side beside the scratch, so
   -- the diff never disturbs the existing window layout.
   if view == "tab" then
-    local origin_buf = api.nvim_win_get_buf(origin_win)
+    local left_buf = source_buf or api.nvim_win_get_buf(origin_win)
     vim.cmd("tabnew")
-    vim.cmd(string.format("silent! buffer %d", origin_buf))
+    vim.cmd(string.format("silent! buffer %d", left_buf))
     local left = api.nvim_get_current_win()
     vim.cmd(string.format("silent! vsplit | buffer %d", scratch_buf))
     local right = api.nvim_get_current_win()
     if validate.win_valid(left) then
-      vim.wo[left].diff = true
+      set_win_diff(left, true)
     end
     if validate.win_valid(right) then
-      vim.wo[right].diff = true
+      set_win_diff(right, true)
     end
     return
   end
 
   api.nvim_set_current_win(origin_win)
-  local split_cmd = (view == "split") and "split" or "vsplit"
+
+  -- With a materialized source the diff lives entirely in windows we opened;
+  -- `left_win` is whichever of the two ends up holding the "-" side.
+  local left_win = origin_win
+  if source_buf then
+    vim.cmd(string.format("silent! %s | buffer %d", split_cmd, source_buf))
+    left_win = api.nvim_get_current_win()
+  end
+
   vim.cmd(string.format("silent! %s | buffer %d", split_cmd, scratch_buf))
 
   local new_win = api.nvim_get_current_win()
   if validate.win_valid(new_win) then
-    vim.wo[new_win].diff = true
+    set_win_diff(new_win, true)
   end
-  if validate.win_valid(origin_win) then
-    api.nvim_set_current_win(origin_win)
-    vim.wo[origin_win].diff = true
+  if validate.win_valid(left_win) then
+    api.nvim_set_current_win(left_win)
+    set_win_diff(left_win, true)
   end
   if validate.win_valid(new_win) then
     api.nvim_set_current_win(new_win)
@@ -318,7 +356,7 @@ function M.three_way(origin_win, base_buf, target_buf, view)
     local right = api.nvim_get_current_win()
     for _, w in ipairs({ left, mid, right }) do
       if validate.win_valid(w) then
-        vim.wo[w].diff = true
+        set_win_diff(w, true)
       end
     end
     return
@@ -333,7 +371,7 @@ function M.three_way(origin_win, base_buf, target_buf, view)
 
   for _, w in ipairs({ origin_win, mid_win, right_win }) do
     if validate.win_valid(w) then
-      vim.wo[w].diff = true
+      set_win_diff(w, true)
     end
   end
 

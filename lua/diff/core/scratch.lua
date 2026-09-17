@@ -12,6 +12,17 @@ local validate = require("diff.util.validate")
 
 local M = {}
 
+---Leave diffmode in `win`, window-locally.
+---@internal
+---@param win integer
+---@return nil
+local function diff_off(win)
+  -- `vim.wo[win].diff = false` behaves like `:set` and would clear the
+  -- *global* value too, which is not ours to touch -- see `set_win_diff` in
+  -- core/render.lua for the same reasoning on the way in.
+  pcall(api.nvim_set_option_value, "diff", false, { win = win, scope = "local" })
+end
+
 ---@type integer[]  Tracked scratch buffer handles
 local _bufs = {}
 
@@ -72,7 +83,7 @@ function M.cleanup_all()
     if validate.buf_valid(bufnr) then
       for _, win in ipairs(api.nvim_list_wins()) do
         if validate.win_valid(win) and api.nvim_win_get_buf(win) == bufnr then
-          vim.wo[win].diff = false
+          diff_off(win)
         end
       end
       if pcall(api.nvim_buf_delete, bufnr, { force = true }) then
@@ -84,7 +95,7 @@ function M.cleanup_all()
   -- Disable diffmode left over in any other window (e.g. the origin buffer).
   for _, win in ipairs(api.nvim_list_wins()) do
     if validate.win_valid(win) and vim.wo[win].diff then
-      vim.wo[win].diff = false
+      diff_off(win)
     end
   end
 

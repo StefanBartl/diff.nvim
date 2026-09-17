@@ -309,6 +309,22 @@ view= ~
                 word-level DiffText highlighting on changed spans
     float       Same as inline, in a floating window (press q or <Esc> to close)
 
+  For vsplit/split/tab the left-hand pane is the origin window's own live
+  buffer — and stays editable, so :diffget/:diffput write into the file you
+  will save — but only when the source is that buffer in full, i.e.
+  `source=current` (the default) without a range. Any other source= and any
+  range are materialized into their own read-only scratch buffer and get a
+  window of their own; the origin window keeps its buffer and stays out of
+  the diff.
+
+  Side labels: the unified-diff header (`--- <source>` / `+++ <target>`) and
+  the scratch-buffer names use the specifier as written — which reads well
+  for a file path, clipboard, git:{rev} or a URL. A buffer number is the
+  exception (`--- 7` says nothing), so it is labelled by that buffer's own
+  name, shortened relative to the cwd/$HOME; an unnamed buffer falls back to
+  `buf:{N}`. `source=current` is labelled `buf:{N}`, plus `@{line1}-{line2}`
+  when a range narrowed it.
+
 output= ~
   Where the result goes. Default: `buffer`.
     buffer      Interactive diff in a split (see view=)

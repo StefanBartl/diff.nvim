@@ -87,6 +87,34 @@ local function resolve_side_async(spec, label, source_bufnr, range, callback)
   callback(resolve_side(spec, label, source_bufnr, range))
 end
 
+---Human-readable label for a resolved side, used in the unified-diff header
+---("--- <label>" / "+++ <label>") and in scratch-buffer names.
+---
+---A numeric specifier is the one kind that labels itself badly: `--- 7` says
+---nothing about what buffer 7 holds, and it is the shape an integrating
+---plugin naturally produces (it hands `:Diff` a scratch buffer it just
+---created). Resolve it to that buffer's own name, shortened relative to the
+---cwd/$HOME so it reads like a typed-in path specifier does, and fall back to
+---`buf:N` for an unnamed buffer -- the same shape `source=current` already
+---uses. Every other specifier (a file path, "clipboard", `git:<rev>`, a URL)
+---is already its own best label and is passed through unchanged.
+---@internal
+---@param spec DiffNvim.Source|DiffNvim.Target
+---@return string
+local function side_label(spec)
+  local as_num = tonumber(spec)
+  if as_num == nil then
+    return tostring(spec)
+  end
+  local bufnr = math.floor(as_num)
+  local name = validate.buf_valid(bufnr) and api.nvim_buf_get_name(bufnr) or ""
+  if name == "" then
+    return string.format("buf:%d", bufnr)
+  end
+  local short = vim.fn.fnamemodify(name, ":~:.")
+  return (type(short) == "string" and short ~= "") and short or name
+end
+
 ---Run a three-way diff: the origin window keeps its live buffer (left/local
 ---— still editable, matching side_by_side's convention for output=buffer),
 ---`base` (middle/ancestor) and `target` (right/remote) each get a read-only
@@ -112,8 +140,8 @@ local function execute_three_way(opts, ctx)
         return
       end
 
-      local base_label = tostring(opts.base)
-      local tgt_label = tostring(opts.target)
+      local base_label = side_label(opts.base)
+      local tgt_label = side_label(opts.target)
       local base_buf = scratch.create(base_lines, string.format("[Diff:base] %s", base_label))
       local tgt_buf = scratch.create(tgt_lines, string.format("[Diff:target] %s", tgt_label))
 
@@ -231,9 +259,9 @@ function M.execute(opts, ctx)
             src_label = src_label .. string.format("@%d-%d", ctx.range.line1, ctx.range.line2)
           end
         else
-          src_label = tostring(opts.source)
+          src_label = side_label(opts.source)
         end
-        local tgt_label = tostring(opts.target)
+        local tgt_label = side_label(opts.target)
 
         if opts.output == "prompt" then
           render.prompt(src_lines, tgt_lines, src_label, tgt_label, cfg.algorithm, cfg.ctxlen)
@@ -280,8 +308,33 @@ function M.execute(opts, ctx)
         end
 
         -- view == "vsplit" | "split" | "tab"
-        local buf = scratch.create(tgt_lines, string.format("[Diff] %s", tgt_label))
-        render.side_by_side(ctx.origin_win, buf, opts.view)
+        --
+        -- The origin window's live buffer is the left-hand side only when the
+        -- source really is that buffer in full -- source=current with no
+        -- range. That case is worth keeping as-is: the left side stays
+        -- editable, so :diffget/:diffput write into the file being saved (the
+        -- same property three-way diffs rely on, see docs/three-way-diff.md).
+        --
+        -- Every other source -- a buffer number, a file path, clipboard,
+        -- git:<rev>, a URL -- and every range resolve to lines that are *not*
+        -- what the origin window is showing, so they get materialized into a
+        -- read-only scratch buffer of their own. Without this, src_lines was
+        -- resolved (network round-trip and all) and then silently dropped,
+        -- and `:Diff source=<x> target=<y> view=vsplit` diffed the current
+        -- buffer against <y> while looking exactly like it had worked.
+        local src_buf = nil
+        if opts.source ~= "current" or ctx.range then
+          src_buf = scratch.create(src_lines, string.format("[Diff:source] %s", src_label))
+        end
+
+        local buf = scratch.create(
+          tgt_lines,
+          string.format(src_buf and "[Diff:target] %s" or "[Diff] %s", tgt_label)
+        )
+        render.side_by_side(ctx.origin_win, buf, opts.view, src_buf)
+        if src_buf then
+          exit.attach_buffer(src_buf)
+        end
         exit.attach_buffer(buf)
       end)
     end

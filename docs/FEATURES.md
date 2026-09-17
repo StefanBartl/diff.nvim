@@ -71,6 +71,13 @@ unified diff into a single scratch buffer (`ft=diff`); `float` is the same
 in a floating window (`q`/`<Esc>` to close). `vsplit`/`split`/`tab` follow
 Neovim's own `'splitright'`/`'splitbelow'` for left-right/top-bottom order.
 
+In the native-diffmode views the left-hand pane is the origin window's own
+live (editable) buffer only for `source=current` without a range — the case
+where that really is the source, and where `:diffget`/`:diffput` writing
+into the file you will save is the point. Every other `source=` and every
+range get a read-only scratch buffer and a window of their own, leaving the
+origin window's buffer untouched and out of the diff.
+
 - **Module:** `lua/diff/core/render.lua`
 - **Config:** `opts.diff.default_view` (default `"vsplit"`)
 
