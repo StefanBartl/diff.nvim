@@ -57,6 +57,45 @@ return function(H)
     "maybe_compare claims the diff when both sides are image files, regardless of images.nvim availability"
   )
 
+  -- With images.nvim present, the pair is handed to its gallery -----------
+  -- The contract diff.nvim depends on is `images.gallery({a, b}, 2)` -- the
+  -- same primitive `:Image gallery` itself uses -- with both *expanded* paths
+  -- and a column count of 2. Driven against a double in `package.loaded`, so
+  -- no images.nvim checkout is needed and nothing is actually drawn.
+  do
+    local saved_images = package.loaded["images"]
+    local captured
+    package.loaded["images"] = {
+      gallery = function(paths, columns)
+        captured = { paths = paths, columns = columns }
+      end,
+    }
+
+    local png_b = vim.fn.tempname() .. ".JPEG"
+    vim.fn.writefile({ "also not a real image" }, png_b)
+
+    local handled_pair = image_compare.maybe_compare(png, png_b)
+    ok(handled_pair, "maybe_compare claims the pair when images.nvim is installed")
+    ok(captured ~= nil, "and hands it to images.gallery")
+    eq(#captured.paths, 2, "with exactly two paths")
+    eq(captured.paths[1], vim.fn.expand(png), "the source path, expanded")
+    eq(captured.paths[2], vim.fn.expand(png_b), "the target path, expanded")
+    eq(captured.columns, 2, "and two columns, so the pair sits side by side")
+
+    -- The extension check is case-insensitive -- .JPEG matched above.
+    ok(image_compare.is_image_file_spec(png_b), "an uppercase extension is still an image spec")
+
+    -- An images.nvim without a gallery function (an API mismatch, or an older
+    -- release) falls back to the warning rather than erroring.
+    package.loaded["images"] = {}
+    local no_gallery_ok, no_gallery = pcall(image_compare.maybe_compare, png, png_b)
+    ok(no_gallery_ok, "an images.nvim without gallery() does not throw")
+    ok(no_gallery, "and the pair is still claimed, with the install hint")
+
+    vim.fn.delete(png_b)
+    package.loaded["images"] = saved_images
+  end
+
   -- diff.image_compare = false disables the whole feature -----------------
   local config = require("diff.config")
   config.setup({ diff = { image_compare = false } })

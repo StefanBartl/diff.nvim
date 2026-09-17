@@ -65,6 +65,14 @@ and the output have become coupled and the design has drifted.
 [GitHub Actions](../.github/workflows/ci.yml) runs it on every push and PR to
 `main`.
 
+A new spec keeps the suite process-free and network-free: cut at the seam
+(`vim.system`, `vim.fn.<something>`, a `package.loaded` entry) and replace it
+*before* requiring the module under test — these modules bind their
+dependencies to upvalues at load time, so patching a field afterwards is too
+late. [`TESTS/README.md`](../TESTS/README.md) lists the seam for each spawnable
+process, the two deliberate exceptions, and the conventions a spec follows when
+it shares the runner's single Neovim process.
+
 ## Workflow
 
 1. Fork the repository.
