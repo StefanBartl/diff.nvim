@@ -219,15 +219,15 @@ return function(H)
     )
   end
 
-  -- BUG: lib.nvim missing -----------------------------------------------------
-  -- `check()` has a dedicated branch for "lib.nvim not found", reports it as an
-  -- error with an install hint -- and then ends, unconditionally, with
-  -- `require(COMPOSER).checkhealth("Diff")`. When lib.nvim really is absent,
-  -- that require throws, so `:checkhealth diff` aborts with a stack trace
-  -- partway through and the user never sees the very diagnosis the branch above
-  -- was written to give them. (`lib.nvim.deps.health` two lines earlier is
-  -- pcall'd for exactly this reason -- the last line was not.) This is the one
-  -- environment the check exists for, and it is the one it cannot survive.
+  -- Regression: lib.nvim missing -----------------------------------------
+  -- `check()` has a dedicated branch for "lib.nvim not found", reports it as
+  -- an error with an install hint, and used to end unconditionally with
+  -- `require(COMPOSER).checkhealth("Diff")`. When lib.nvim really was absent,
+  -- that require threw, so `:checkhealth diff` aborted with a stack trace
+  -- partway through and the user never saw the very diagnosis the branch above
+  -- was written to give them -- the one environment the check exists for was
+  -- the one it could not survive. (`lib.nvim.deps.health` two lines earlier
+  -- was already pcall'd for exactly this reason; now the last line is too.)
   do
     local saved_loaded = package.loaded[COMPOSER]
     local saved_preload = package.preload[COMPOSER]
@@ -245,15 +245,7 @@ return function(H)
       r.text:find("lib.nvim not found", 1, true) ~= nil,
       "the missing dependency is correctly diagnosed..."
     )
-    eq(
-      r.ok,
-      false,
-      "BUG: ...and then check() throws on the unconditional composer.checkhealth() call"
-    )
-    ok(
-      tostring(r.err):find(COMPOSER, 1, true) ~= nil,
-      "BUG: what escapes names the module it could not require (got: " .. tostring(r.err) .. ")"
-    )
+    ok(r.ok, "...and check() runs to completion instead of throwing on the same missing module")
 
     -- Make sure the sabotage really was undone.
     ok(pcall(require, COMPOSER), "the composer is requirable again afterwards")
