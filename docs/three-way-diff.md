@@ -41,8 +41,13 @@ A three-way diff is inherently a "put things in windows" concept, not a
 Both are validated up front; an incompatible combination is rejected with an
 explanatory error before anything opens.
 
-`source=` is accepted but only `current` (the default) makes practical
-sense — local is always the live buffer in the origin window.
+- **`source=` must be `current`** (the default), or be left out. Local is
+  always the live buffer in the origin window, and a three-way layout has no
+  fourth window to put a materialized source in — unlike the two-way
+  side-by-side views, which do give an explicit `source=` a window of its
+  own. An explicit `source=` alongside `base=` is therefore rejected rather
+  than accepted and quietly ignored. A configured `diff.default_source` is
+  not affected: only a `source=` you actually typed is checked.
 
 ## Examples
 

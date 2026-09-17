@@ -87,6 +87,20 @@ local function resolve_side_async(spec, label, source_bufnr, range, callback)
   callback(resolve_side(spec, label, source_bufnr, range))
 end
 
+---A label always has to stay on one line: `with_header` writes exactly two
+---header lines ("--- a" / "+++ b") and `render.apply_word_diff` counts on the
+---diff body starting at line 3. A buffer name may legitimately contain
+---newlines (nvim accepts them, and a filename can carry one on Linux/macOS),
+---which would otherwise push extra lines -- including a forged `@@` hunk
+---header -- into a diff that `output=file`/`clipboard` hands to `git apply`.
+---Control characters are folded to a space for the same reason.
+---@internal
+---@param label string
+---@return string
+local function one_line(label)
+  return (label:gsub("%c", " "))
+end
+
 ---Human-readable label for a resolved side, used in the unified-diff header
 ---("--- <label>" / "+++ <label>") and in scratch-buffer names.
 ---
@@ -102,26 +116,28 @@ end
 ---@param spec DiffNvim.Source|DiffNvim.Target
 ---@return string
 local function side_label(spec)
-  local as_num = tonumber(spec)
-  if as_num == nil then
-    return tostring(spec)
+  local bufnr = resolve.as_bufnr(spec)
+  if bufnr == nil then
+    return one_line(tostring(spec))
   end
-  local bufnr = math.floor(as_num)
   local name = validate.buf_valid(bufnr) and api.nvim_buf_get_name(bufnr) or ""
   if name == "" then
     return string.format("buf:%d", bufnr)
   end
   local short = vim.fn.fnamemodify(name, ":~:.")
-  return (type(short) == "string" and short ~= "") and short or name
+  return one_line((type(short) == "string" and short ~= "") and short or name)
 end
 
 ---Run a three-way diff: the origin window keeps its live buffer (left/local
----— still editable, matching side_by_side's convention for output=buffer),
----`base` (middle/ancestor) and `target` (right/remote) each get a read-only
----scratch buffer. opts.source is deliberately not resolved here — exactly
----like the two-way output=buffer path, the origin window's live content is
----what's shown, so fetching/reading it separately would be wasted work (a
----discarded network round-trip for a url:// source, in the worst case).
+---— still editable, which is the point of the layout), `base`
+---(middle/ancestor) and `target` (right/remote) each get a read-only scratch
+---buffer. opts.source is deliberately not resolved here: local is always the
+---live buffer, so fetching/reading a source separately would be wasted work
+---(a discarded network round-trip for a url:// source, in the worst case).
+---Unlike the two-way path, which materializes a non-`current` source into its
+---own window, a three-way diff has no window to put one in — `M.run` rejects
+---an explicit `source=` alongside `base=` up front rather than accepting one
+---and quietly ignoring it.
 ---@see docs/three-way-diff.md
 ---@internal
 ---@param opts DiffNvim.ResolvedOpts
@@ -173,9 +189,9 @@ local function stat_list_target(spec)
   if type(spec) ~= "string" then
     return nil
   end
-  local as_num = tonumber(spec)
-  if as_num ~= nil then
-    return { bufnr = math.floor(as_num) }
+  local bufnr = resolve.as_bufnr(spec)
+  if bufnr ~= nil then
+    return { bufnr = bufnr }
   end
   if
     spec == "current"
@@ -231,114 +247,144 @@ function M.execute(opts, ctx)
 
   local cfg = config.get().diff
 
-  -- The visual range applies to the source side only (the selection lives in
-  -- the buffer that was current when :Diff was invoked). Nested rather than
-  -- parallel because a URL fetch is the one path that's genuinely async; every
-  -- other specifier's callback fires synchronously within the same tick.
-  resolve_side_async(
-    opts.source,
-    "source",
-    ctx.source_bufnr,
-    ctx.range,
-    function(src_lines, src_err)
-      if not src_lines then
-        notify.error(src_err or "could not resolve source")
+  -- Whether the left-hand side of this diff is the origin window's own live
+  -- buffer rather than content we have to produce. That is the case for the
+  -- native-diffmode views when the source really is that buffer in full --
+  -- `source=current` (the default) with no range -- and it is worth keeping:
+  -- the left side stays editable, so :diffget/:diffput write into the file
+  -- being saved (the same property three-way diffs rely on, see
+  -- docs/three-way-diff.md).
+  --
+  -- Every other source (a buffer number, a file path, clipboard, git:<rev>, a
+  -- URL) and every range resolve to lines that are *not* what that window is
+  -- showing, and get a read-only scratch buffer of their own further down.
+  --
+  -- Decided here, before anything is resolved, because it answers two
+  -- questions at once: which buffer goes on the left, and whether the source
+  -- has to be read at all. When the live buffer is the left-hand side its
+  -- content is never used, and resolving it would copy the whole buffer into
+  -- a Lua table only to drop it -- the same waste `execute_three_way` avoids.
+  local uses_origin_buffer = opts.output == "buffer"
+    and (opts.view == "vsplit" or opts.view == "split" or opts.view == "tab")
+    and opts.source == "current"
+    and ctx.range == nil
+
+  ---@internal
+  ---Hand the source side's lines to `callback`, or skip straight to it with an
+  ---empty list when they are not going to be read (see `uses_origin_buffer`).
+  ---@param callback fun(lines: string[]|nil, err: string|nil): nil
+  ---@return nil
+  local function resolve_source(callback)
+    if not uses_origin_buffer then
+      -- The visual range applies to the source side only (the selection lives
+      -- in the buffer that was current when :Diff was invoked).
+      resolve_side_async(opts.source, "source", ctx.source_bufnr, ctx.range, callback)
+      return
+    end
+    if not validate.buf_valid(ctx.source_bufnr) then
+      callback(nil, "source buffer is no longer valid")
+      return
+    end
+    callback({}, nil)
+  end
+
+  -- Nested rather than parallel because a URL fetch is the one path that's
+  -- genuinely async; every other specifier's callback fires synchronously
+  -- within the same tick.
+  resolve_source(function(src_lines, src_err)
+    if not src_lines then
+      notify.error(src_err or "could not resolve source")
+      return
+    end
+
+    resolve_side_async(opts.target, "target", ctx.source_bufnr, nil, function(tgt_lines, tgt_err)
+      if not tgt_lines then
+        notify.error(tgt_err or "could not resolve target")
         return
       end
 
-      resolve_side_async(opts.target, "target", ctx.source_bufnr, nil, function(tgt_lines, tgt_err)
-        if not tgt_lines then
-          notify.error(tgt_err or "could not resolve target")
-          return
+      local src_label
+      if opts.source == "current" then
+        src_label = "buf:" .. ctx.source_bufnr
+        if ctx.range then
+          src_label = src_label .. string.format("@%d-%d", ctx.range.line1, ctx.range.line2)
         end
+      else
+        src_label = side_label(opts.source)
+      end
+      local tgt_label = side_label(opts.target)
 
-        local src_label
-        if opts.source == "current" then
-          src_label = "buf:" .. ctx.source_bufnr
-          if ctx.range then
-            src_label = src_label .. string.format("@%d-%d", ctx.range.line1, ctx.range.line2)
-          end
-        else
-          src_label = side_label(opts.source)
-        end
-        local tgt_label = side_label(opts.target)
+      if opts.output == "prompt" then
+        render.prompt(src_lines, tgt_lines, src_label, tgt_label, cfg.algorithm, cfg.ctxlen)
+        return
+      end
+      if opts.output == "file" then
+        render.file(src_lines, tgt_lines, src_label, tgt_label, cfg.algorithm, cfg.ctxlen)
+        return
+      end
+      if opts.output == "clipboard" then
+        render.clipboard(src_lines, tgt_lines, src_label, tgt_label, cfg.algorithm, cfg.ctxlen)
+        return
+      end
+      if opts.output == "stat" then
+        render.stat(src_lines, tgt_lines, src_label, tgt_label, cfg.algorithm, cfg.ctxlen, {
+          list = cfg.stat_list,
+          mode = cfg.stat_list_mode,
+          target = stat_list_target(opts.target),
+        })
+        return
+      end
 
-        if opts.output == "prompt" then
-          render.prompt(src_lines, tgt_lines, src_label, tgt_label, cfg.algorithm, cfg.ctxlen)
-          return
-        end
-        if opts.output == "file" then
-          render.file(src_lines, tgt_lines, src_label, tgt_label, cfg.algorithm, cfg.ctxlen)
-          return
-        end
-        if opts.output == "clipboard" then
-          render.clipboard(src_lines, tgt_lines, src_label, tgt_label, cfg.algorithm, cfg.ctxlen)
-          return
-        end
-        if opts.output == "stat" then
-          render.stat(src_lines, tgt_lines, src_label, tgt_label, cfg.algorithm, cfg.ctxlen, {
-            list = cfg.stat_list,
-            mode = cfg.stat_list_mode,
-            target = stat_list_target(opts.target),
-          })
-          return
-        end
+      -- output == "buffer"
+      local exit = require("diff.features.exit")
 
-        -- output == "buffer"
-        local exit = require("diff.features.exit")
-
-        if opts.view == "inline" or opts.view == "float" then
-          local buf = render.inline(
-            ctx.origin_win,
-            src_lines,
-            tgt_lines,
-            src_label,
-            tgt_label,
-            cfg.algorithm,
-            cfg.ctxlen,
-            {
-              layout = (opts.view == "float") and "float" or "split",
-              word_diff = cfg.word_diff,
-            }
-          )
-          if buf then
-            exit.attach_buffer(buf)
-          end
-          return
-        end
-
-        -- view == "vsplit" | "split" | "tab"
-        --
-        -- The origin window's live buffer is the left-hand side only when the
-        -- source really is that buffer in full -- source=current with no
-        -- range. That case is worth keeping as-is: the left side stays
-        -- editable, so :diffget/:diffput write into the file being saved (the
-        -- same property three-way diffs rely on, see docs/three-way-diff.md).
-        --
-        -- Every other source -- a buffer number, a file path, clipboard,
-        -- git:<rev>, a URL -- and every range resolve to lines that are *not*
-        -- what the origin window is showing, so they get materialized into a
-        -- read-only scratch buffer of their own. Without this, src_lines was
-        -- resolved (network round-trip and all) and then silently dropped,
-        -- and `:Diff source=<x> target=<y> view=vsplit` diffed the current
-        -- buffer against <y> while looking exactly like it had worked.
-        local src_buf = nil
-        if opts.source ~= "current" or ctx.range then
-          src_buf = scratch.create(src_lines, string.format("[Diff:source] %s", src_label))
-        end
-
-        local buf = scratch.create(
+      if opts.view == "inline" or opts.view == "float" then
+        local buf = render.inline(
+          ctx.origin_win,
+          src_lines,
           tgt_lines,
-          string.format(src_buf and "[Diff:target] %s" or "[Diff] %s", tgt_label)
+          src_label,
+          tgt_label,
+          cfg.algorithm,
+          cfg.ctxlen,
+          {
+            layout = (opts.view == "float") and "float" or "split",
+            word_diff = cfg.word_diff,
+          }
         )
-        render.side_by_side(ctx.origin_win, buf, opts.view, src_buf)
-        if src_buf then
-          exit.attach_buffer(src_buf)
+        if buf then
+          exit.attach_buffer(buf)
         end
-        exit.attach_buffer(buf)
-      end)
-    end
-  )
+        return
+      end
+
+      -- view == "vsplit" | "split" | "tab"
+      --
+      -- `uses_origin_buffer` (computed before the source was resolved, see
+      -- above) decides whether the left-hand side is the origin window's
+      -- own live buffer or a scratch buffer of its own.
+      local src_buf = nil
+      if not uses_origin_buffer then
+        src_buf = scratch.create(src_lines, string.format("[Diff:source] %s", src_label))
+      end
+
+      local buf = scratch.create(tgt_lines, string.format("[Diff:target] %s", tgt_label))
+
+      if not render.side_by_side(ctx.origin_win, buf, opts.view, src_buf) then
+        -- Nothing was displayed, so nothing will ever wipe these two.
+        if src_buf then
+          scratch.discard(src_buf)
+        end
+        scratch.discard(buf)
+        return
+      end
+
+      if src_buf then
+        exit.attach_buffer(src_buf)
+      end
+      exit.attach_buffer(buf)
+    end)
+  end)
 end
 
 ---@internal
@@ -592,6 +638,21 @@ function M.run(raw_args, range)
         string.format(
           "base= (three-way diff) does not support view=%q (use vsplit, split, or tab)",
           view
+        )
+      )
+      return
+    end
+    -- The local side of a three-way diff is always the origin window's live
+    -- buffer -- there is no third window to put a materialized source in, the
+    -- way the two-way side-by-side views have. Only an *explicitly given*
+    -- source= is rejected: a configured `default_source` must not make every
+    -- three-way diff fail, and "ask" would just pick something we then could
+    -- not honour either.
+    if type(kv.source) == "string" and kv.source ~= "" and kv.source ~= "current" then
+      notify.error(
+        string.format(
+          "base= (three-way diff) only supports source=current, got source=%q",
+          kv.source
         )
       )
       return

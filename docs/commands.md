@@ -98,10 +98,12 @@ Accepts the same grammar as `target=` (`clipboard`, `ask`, `git:{rev}`,
 a native **three-window** diffmode instead of two: the current buffer stays
 live and editable in the origin window (local), `base=` gets a read-only
 scratch buffer (the common ancestor), `target=` gets another (the
-remote/incoming version). Requires `output=buffer` (the default) and
-`view=vsplit`/`split`/`tab` — `inline`/`float`/any non-`buffer` output are
-single-diff concepts with no three-way equivalent, and are rejected with an
-error if combined with `base=`. See [Three-way diff](three-way-diff.md) for
+remote/incoming version). Requires `output=buffer` (the default),
+`view=vsplit`/`split`/`tab`, and `source=current` (the default) — the other
+`output=`/`view=` values are single-diff concepts with no three-way
+equivalent, and a three-way layout has no window to put an explicit
+`source=` in. All three are rejected with an error if combined with `base=`,
+rather than accepted and ignored. See [Three-way diff](three-way-diff.md) for
 the full picture and merge-conflict-resolution examples.
 
 **`view=`** (only for `output=buffer`, default: `vsplit`)
@@ -136,12 +138,15 @@ of the diff — nothing is evicted from it.
 | `stat` | Report `+N -M, K hunks` as a notification only (no window by default — see `stat_list` below) |
 
 **Side labels** — the unified-diff header (`--- <source>` / `+++ <target>`)
-and the scratch-buffer names use the specifier as written, which reads well
+and the scratch-buffer names (`[Diff:source] <label>`, `[Diff:target]
+<label>`, `[Diff:base] <label>`) use the specifier as written, which reads well
 for a file path, `clipboard`, `git:{rev}` or a URL. A **buffer number** is the
 exception — `--- 7` says nothing — so it is labelled by that buffer's own
 name, shortened relative to the cwd/`$HOME` (`--- lua/old.lua`); an unnamed
 buffer falls back to `buf:{N}`. `source=current` is labelled `buf:{N}`, plus
-`@{line1}-{line2}` when a range narrowed it.
+`@{line1}-{line2}` when a range narrowed it. A label is always folded to a
+single line — a buffer name may legally contain a newline, and a diff header
+is exactly two lines.
 
 `output=stat` can also push each hunk into the quickfix or location list via
 `opts.diff.stat_list` (`"off"` by default, or `"qf"`/`"loc"`) so hunks from

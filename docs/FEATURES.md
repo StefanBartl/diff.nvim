@@ -174,9 +174,11 @@ file you'll save), **base** (the common ancestor, read-only scratch), and
 **target** (the incoming/remote version, read-only scratch). `base=`
 accepts the same specifier grammar as `target=`/`source=`. Neovim's native
 diffmode does the actual 3-window diffing — nothing custom computed.
-Requires `output=buffer` (the default) and `view=vsplit`/`split`/`tab`;
-`inline`/`float`/non-`buffer` output are rejected up front with an error,
-since they're single-diff concepts with no three-way equivalent.
+Requires `output=buffer` (the default), `view=vsplit`/`split`/`tab`, and
+`source=current` (the default); `inline`/`float`/non-`buffer` output are
+single-diff concepts with no three-way equivalent, and local is always the
+origin window's live buffer, so there is nowhere to put an explicit
+`source=`. All three are rejected up front with an error.
 
 - **Tab:** true
 - **Module:** `lua/diff/core/init.lua`, `lua/diff/core/render.lua`

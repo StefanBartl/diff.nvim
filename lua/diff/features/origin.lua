@@ -11,6 +11,7 @@ local fn = vim.fn
 local notify = require("diff.util.notify")
 local validate = require("diff.util.validate")
 local scratch = require("diff.core.scratch")
+local diffmode = require("diff.util.diffmode")
 local config = require("diff.config")
 
 local M = {}
@@ -59,17 +60,13 @@ function M.run()
   api.nvim_set_current_win(origin_win)
   vim.cmd(string.format("silent! %s | buffer %d", split_cmd, snap))
 
-  -- Written through nvim_set_option_value's "local" scope rather than
-  -- `vim.wo[...].diff = true`, which behaves like `:set` and would leave the
-  -- *global* 'diff' on for every window opened afterwards -- see
-  -- `set_win_diff` in core/render.lua.
   local snap_win = api.nvim_get_current_win()
   if validate.win_valid(snap_win) then
-    pcall(api.nvim_set_option_value, "diff", true, { win = snap_win, scope = "local" })
+    diffmode.set(snap_win, true)
   end
   if validate.win_valid(origin_win) then
     api.nvim_set_current_win(origin_win)
-    pcall(api.nvim_set_option_value, "diff", true, { win = origin_win, scope = "local" })
+    diffmode.set(origin_win, true)
   end
 
   require("diff.features.exit").attach_buffer(snap)

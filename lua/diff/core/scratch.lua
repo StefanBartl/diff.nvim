@@ -9,19 +9,9 @@
 local api = vim.api
 
 local validate = require("diff.util.validate")
+local diffmode = require("diff.util.diffmode")
 
 local M = {}
-
----Leave diffmode in `win`, window-locally.
----@internal
----@param win integer
----@return nil
-local function diff_off(win)
-  -- `vim.wo[win].diff = false` behaves like `:set` and would clear the
-  -- *global* value too, which is not ours to touch -- see `set_win_diff` in
-  -- core/render.lua for the same reasoning on the way in.
-  pcall(api.nvim_set_option_value, "diff", false, { win = win, scope = "local" })
-end
 
 ---@type integer[]  Tracked scratch buffer handles
 local _bufs = {}
@@ -60,6 +50,25 @@ function M.track(bufnr)
   end
 end
 
+---Wipe a scratch buffer and stop tracking it.
+---
+---For the buffers a render path created but never got to display: with
+---`bufhidden = "wipe"` a buffer that was never in a window is never wiped, so
+---it would sit in `_bufs` until `:DiffClear` -- counted by `active_count`,
+---which is what the statusline component reports as "a diff is active".
+---@param bufnr integer
+---@return nil
+function M.discard(bufnr)
+  for i = #_bufs, 1, -1 do
+    if _bufs[i] == bufnr then
+      table.remove(_bufs, i)
+    end
+  end
+  if validate.buf_valid(bufnr) then
+    pcall(api.nvim_buf_delete, bufnr, { force = true })
+  end
+end
+
 ---Count the scratch buffers diff.nvim is currently tracking (valid handles
 ---only). Used by the statusline component to show whether a diff is active.
 ---@return integer count
@@ -83,7 +92,7 @@ function M.cleanup_all()
     if validate.buf_valid(bufnr) then
       for _, win in ipairs(api.nvim_list_wins()) do
         if validate.win_valid(win) and api.nvim_win_get_buf(win) == bufnr then
-          diff_off(win)
+          diffmode.set(win, false)
         end
       end
       if pcall(api.nvim_buf_delete, bufnr, { force = true }) then
@@ -95,7 +104,7 @@ function M.cleanup_all()
   -- Disable diffmode left over in any other window (e.g. the origin buffer).
   for _, win in ipairs(api.nvim_list_wins()) do
     if validate.win_valid(win) and vim.wo[win].diff then
-      diff_off(win)
+      diffmode.set(win, false)
     end
   end
 

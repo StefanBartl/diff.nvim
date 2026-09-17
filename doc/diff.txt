@@ -318,12 +318,14 @@ view= ~
   the diff.
 
   Side labels: the unified-diff header (`--- <source>` / `+++ <target>`) and
-  the scratch-buffer names use the specifier as written — which reads well
+  the scratch-buffer names (`[Diff:source] …`, `[Diff:target] …`,
+  `[Diff:base] …`) use the specifier as written — which reads well
   for a file path, clipboard, git:{rev} or a URL. A buffer number is the
   exception (`--- 7` says nothing), so it is labelled by that buffer's own
   name, shortened relative to the cwd/$HOME; an unnamed buffer falls back to
   `buf:{N}`. `source=current` is labelled `buf:{N}`, plus `@{line1}-{line2}`
-  when a range narrowed it.
+  when a range narrowed it. A label is always folded to a single line: a
+  buffer name may legally contain a newline, and a diff header is two lines.
 
 output= ~
   Where the result goes. Default: `buffer`.
@@ -353,11 +355,13 @@ Three-way diff ~                                              *diff-three-way*
   diffmode natively diffs 3+ windows against each other — nothing custom is
   computed.
 
-  Requires `output=buffer` (the default) and `view=vsplit`/`split`/`tab` —
-  `prompt`/`file`/`clipboard`/`stat` and `inline`/`float` are all two-input
-  concepts with no three-way equivalent, and are rejected with an error if
-  combined with `base=`. `source=` is accepted but only `current` (the
-  default) makes practical sense.
+  Requires `output=buffer` (the default), `view=vsplit`/`split`/`tab` and
+  `source=current` (the default) — `prompt`/`file`/`clipboard`/`stat` and
+  `inline`/`float` are all two-input concepts with no three-way equivalent,
+  and local is always the origin window's live buffer, so there is no window
+  to put an explicit `source=` in. All three are rejected with an error if
+  combined with `base=`, rather than accepted and ignored. A configured
+  `default_source` is not affected; only a `source=` you typed is checked.
 
   See docs/three-way-diff.md in the repository for the full picture,
   layout diagrams, and merge-conflict-resolution examples.
