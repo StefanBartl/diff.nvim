@@ -48,6 +48,22 @@ function M.split_git_range(spec)
   return nil, nil
 end
 
+---Classify a specifier as a buffer number, the way every consumer of the
+---specifier grammar must agree to classify it. Kept here, next to
+---`resolve_lines` (its first consumer), so the rule lives in one place:
+---`core.init`'s labelling and `stat_list_target` both have to reach the same
+---verdict for the same string, or a side resolves as a buffer while labelling
+---itself as a file path.
+---@param spec any
+---@return integer|nil bufnr  nil when `spec` is not a buffer number
+function M.as_bufnr(spec)
+  local as_num = tonumber(spec)
+  if as_num == nil then
+    return nil
+  end
+  return math.floor(as_num)
+end
+
 ---Resolve a specifier to its content lines.
 ---@param spec string|integer  "clipboard", a file path, or a buffer number
 ---@param label string         "target"|"source" — used only in error text
@@ -63,9 +79,8 @@ function M.resolve_lines(spec, label)
   end
 
   -- buffer number ------------------------------------------------------------
-  local as_num = tonumber(spec)
-  if as_num ~= nil then
-    local bufnr = math.floor(as_num)
+  local bufnr = M.as_bufnr(spec)
+  if bufnr ~= nil then
     if not validate.buf_valid(bufnr) then
       return nil, string.format("%s: buffer %d does not exist or is invalid", label, bufnr)
     end
