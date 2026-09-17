@@ -137,22 +137,43 @@ end
 ---much as on the ones that open windows. `on_done` runs inside pcall: it is
 ---third-party code reached from our async callbacks, and an error thrown
 ---there must not surface as an unhandled error inside a URL fetch.
+---The third return value is that same guard as a plain `on_done`, for
+---passing on to code that will wrap it again. `M.run` hands it to
+---`M.execute` rather than the caller's own function: each would otherwise
+---build its own guard, and the flag only spans one of them, so a picker that
+---invokes its callback twice produced a `fail` from one instance and a `done`
+---from the other -- two calls, against a documented "exactly once".
 ---@internal
 ---@param on_done DiffNvim.RunOpts.OnDone|nil
----@return fun(result: DiffNvim.Result): nil done, fun(err: string): nil fail
+---@return fun(result: DiffNvim.Result): nil done
+---@return fun(err: string): nil fail
+---@return DiffNvim.RunOpts.OnDone|nil guarded
 local function reporters(on_done)
+  if type(on_done) ~= "function" then
+    return function() end, function() end, nil
+  end
+
   local fired = false
   local function call(result, err)
-    if fired or type(on_done) ~= "function" then
+    if fired then
       return
     end
     fired = true
-    pcall(on_done, result, err)
+    -- Not propagated: this is third-party code reached from our own async
+    -- callbacks, and an error here must not surface inside a URL fetch. Not
+    -- swallowed either -- an integration whose callback dies would otherwise
+    -- get no signal at all, from anywhere.
+    local ok, caller_err = pcall(on_done, result, err)
+    if not ok then
+      notify.error("on_done failed: " .. tostring(caller_err))
+    end
   end
   return function(result)
     call(result, nil)
   end, function(err)
     call(nil, err)
+  end, function(result, err)
+    call(result, err)
   end
 end
 
@@ -299,7 +320,10 @@ function M.execute(opts, ctx, on_done)
   -- buffer) never matches this, so it never fires for the common
   -- current-vs-target case.
   if require("diff.features.image_compare").maybe_compare(opts.source, opts.target) then
-    -- images.nvim owns whatever it opened; none of it is ours to report.
+    -- images.nvim owns whatever it opened; none of it is ours to report. No
+    -- `view` either: this comparison ignores view= entirely, so naming one
+    -- would describe a layout that was never applied (same for a directory
+    -- diff -- @see DiffNvim.Result).
     done({ output = opts.output, buffers = {}, windows = {} })
     return
   end
@@ -381,29 +405,47 @@ function M.execute(opts, ctx, on_done)
       -- they all report the same empty result -- what matters to a caller is
       -- that the run is over, which is just as true here as it is for a
       -- window-opening view. output=file adds the path it wrote.
+      ---Report a text output: nothing was created that a caller could take
+      ---down again, so the result is empty either way -- but "nothing to
+      ---show" and "it could not be produced" are opposite outcomes and each
+      ---renderer says which it was (@see render.prompt).
+      ---@param render_err string|nil
+      ---@param path string|nil
+      ---@return nil
+      local function finish_text_output(render_err, path)
+        if render_err then
+          fail(render_err)
+          return
+        end
+        done({ output = opts.output, buffers = {}, windows = {}, path = path })
+      end
+
       if opts.output == "prompt" then
-        render.prompt(src_lines, tgt_lines, src_label, tgt_label, cfg.algorithm, cfg.ctxlen)
-        done({ output = opts.output, buffers = {}, windows = {} })
+        finish_text_output(
+          render.prompt(src_lines, tgt_lines, src_label, tgt_label, cfg.algorithm, cfg.ctxlen)
+        )
         return
       end
       if opts.output == "file" then
-        local path =
+        local path, file_err =
           render.file(src_lines, tgt_lines, src_label, tgt_label, cfg.algorithm, cfg.ctxlen)
-        done({ output = opts.output, buffers = {}, windows = {}, path = path })
+        finish_text_output(file_err, path)
         return
       end
       if opts.output == "clipboard" then
-        render.clipboard(src_lines, tgt_lines, src_label, tgt_label, cfg.algorithm, cfg.ctxlen)
-        done({ output = opts.output, buffers = {}, windows = {} })
+        finish_text_output(
+          render.clipboard(src_lines, tgt_lines, src_label, tgt_label, cfg.algorithm, cfg.ctxlen)
+        )
         return
       end
       if opts.output == "stat" then
-        render.stat(src_lines, tgt_lines, src_label, tgt_label, cfg.algorithm, cfg.ctxlen, {
-          list = cfg.stat_list,
-          mode = cfg.stat_list_mode,
-          target = stat_list_target(opts.target),
-        })
-        done({ output = opts.output, buffers = {}, windows = {} })
+        finish_text_output(
+          render.stat(src_lines, tgt_lines, src_label, tgt_label, cfg.algorithm, cfg.ctxlen, {
+            list = cfg.stat_list,
+            mode = cfg.stat_list_mode,
+            target = stat_list_target(opts.target),
+          })
+        )
         return
       end
 
@@ -672,8 +714,7 @@ end
 ---@param run_opts? DiffNvim.RunOpts  Caller-side options (`on_done`)
 ---@return nil
 function M.run(raw_args, range, run_opts)
-  local on_done = type(run_opts) == "table" and run_opts.on_done or nil
-  local _, fail = reporters(on_done)
+  local _, fail, guarded_on_done = reporters(type(run_opts) == "table" and run_opts.on_done or nil)
 
   ---@type DiffNvim.Range|nil
   local sel = nil
@@ -780,7 +821,7 @@ function M.run(raw_args, range, run_opts)
   local function pick_target_then_run()
     if not need_target then
       opts.target = kv.target
-      M.execute(opts, ctx, on_done)
+      M.execute(opts, ctx, guarded_on_done)
       return
     end
     pick_specifier("target", function(chosen)
@@ -789,7 +830,7 @@ function M.run(raw_args, range, run_opts)
         return
       end
       opts.target = chosen
-      M.execute(opts, ctx, on_done)
+      M.execute(opts, ctx, guarded_on_done)
     end)
   end
 
@@ -830,8 +871,7 @@ end
 ---@param run_opts? DiffNvim.RunOpts  Caller-side options (`on_done`)
 ---@return nil
 function M.run_buffers(raw_args, run_opts)
-  local on_done = type(run_opts) == "table" and run_opts.on_done or nil
-  local _, fail = reporters(on_done)
+  local _, fail, guarded_on_done = reporters(type(run_opts) == "table" and run_opts.on_done or nil)
 
   ---@type DiffNvim.Context
   local ctx = {
@@ -885,7 +925,7 @@ function M.run_buffers(raw_args, run_opts)
       source = "current",
       view = view --[[@as DiffNvim.View]],
       output = output --[[@as DiffNvim.Output]],
-    }, ctx, on_done)
+    }, ctx, guarded_on_done)
   end)
 end
 

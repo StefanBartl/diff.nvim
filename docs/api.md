@@ -51,7 +51,7 @@ to that, not instead of it.
 | Field | |
 |---|---|
 | `output` | The `output=` that produced this run |
-| `view` | The `view=` used, when `output == "buffer"`; `nil` otherwise |
+| `view` | The layout that was applied; `nil` when none was — the text outputs, and image/directory comparisons, which ignore `view=` |
 | `buffers` | Scratch buffers diff.nvim created |
 | `windows` | Windows diff.nvim opened |
 | `path` | The file written, for `output=file` (`nil` otherwise) |
@@ -66,6 +66,11 @@ Both lists can be empty on success: `output=prompt`/`clipboard`/`stat` create
 nothing, and two sides that turn out to be identical produce a result with
 nothing in it rather than an error. Check `#result.windows`, not `result`, to
 decide whether anything is on screen.
+
+"Nothing to show" and "it could not be produced" are kept apart, because they
+need opposite handling. A diff that could not be computed, a file that could
+not be written, a layout that could not be opened — each of those is `nil`
+plus a reason, exactly like an unresolvable side, and never an empty result.
 
 > **A window in `windows` may be showing a buffer that is not yours to
 > touch.** `view=tab` opens its own tab and puts the left-hand side in it, so
