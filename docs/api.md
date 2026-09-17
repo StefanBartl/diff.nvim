@@ -27,12 +27,10 @@ require("diff").run("source=7 target=8 view=vsplit", {
       -- combination, or a cancelled picker. `err` says which.
       return
     end
-    -- Take the diff back down again.
+    -- Take the diff back down again. Closing the windows is enough: the
+    -- scratch buffers are `bufhidden = "wipe"` and go with them.
     for _, win in ipairs(result.windows) do
       pcall(vim.api.nvim_win_close, win, true)
-    end
-    for _, buf in ipairs(result.buffers) do
-      pcall(vim.api.nvim_buf_delete, buf, { force = true })
     end
   end,
 })
@@ -69,6 +67,20 @@ nothing, and two sides that turn out to be identical produce a result with
 nothing in it rather than an error. Check `#result.windows`, not `result`, to
 decide whether anything is on screen.
 
+> **A window in `windows` may be showing a buffer that is not yours to
+> touch.** `view=tab` opens its own tab and puts the left-hand side in it, so
+> with `source=current` one of the two windows shows the user's own live
+> buffer. Closing that window is correct and is what `windows` is for;
+> deleting the buffer behind it is not, and with unsaved changes it destroys
+> the user's work. Close windows, never `nvim_buf_delete` whatever
+> `nvim_win_get_buf` hands back.
+>
+> `buffers` is safe by construction — it only ever lists scratch buffers
+> diff.nvim created, never the user's. It is there so a caller can read them
+> (their content, name or filetype); it does not have to delete them, because
+> they are `bufhidden = "wipe"` and go away with their windows. `:DiffClear`
+> also takes down everything diff.nvim is tracking.
+
 ### What each mode reports
 
 | Invocation | `buffers` | `windows` |
@@ -76,8 +88,9 @@ decide whether anything is on screen.
 | `output=prompt` / `clipboard` / `stat` | — | — |
 | `output=file` | — | — (`path` is set) |
 | `view=inline` / `float` | the unified-diff buffer | its window |
-| `view=vsplit` / `split` / `tab`, `source=current` | the target side | the one window opened |
-| `view=vsplit` / `split` / `tab`, explicit `source=` | both sides | both windows |
+| `view=vsplit` / `split`, `source=current` | the target side | the one window opened |
+| `view=vsplit` / `split`, explicit `source=` | both sides | both windows |
+| `view=tab` | the target side, plus the source side when materialized | both windows in the new tab |
 | `base=…` (three-way) | base + target | the two windows opened |
 | directory diff, `output=buffer` | the summary buffer | its window |
 | two image files | — | — (images.nvim owns what it opened) |

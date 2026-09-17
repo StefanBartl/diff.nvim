@@ -88,14 +88,10 @@ function M.resolve(spec, bufname, label, cb)
           return cb(nil, label .. ": " .. msg)
         end
 
-        local out = res.stdout or ""
-        local lines = vim.split(out, "\n", { plain = true })
-        -- git output ends with a trailing newline; drop the empty final element
-        -- so line counts match readfile()/buffer content.
-        if lines[#lines] == "" then
-          lines[#lines] = nil
-        end
-        cb(lines, nil)
+        -- split_lines drops git's trailing newline and any CR a repository
+        -- with core.autocrlf=true hands back, so line counts and contents
+        -- match readfile()/buffer content -- see resolve.split_lines.
+        cb(require("diff.core.resolve").split_lines(res.stdout or ""), nil)
       end)
     end)
   end)
