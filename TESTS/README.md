@@ -128,10 +128,12 @@ under "Deliberately not covered" below.
   cannot disagree in any way reachable from Lua. Every other guard in that
   function *is* covered.
 
-### Bugs pinned, not fixed
+### Bugs found in this round
 
-Three defects found while writing this round are pinned with `BUG:`-marked
-assertions rather than fixed, so the suite fails the day the behaviour changes.
+Three defects came out of writing it. The third is **fixed**, its assertion in
+`health_spec.lua` turned into a regression guard; the other two are pinned with
+`BUG:`-marked assertions rather than fixed, so the suite fails the day that
+behaviour changes.
 
 1. **`core/directory.lua` — an unreadable file escapes as a raw `E484`**
    (`directory_edge_spec.lua`). `list_files` walks the tree, then `diff_trees`
@@ -159,14 +161,15 @@ assertions rather than fixed, so the suite fails the day the behaviour changes.
    entry point "for buffers it did not itself create", so an integrating
    plugin reaches it first.
 
-3. **`health.lua` — the lib.nvim-missing branch cannot survive lib.nvim being
-   missing** (`health_spec.lua`). `check()` diagnoses an absent lib.nvim
-   correctly and reports it as an error with an install hint — and then ends,
-   unconditionally, with `require("lib.nvim.bindings.usercmd.composer")
-   .checkhealth("Diff")`. When lib.nvim really is absent that require throws,
-   so `:checkhealth diff` aborts partway through and the user never sees the
-   diagnosis. `lib.nvim.deps.health`, two lines earlier, is `pcall`'d for
-   precisely this reason; the last line was not.
+3. **`health.lua` — the lib.nvim-missing branch could not survive lib.nvim
+   being missing** (`health_spec.lua`) — **fixed.** `check()` diagnoses an
+   absent lib.nvim correctly and reports it as an error with an install hint,
+   and used to end unconditionally with
+   `require("lib.nvim.bindings.usercmd.composer").checkhealth("Diff")`. When
+   lib.nvim really was absent that require threw, so `:checkhealth diff`
+   aborted partway through and the user never saw the diagnosis.
+   `lib.nvim.deps.health`, two lines earlier, was already `pcall`'d for
+   precisely this reason; the last line is now too.
 
 ### Verified, not assumed
 

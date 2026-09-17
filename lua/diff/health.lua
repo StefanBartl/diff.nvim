@@ -103,7 +103,14 @@ function M.check()
     deps_health.report_for("diff.nvim")
   end
 
-  require("lib.nvim.bindings.usercmd.composer").checkhealth("Diff")
+  -- Guarded like the deps report above it: without lib.nvim this require
+  -- throws, and `:checkhealth diff` would abort right here -- on exactly the
+  -- machine whose report says lib.nvim is missing, so the user would never get
+  -- to read the diagnosis they came for.
+  local ok_composer, composer = pcall(require, "lib.nvim.bindings.usercmd.composer")
+  if ok_composer then
+    composer.checkhealth("Diff")
+  end
 end
 
 return M
