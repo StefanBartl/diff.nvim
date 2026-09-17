@@ -45,9 +45,14 @@ end
 ---@return string[]
 function M.split_lines(raw)
   local lines = vim.split(raw, "\n", { plain = true })
-  for i = 1, #lines do
-    if lines[i]:sub(-1) == "\r" then
-      lines[i] = lines[i]:sub(1, -2)
+  -- One scan to answer "is there anything to strip at all", rather than a
+  -- per-line sub() on payloads that have none -- which is every source on
+  -- Linux and macOS, and on Windows with core.autocrlf=input.
+  if raw:find("\r", 1, true) then
+    for i = 1, #lines do
+      if lines[i]:sub(-1) == "\r" then
+        lines[i] = lines[i]:sub(1, -2)
+      end
     end
   end
   -- A trailing newline terminates the last line, it does not begin a new one.

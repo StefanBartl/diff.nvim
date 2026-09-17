@@ -9,7 +9,9 @@
 return function(H)
   local eq, ok = H.eq, H.ok
   local core = require("diff.core")
+  local render = require("diff.core.render")
   local scratch = require("diff.core.scratch")
+  local config = require("diff.config")
 
   local saved_notify = vim.notify
 
@@ -17,6 +19,27 @@ return function(H)
     vim.cmd("silent! tabonly")
     vim.cmd("silent! only")
     vim.cmd("silent! diffoff!")
+  end
+
+  local function silence()
+    -- Test double over a typed surface; taken down again by `guarded`.
+    ---@diagnostic disable-next-line: duplicate-set-field
+    vim.notify = function() end
+  end
+
+  ---Run `fn` with the doubles installed and always take them down again.
+  ---A plain assign/restore pair leaves the double in place when something
+  ---between them throws, and every later spec then runs against this spec's
+  ---stub -- one real failure plus a page of unrelated noise.
+  ---@param fn fun(): any
+  ---@return any
+  local function guarded(fn)
+    local okc, res = pcall(fn)
+    vim.notify = saved_notify
+    if not okc then
+      error(res, 0)
+    end
+    return res
   end
 
   ---Run `args` and collect what on_done was handed. Notifications are silenced
@@ -156,14 +179,100 @@ return function(H)
   eq(#three.result.windows, 2, "three-way: the origin window is not reported as ours")
   scratch.cleanup_all()
 
-  -- A caller's on_done that throws must not break the diff -----------------
+  -- A render that cannot happen fails loudly and leaves nothing behind -------
+  -- side_by_side runs its splits under `silent!`, which suppresses the
+  -- message but not the error: a wiped buffer handle raises E86 into Lua.
+  -- That used to escape every cleanup path at once -- no scratch buffers
+  -- discarded, no on_done, and for view=tab a fresh tabpage left open.
+  reset()
+  H.scratch()
+  for _, view in ipairs({ "vsplit", "tab" }) do
+    local tabs_before = #vim.api.nvim_list_tabpages()
+    local tracked_before = scratch.active_count()
+    local doomed = scratch.create({ "gone" }, "[Diff:target] doomed " .. view)
+    vim.api.nvim_buf_delete(doomed, { force = true })
+
+    local okc, windows = pcall(render.side_by_side, vim.api.nvim_get_current_win(), doomed, view)
+    ok(okc, view .. ": a failed render returns instead of raising")
+    eq(windows, nil, view .. ": a failed render reports nothing was opened")
+    eq(#vim.api.nvim_list_tabpages(), tabs_before, view .. ": no tabpage is left behind")
+    scratch.discard(doomed)
+    eq(scratch.active_count(), tracked_before, view .. ": nothing stays tracked")
+  end
+
+  -- output=file distinguishes "nothing to write" from "could not write" ------
+  reset()
+  H.scratch()
+  local real_tempname = vim.fn.tempname
+  local write_fail = guarded(function()
+    silence()
+    -- Somewhere no file can be created, so writefile fails for real.
+    ---@diagnostic disable-next-line: duplicate-set-field
+    vim.fn.tempname = function()
+      return "Z:/definitely/not/writable/diff-nvim-probe"
+    end
+    local probe = { calls = 0 }
+    core.execute(
+      { source = tostring(a), target = tostring(b), view = "vsplit", output = "file" },
+      { source_bufnr = vim.api.nvim_get_current_buf(), origin_win = vim.api.nvim_get_current_win() },
+      function(result, e)
+        probe.calls = probe.calls + 1
+        probe.result, probe.err = result, e
+      end
+    )
+    vim.fn.tempname = real_tempname
+    return probe
+  end)
+  eq(write_fail.calls, 1, "output=file write failure: on_done fired exactly once")
+  eq(write_fail.result, nil, "output=file write failure: reported as a failure, not a result")
+  ok(type(write_fail.err) == "string", "output=file write failure: a reason is given")
+
+  -- ...while identical sides stay a successful, empty result.
+  reset()
+  H.scratch()
+  local no_diff = run(string.format("source=%d target=%d output=file", a, a))
+  ok(no_diff.result ~= nil, "output=file with no differences: still a result, not a failure")
+  eq(no_diff.result.path, nil, "output=file with no differences: no path was written")
+
+  -- on_done fires once even when a picker calls back more than once ----------
+  -- `select_fn` is third-party; kit_confirm_select already normalizes callback
+  -- shapes for it. A picker that answers twice used to produce one `fail` from
+  -- run()'s guard and one `done` from execute's -- two separate guards.
+  reset()
+  H.scratch()
+  local cfg = config.get()
+  local prev_select = cfg.select_fn
+  local double_tgt = vim.fn.tempname()
+  vim.fn.writefile({ "target" }, double_tgt)
+  local double = { calls = 0 }
+  guarded(function()
+    silence()
+    cfg.select_fn = function(items, _, cb)
+      cb(nil, nil)
+      cb(items[1], 1)
+    end
+    core.run("target=ask", nil, {
+      on_done = function()
+        double.calls = double.calls + 1
+      end,
+    })
+  end)
+  cfg.select_fn = prev_select
+  eq(double.calls, 1, "a picker answering twice still produces exactly one on_done")
+  scratch.cleanup_all()
+
+  -- A throwing on_done is reported, not swallowed ---------------------------
+
   reset()
   H.scratch()
   local threw = false
+  local notes = {}
   local okc = pcall(function()
     -- Test double over a typed surface; restored right below.
     ---@diagnostic disable-next-line: duplicate-set-field
-    vim.notify = function() end
+    vim.notify = function(m)
+      notes[#notes + 1] = m
+    end
     core.run(string.format("source=%d target=%d view=inline", a, b), nil, {
       on_done = function()
         threw = true
@@ -174,6 +283,13 @@ return function(H)
   vim.notify = saved_notify
   ok(threw, "a throwing on_done was still called")
   ok(okc, "a throwing on_done does not propagate out of the diff")
+  local reported = false
+  for _, m in ipairs(notes) do
+    if tostring(m):find("on_done failed", 1, true) then
+      reported = true
+    end
+  end
+  ok(reported, "a throwing on_done is reported rather than swallowed")
   scratch.cleanup_all()
 
   reset()

@@ -58,9 +58,11 @@
 --- buffer as the left-hand side): it belongs to the user, and a caller
 --- closing everything in `windows` must not close the window they were
 --- working in. Both lists are empty when there was nothing to show — a
---- `output=stat` run, or two sides that turned out to be identical.
+--- `output=stat` run, or two sides that turned out to be identical. A run
+--- that could not produce its output at all is not this: that reports nil
+--- plus a reason through `on_done`, never an empty result.
 ---@field output  DiffNvim.Output   The delivery that produced this run
----@field view    DiffNvim.View|nil The layout, when `output == "buffer"`
+---@field view    DiffNvim.View|nil The layout applied, nil when none was
 ---@field buffers integer[]         Scratch buffers diff.nvim created
 ---@field windows integer[]         Windows diff.nvim opened
 ---@field path    string|nil        The file written, when `output == "file"`

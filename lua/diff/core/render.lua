@@ -195,16 +195,17 @@ end
 ---@param algorithm string
 ---@param ctxlen integer
 ---@param list_opts? DiffNvim.StatList.Opts
----@return nil
+---@return string|nil err  @see M.prompt
 function M.stat(a_lines, b_lines, a_label, b_label, algorithm, ctxlen, list_opts)
   local stats, err = M.compute_stats(a_lines, b_lines, algorithm, ctxlen)
   if not stats then
-    notify.error(err or "could not compute diff")
-    return
+    err = err or "could not compute diff"
+    notify.error(err)
+    return err
   end
   if stats.added == 0 and stats.removed == 0 then
     notify.info("No differences found")
-    return
+    return nil
   end
   notify.info(string.format("%s -> %s  %s", a_label, b_label, M.format_stats(stats)))
 
@@ -212,6 +213,7 @@ function M.stat(a_lines, b_lines, a_label, b_label, algorithm, ctxlen, list_opts
     ---@cast list_opts DiffNvim.StatList.Wanted
     M.push_stat_list(a_lines, b_lines, a_label, b_label, algorithm, ctxlen, list_opts)
   end
+  return nil
 end
 
 ---@class DiffNvim.StatList.Target
@@ -281,19 +283,31 @@ function M.side_by_side(origin_win, scratch_buf, view, source_buf)
 
   local split_cmd = (view == "split") and "split" or "vsplit"
 
-  ---Open `buf` in a new split and hand back that window, or nil when the
-  ---split or the `:buffer` silently failed. Both commands run under `silent!`
-  ---(a `:split` can hit E36, a `:buffer` E37), and an error there aborts the
-  ---rest of the command line -- leaving the current window showing something
-  ---else entirely. Enabling diffmode on that window is how a diff ends up
-  ---quietly showing the wrong content, which is the whole failure mode
-  ---`source_buf` exists to remove, so the buffer is verified rather than
+  ---Open `buf` in a new split and hand back that window, or nil when it could
+  ---not be done.
+  ---
+  ---Two ways this fails, and both have to come back as nil. The command can
+  ---abort mid-line -- a `:split` hitting E36 leaves no new window, and the
+  ---`| buffer` after it never runs, so the current window is showing something
+  ---else entirely; enabling diffmode on *that* is how a diff ends up quietly
+  ---showing the wrong content, which is the whole failure mode `source_buf`
+  ---exists to remove. So the resulting window's buffer is verified rather than
   ---assumed.
+  ---
+  ---And `silent!` does not make the command safe to call: it suppresses the
+  ---message, not the error. `vim.cmd("silent! buffer 3")` on a wiped buffer
+  ---still raises E86 into Lua -- verified -- which would escape this function,
+  ---escape `core.execute`, and take every cleanup path with it (the scratch
+  ---buffers never discarded, the caller's `on_done` never called). Hence the
+  ---pcall: the nil return is the contract, so nothing may leave by any other
+  ---route.
   ---@param cmd string
   ---@param buf integer
   ---@return integer|nil
   local function split_into(cmd, buf)
-    vim.cmd(string.format("silent! %s | buffer %d", cmd, buf))
+    if not pcall(vim.cmd, string.format("silent! %s | buffer %d", cmd, buf)) then
+      return nil
+    end
     local win = api.nvim_get_current_win()
     if not validate.win_valid(win) or api.nvim_win_get_buf(win) ~= buf then
       return nil
@@ -306,15 +320,35 @@ function M.side_by_side(origin_win, scratch_buf, view, source_buf)
   if view == "tab" then
     local left_buf = source_buf or api.nvim_win_get_buf(origin_win)
     vim.cmd("tabnew")
-    vim.cmd(string.format("silent! buffer %d", left_buf))
+    local new_tab = api.nvim_get_current_tabpage()
+
+    ---Give up on the tab this branch opened. Without it a failed render left
+    ---the fresh tab behind, and since the caller then disposes of the scratch
+    ---buffers it was showing, the user is left on an empty tab with no diff
+    ---in it and no message tying the two together.
+    ---@return nil
+    local function abandon_tab()
+      if api.nvim_tabpage_is_valid(new_tab) then
+        pcall(api.nvim_set_current_tabpage, new_tab)
+        pcall(vim.cmd, "silent! tabclose")
+      end
+    end
+
+    if not pcall(vim.cmd, string.format("silent! buffer %d", left_buf)) then
+      notify.error("could not open the left-hand side of the diff")
+      abandon_tab()
+      return nil
+    end
     local left = api.nvim_get_current_win()
     if not validate.win_valid(left) or api.nvim_win_get_buf(left) ~= left_buf then
       notify.error("could not open the left-hand side of the diff")
+      abandon_tab()
       return nil
     end
     local right = split_into("vsplit", scratch_buf)
     if not right then
       notify.error("could not open the right-hand side of the diff")
+      abandon_tab()
       return nil
     end
     diffmode.set(left, true)
@@ -694,22 +728,29 @@ function M.inline(origin_win, a_lines, b_lines, a_label, b_label, algorithm, ctx
 end
 
 ---Echo the unified diff to the message area.
+---
+---Returns the reason when the diff could not be produced, and nil when it
+---could. "No differences found" is nil: nothing was delivered, but nothing
+---went wrong either, and a caller has to be able to tell those apart -- they
+---need opposite handling. The three sibling text renderers below answer the
+---same way, so `core.execute` can report all four identically.
 ---@param a_lines string[]
 ---@param b_lines string[]
 ---@param a_label string
 ---@param b_label string
 ---@param algorithm string
 ---@param ctxlen integer
----@return nil
+---@return string|nil err
 function M.prompt(a_lines, b_lines, a_label, b_label, algorithm, ctxlen)
   local unified, err = M.compute_unified(a_lines, b_lines, algorithm, ctxlen)
   if not unified then
-    notify.error(err or "could not compute diff")
-    return
+    err = err or "could not compute diff"
+    notify.error(err)
+    return err
   end
   if unified == "" then
     notify.info("No differences found")
-    return
+    return nil
   end
   api.nvim_echo(
     { { string.format("--- %s\n+++ %s\n", a_label, b_label) .. unified, "Normal" } },
@@ -725,25 +766,28 @@ end
 ---@param b_label string
 ---@param algorithm string
 ---@param ctxlen integer
----@return string|nil path  The file written, or nil when nothing was
+---@return string|nil path  The file written; nil when nothing was
+---@return string|nil err   Set only when it failed -- @see M.prompt
 function M.file(a_lines, b_lines, a_label, b_label, algorithm, ctxlen)
   local unified, err = M.compute_unified(a_lines, b_lines, algorithm, ctxlen)
   if not unified then
-    notify.error(err or "could not compute diff")
-    return
+    err = err or "could not compute diff"
+    notify.error(err)
+    return nil, err
   end
   if unified == "" then
     notify.info("No differences found")
-    return
+    return nil, nil
   end
   local tmp = fn.tempname() .. ".diff"
   local ok = pcall(fn.writefile, with_header(unified, a_label, b_label), tmp)
   if not ok then
-    notify.error("could not write diff to: " .. tmp)
-    return nil
+    local msg = "could not write diff to: " .. tmp
+    notify.error(msg)
+    return nil, msg
   end
   notify.info(string.format("Diff written to: %s", tmp))
-  return tmp
+  return tmp, nil
 end
 
 ---Copy the unified diff to the system clipboard register (+).
@@ -753,20 +797,22 @@ end
 ---@param b_label string
 ---@param algorithm string
 ---@param ctxlen integer
----@return nil
+---@return string|nil err  @see M.prompt
 function M.clipboard(a_lines, b_lines, a_label, b_label, algorithm, ctxlen)
   local unified, err = M.compute_unified(a_lines, b_lines, algorithm, ctxlen)
   if not unified then
-    notify.error(err or "could not compute diff")
-    return
+    err = err or "could not compute diff"
+    notify.error(err)
+    return err
   end
   if unified == "" then
     notify.info("No differences found")
-    return
+    return nil
   end
   local text = string.format("--- %s\n+++ %s\n", a_label, b_label) .. unified
   fn.setreg("+", text)
   notify.info("Unified diff copied to clipboard")
+  return nil
 end
 
 return M

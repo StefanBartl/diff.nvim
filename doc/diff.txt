@@ -508,7 +508,8 @@ unresolvable side, a rejected option combination, or a cancelled picker.
 Otherwise it carries:
 
   output      The output= that produced this run
-  view        The view= used, when output == "buffer"; nil otherwise
+  view        The layout that was applied; nil when none was (the text
+              outputs, and image/directory comparisons, which ignore view=)
   buffers     Scratch buffers diff.nvim created
   windows     Windows diff.nvim opened
   path        The file written, for output=file (nil otherwise)
@@ -523,6 +524,11 @@ Both lists can be empty on success: output=prompt/clipboard/stat create
 nothing, and two identical sides produce a result with nothing in it rather
 than an error. Check `#result.windows`, not `result`, to decide whether
 anything is on screen. See docs/api.md for the per-mode table.
+
+"Nothing to show" and "it could not be produced" stay apart, because they need
+opposite handling: a diff that could not be computed, a file that could not be
+written or a layout that could not be opened is nil plus a reason, exactly
+like an unresolvable side, never an empty result.
 
 A window in `windows` may be showing a buffer that is not yours to touch.
 `view=tab` opens its own tab and puts the left-hand side in it, so with
