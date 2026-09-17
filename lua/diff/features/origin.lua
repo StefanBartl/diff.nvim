@@ -59,13 +59,17 @@ function M.run()
   api.nvim_set_current_win(origin_win)
   vim.cmd(string.format("silent! %s | buffer %d", split_cmd, snap))
 
+  -- Written through nvim_set_option_value's "local" scope rather than
+  -- `vim.wo[...].diff = true`, which behaves like `:set` and would leave the
+  -- *global* 'diff' on for every window opened afterwards -- see
+  -- `set_win_diff` in core/render.lua.
   local snap_win = api.nvim_get_current_win()
   if validate.win_valid(snap_win) then
-    vim.wo[snap_win].diff = true
+    pcall(api.nvim_set_option_value, "diff", true, { win = snap_win, scope = "local" })
   end
   if validate.win_valid(origin_win) then
     api.nvim_set_current_win(origin_win)
-    vim.wo[origin_win].diff = true
+    pcall(api.nvim_set_option_value, "diff", true, { win = origin_win, scope = "local" })
   end
 
   require("diff.features.exit").attach_buffer(snap)

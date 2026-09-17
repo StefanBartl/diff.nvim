@@ -114,6 +114,17 @@ the full picture and merge-conflict-resolution examples.
 | `inline` | Single scratch buffer holding the unified diff (`ft=diff`), with word-level `DiffText` highlighting on changed spans |
 | `float` | Same as `inline`, in a floating window (press `q` or `<Esc>` to close) |
 
+For `vsplit`/`split`/`tab`, the left-hand pane is the **origin window's own
+live buffer** when the source is that buffer in full — `source=current` (the
+default) with no range. That side stays editable on purpose, so
+`:diffget`/`:diffput` write straight into the file you will save.
+
+Any other `source=` (a buffer number, a file path, `clipboard`, `git:{rev}`,
+a URL) and any range resolve to content that window is *not* showing, so that
+side is materialized into its own read-only scratch buffer and gets a window
+of its own. The origin window keeps the buffer you were editing and stays out
+of the diff — nothing is evicted from it.
+
 **`output=`** (default: `buffer`)
 
 | Value | Delivery |
@@ -123,6 +134,14 @@ the full picture and merge-conflict-resolution examples.
 | `file` | Unified diff written to a temp file |
 | `clipboard` | Unified diff copied to the clipboard (`+`) |
 | `stat` | Report `+N -M, K hunks` as a notification only (no window by default — see `stat_list` below) |
+
+**Side labels** — the unified-diff header (`--- <source>` / `+++ <target>`)
+and the scratch-buffer names use the specifier as written, which reads well
+for a file path, `clipboard`, `git:{rev}` or a URL. A **buffer number** is the
+exception — `--- 7` says nothing — so it is labelled by that buffer's own
+name, shortened relative to the cwd/`$HOME` (`--- lua/old.lua`); an unnamed
+buffer falls back to `buf:{N}`. `source=current` is labelled `buf:{N}`, plus
+`@{line1}-{line2}` when a range narrowed it.
 
 `output=stat` can also push each hunk into the quickfix or location list via
 `opts.diff.stat_list` (`"off"` by default, or `"qf"`/`"loc"`) so hunks from

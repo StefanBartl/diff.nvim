@@ -101,6 +101,7 @@ local specs = {
   "keymaps_spec.lua",
   "url_spec.lua",
   "three_way_spec.lua",
+  "side_by_side_spec.lua",
   "image_compare_spec.lua",
   "directory_spec.lua",
 }
