@@ -231,10 +231,13 @@ return function(H)
     local by_file = stat_entries(string.format("source=%d target=%s output=stat", src, file))
     ok(#by_file > 0, "a file target produces stat entries")
     eq(by_file[1].valid, 1, "a file target's entry is jump-able")
+    -- Canonicalized on both sides, not just normalized: the buffer name is
+    -- whatever spelling nvim settled on, `file` is the raw tempname() one,
+    -- and on macOS those differ by /var vs /private/var. See H.canonical.
     eq(
-      vim.fs.normalize(vim.api.nvim_buf_get_name(by_file[1].bufnr)),
-      vim.fs.normalize(vim.fn.fnamemodify(file, ":p")),
-      "and points at the file that was diffed -- both spellings normalized alike"
+      H.canonical(vim.api.nvim_buf_get_name(by_file[1].bufnr)),
+      H.canonical(file),
+      "and points at the file that was diffed -- both spellings canonicalized alike"
     )
 
     local tgt_buf = H.scratch()

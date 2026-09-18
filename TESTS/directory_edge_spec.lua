@@ -98,15 +98,25 @@ return function(H)
     end
     -- A deleted file only exists on the source side; its entry must point
     -- there, or it would resolve to nothing at all.
+    --
+    -- Both sides go through H.canonical, not vim.fs.normalize: the buffer
+    -- name nvim resolved and the tempname() path this spec holds can be two
+    -- spellings of one directory (see H.canonical for which platform spells
+    -- it which way).
+    --
+    -- The prefix also carries a trailing separator, which H.canonical strips
+    -- and so has to be re-appended: tempname() numbers its directories
+    -- sequentially within a session, so a bare prefix lets `…/3` match
+    -- `…/33`, and a D entry pointing at the *target* tree would pass.
+    local function under(path, dir)
+      return H.canonical(path):find(H.canonical(dir) .. "/", 1, true) == 1
+    end
     ok(by_status["D"] ~= nil, "the deleted file got an entry")
     ok(
-      vim.fs.normalize(by_status["D"]):find(vim.fs.normalize(src), 1, true) == 1,
+      under(by_status["D"], src),
       "a D entry points into the source tree, the only one that still has the file"
     )
-    ok(
-      vim.fs.normalize(by_status["A"]):find(vim.fs.normalize(tgt), 1, true) == 1,
-      "an A entry points into the target tree"
-    )
+    ok(under(by_status["A"], tgt), "an A entry points into the target tree")
     vim.fn.setqflist({}, "r", { items = {} })
   end
 
