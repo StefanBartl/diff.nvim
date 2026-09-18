@@ -25,7 +25,20 @@ function M.register(cfg)
   end
 
   if cfg.features.diffopt_profile and cfg.diff.diffopt_profile ~= nil then
-    require("diff.features.diffopt_profile").set(cfg.diff.diffopt_profile)
+    -- pcall'd: M.setup() flips its own _setup_done guard to true BEFORE
+    -- calling this function (see diff/init.lua), so an uncaught error here
+    -- would not just abort the two registration steps still below
+    -- (keymap shortcuts, the VimLeavePre cleanup autocmd) -- it would make
+    -- every LATER require("diff").setup() call a silent no-op for the rest
+    -- of the session too, with no way to recover short of restarting
+    -- Neovim. An unknown profile name is exactly the kind of typo a user's
+    -- own config can hand this at startup.
+    local ok, err = pcall(require("diff.features.diffopt_profile").set, cfg.diff.diffopt_profile)
+    if not ok then
+      require("diff.util.notify").error(
+        ("diff.diffopt_profile = %q: %s"):format(cfg.diff.diffopt_profile, tostring(err))
+      )
+    end
   end
 
   -- After usrcmds: the shortcuts point at commands that must already exist,

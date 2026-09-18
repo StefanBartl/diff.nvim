@@ -306,6 +306,28 @@ return function(H)
     eq(found, false, "features.diff_exit=false binds no exit key at all")
   end
 
+  -- An unknown diff.diffopt_profile must not abort the rest of register() --
+  -- regression: M.setup() flips _setup_done=true BEFORE calling
+  -- bindings.register(), so an uncaught error from this one call used to
+  -- skip register_shortcuts()/autocmds.register() below it AND make every
+  -- later setup() call a silent no-op for the whole session (verified
+  -- against the pre-fix code: nvim_get_autocmds({group='diff_cleanup'})
+  -- raised "Invalid group" afterward, and a second, corrected setup() call
+  -- still did not create it).
+  do
+    clear_commands()
+    pcall(vim.api.nvim_del_augroup_by_name, "diff_cleanup")
+    local cfg = config.setup({ diff = { diffopt_profile = "no_such_profile" } })
+
+    local reg_ok = pcall(require("diff.bindings").register, cfg)
+    ok(reg_ok, "register() itself must not throw on an unknown diffopt_profile")
+    eq(
+      #vim.api.nvim_get_autocmds({ group = "diff_cleanup" }),
+      1,
+      "the cleanup autocmd still gets installed after the bad profile"
+    )
+  end
+
   -- Leave the process with the default wiring in place, so later specs see
   -- the same commands a real session would.
   clear_commands()

@@ -131,6 +131,10 @@ without it installed the keymap still exists and notifies instead of
 erroring. Setup-time only, like `diff_origin`/`diff_exit` — there is no
 runtime toggle command.
 
+If `gh` is already mapped in normal mode — your own config, or another
+plugin — `setup()` leaves it alone and warns instead of overwriting it;
+set `features.gitsigns_peek = false` to silence the warning.
+
 ## Picker resolution
 
 The target/source picker (shown when `target=`/`source=` is omitted or set to
