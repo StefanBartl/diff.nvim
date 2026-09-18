@@ -24,8 +24,24 @@ local M = {}
 ---here: gitsigns is typically lazy-loaded on a buffer event, and probing for
 ---it eagerly at setup time would be the load trigger and pull it into every
 ---startup regardless of whether the user ever presses `gh`.
+---
+---Refuses rather than overwriting when `gh` is already mapped: this plugin's
+---own binding philosophy is "diff.nvim imposes no mappings" everywhere else
+---(`bindings/keymaps.lua`'s header comment) -- silently replacing a user's or
+---another plugin's normal-mode `gh` with no warning on an ordinary, default-on
+---`setup()` would be the one exception. `features.gitsigns_peek = false` skips
+---this whole check for a host that would rather keep its own binding.
 ---@return nil
 function M.register()
+  local existing = vim.fn.maparg("gh", "n")
+  if existing ~= "" then
+    notify.warn(
+      "'gh' is already mapped -- not installing the gitsigns hunk peek over it. "
+        .. "Set features.gitsigns_peek = false to silence this, or free up 'gh' yourself."
+    )
+    return
+  end
+
   vim.keymap.set("n", "gh", function()
     local ok, gs = pcall(require, "gitsigns")
     if not ok then

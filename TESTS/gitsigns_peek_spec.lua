@@ -50,4 +50,42 @@ return function(H)
   ok(notified ~= nil and notified:find("gitsigns", 1, true) ~= nil, "and notifies instead")
 
   pcall(vim.keymap.del, "n", "gh")
+
+  -- Regression: register() used to overwrite ANY pre-existing 'gh' map with
+  -- no check at all, contradicting this plugin's own "imposes no mappings"
+  -- philosophy everywhere else.
+  do
+    local user_called = false
+    vim.keymap.set("n", "gh", function()
+      user_called = true
+    end, { desc = "the user's own gh binding" })
+
+    local warned
+    local notify2 = require("diff.util.notify")
+    local saved_warn = notify2.warn
+    ---@diagnostic disable-next-line: duplicate-set-field
+    notify2.warn = function(msg)
+      warned = msg
+    end
+
+    gitsigns_peek.register()
+
+    notify2.warn = saved_warn
+
+    local after = gh_map()
+    ok(after ~= nil, "the user's map is still there")
+    eq(
+      after.desc,
+      "the user's own gh binding",
+      "register() must not overwrite an existing 'gh' map"
+    )
+    after.callback()
+    ok(user_called, "and the user's own callback still fires")
+    ok(
+      warned ~= nil and warned:find("already mapped", 1, true) ~= nil,
+      "and warns instead of clobbering silently"
+    )
+
+    pcall(vim.keymap.del, "n", "gh")
+  end
 end
