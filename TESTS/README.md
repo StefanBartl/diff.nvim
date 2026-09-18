@@ -24,7 +24,7 @@ with no xclip/xsel/wl-clipboard/pbcopy.
 
 | File               | Covers                                                          |
 | ------------------ | ---------------------------------------------------------------- |
-| `harness.lua`      | Shared `eq`/`ok` assertions, a `scratch(ft)` buffer helper, and `tmpdir()`/`write_file()`. |
+| `harness.lua`      | Shared `eq`/`ok` assertions, a `scratch(ft)` buffer helper, `tmpdir()`/`write_file()`, and `canonical()` for comparing paths across platforms. |
 | `config_spec.lua`  | Config defaults + deep-merge of user options.                    |
 | `resolve_spec.lua` | `parse_args` grammar, `resolve_lines` for clipboard/buffer/file, `split_git_range`, `split_lines`. |
 | `validate_spec.lua`| `is_one_of` / `buf_valid` / `win_valid`.                          |
@@ -59,6 +59,13 @@ with no xclip/xsel/wl-clipboard/pbcopy.
 Create `<name>_spec.lua` returning `function(H) … end` (use `H.eq` / `H.ok` /
 `H.scratch` / `H.tmpdir` / `H.write_file`) and add its filename to the
 `specs` list in `run.lua`.
+
+Comparing two paths needs `H.canonical` on **both** sides, never
+`vim.fs.normalize` alone. Normalizing rewrites separators but not symlinks,
+and the runners disagree about which spelling reaches a buffer name: macOS
+resolves `/var/folders/…` (what `tempname()` returns) to `/private/var/…`,
+Windows leaves junctions and `RUNNER~1` short names as it found them.
+`H.canonical` puts every spelling of one file onto the same one.
 
 Specs share one Neovim process and run in the listed order, so a spec that
 changes global state (config, commands, keymaps, `package.loaded`, the current
