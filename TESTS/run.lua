@@ -115,6 +115,8 @@ local specs = {
   "directory_edge_spec.lua",
   "public_api_spec.lua",
   "health_spec.lua",
+  "diffopt_profile_spec.lua",
+  "gitsigns_peek_spec.lua",
 }
 
 local failed = 0

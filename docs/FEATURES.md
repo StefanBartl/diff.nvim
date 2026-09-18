@@ -349,3 +349,39 @@ machine, not per edit.
 
 - **Module:** `lua/diff/health.lua`
 - **Docs:** [testing.md](testing.md)
+
+## `:DiffProfile {name}` — diffopt profiles (2026-09-18)
+
+Moved from my.nvim's `my.set_diff_profile` (ui.nvim/my.nvim cross-feature
+report, finding F1). `'diffopt'` is a *global* option that only takes effect
+once a window enters diffmode — and diff.nvim is the plugin putting windows
+into diffmode (`view=vsplit`/`split`/`tab` all call `diffmode.set()`), not
+my.nvim, which had no stake in which diff algorithm ran inside a window it
+only painted. Four named profiles (`minimal`/`context`/`review`/`strict`)
+each replace `'diffopt'` wholesale — never `diffopt+=`/`diffopt-=` — so
+switching is deterministic. `diff.diffopt_profile` optionally applies one at
+`setup()`; unset (the default) preserves diff.nvim's original behaviour of
+never touching `'diffopt'`.
+
+my.nvim's `<leader>od` cycle keymap and `:My diff {profile}` now delegate
+here (soft-required) rather than owning a second copy of the same table.
+
+- **Module:** `lua/diff/features/diffopt_profile/` (`profiles.lua`,
+  `init.lua`: `names()`, `get()`, `set()`, `current()`, `cycle()`)
+- **Command:** `:DiffProfile {name}`, gated by `features.diffopt_profile`
+- **Config:** `opts.diff.diffopt_profile`, `opts.commands.diff_profile`
+- **Tests:** `TESTS/diffopt_profile_spec.lua`
+
+## `gh` — gitsigns hunk peek (2026-09-18)
+
+Moved from my.nvim's `hl_config.features.diff_peek` (cross-feature report,
+finding F2) — "a git operation wearing a highlight-feature's clothes" there,
+sitting in my.nvim's highlight-toggle system next to cursorline and
+mode-tinting despite having no highlight content of its own. Binds `gh` in
+normal mode to [gitsigns.nvim](https://github.com/lewis6991/gitsigns.nvim)'s
+`preview_hunk_inline`/`preview_hunk`, required lazily on first press.
+Setup-time only, like `diff_origin`/`diff_exit` — no runtime toggle command.
+
+- **Module:** `lua/diff/features/gitsigns_peek.lua`
+- **Config:** `opts.features.gitsigns_peek` (default `true`)
+- **Tests:** `TESTS/gitsigns_peek_spec.lua`

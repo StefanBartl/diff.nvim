@@ -213,6 +213,21 @@ changed since the last save". The snapshot buffer is tracked and cleaned up by
 
 Leaves diff mode from anywhere (`diffoff!`).
 
+## `:DiffProfile {name}`
+
+Replaces `'diffopt'` wholesale with one of four named profiles — `minimal`,
+`context`, `review`, `strict` — see
+[Configuration › Diffopt profiles](configuration.md#diffopt-profiles) for
+what each one sets and why a full replacement rather than `diffopt+=`.
+Tab-completes the profile name.
+
+## `gh` — gitsigns hunk peek
+
+Not a command but worth listing here: with `features.gitsigns_peek` on
+(default), `gh` in normal mode previews the git hunk under the cursor via
+[gitsigns.nvim](https://github.com/lewis6991/gitsigns.nvim) — see
+[Configuration › Gitsigns hunk peek](configuration.md#gitsigns-hunk-peek).
+
 ## Tab completion
 
 `:Diff` completes the `key=value` grammar context-sensitively:

@@ -5,15 +5,18 @@ Full defaults:
 ```lua
 require("diff").setup({
   features = {
-    diff        = true,   -- register :Diff / :DiffClear
-    diff_origin = true,   -- register :DiffOrig
-    diff_exit   = true,   -- register :DiffExit + exit keymap
+    diff            = true,   -- register :Diff / :DiffClear
+    diff_origin     = true,   -- register :DiffOrig
+    diff_exit       = true,   -- register :DiffExit + exit keymap
+    diffopt_profile = true,   -- register :DiffProfile
+    gitsigns_peek   = true,   -- bind `gh` to gitsigns.nvim's hunk preview
   },
   diff = {
     default_view      = "vsplit",    -- "vsplit"|"split"|"tab"|"inline"|"float"
     default_output    = "buffer",    -- "buffer"|"prompt"|"file"|"clipboard"|"stat"
     default_source    = "current",   -- "current"|"clipboard"|"ask"|"git:<rev>"|"http(s)://…"|path|bufnr
     default_orig_view = "vsplit",    -- "vsplit"|"split" — split direction for :DiffOrig
+    diffopt_profile   = nil,         -- "minimal"|"context"|"review"|"strict"|nil — apply once at setup()
     algorithm         = "histogram", -- vim.diff algorithm
     ctxlen            = 3,           -- context lines per hunk
     word_diff         = true,        -- word/char-level DiffText highlighting in view=inline/float
@@ -43,6 +46,7 @@ require("diff").setup({
     diff_buffers = "DiffBuffers",
     diff_orig    = "DiffOrig",
     diff_exit    = "DiffExit",
+    diff_profile = "DiffProfile",
   },
   select_fn        = nil,          -- optional vim.ui.select replacement (DI)
   use_pickers_nvim = true,         -- auto-detect pickers.nvim as the picker engine
@@ -92,6 +96,40 @@ the per-file summary (see [Commands](commands.md)) — this caps how many
 files it will walk per side before erroring instead of silently continuing
 on an unexpectedly huge tree. Hidden path segments (`.git`, `.hg`, …) are
 always excluded from the walk and don't count against the cap.
+
+## Diffopt profiles
+
+`'diffopt'` is a *global* Neovim option, and it is the one that actually
+governs every native-diffmode view this plugin opens (`view=vsplit`/`split`/
+`tab` all put their windows in real `'diff'` mode) — as well as `:diffthis`,
+Fugitive and Diffview, anything that uses native diffmode at all.
+`features.diffopt_profile` (default `true`) registers `:DiffProfile {name}`,
+which replaces `'diffopt'` wholesale with one of four named bundles rather
+than accumulating `diffopt+=`/`diffopt-=` calls, so switching is
+deterministic:
+
+- `minimal` — fast, least context, for everyday review.
+- `context` — reduced context, `patience` algorithm, focused reviews.
+- `review` — moderate context, the default a host might reach for.
+- `strict` — full detail, `myers` algorithm, nothing ignored.
+
+`diff.diffopt_profile` (default `nil`) applies one of these once, at
+`setup()` — leave it unset to keep diff.nvim's original behaviour of never
+touching `'diffopt'` at all. The Lua API is
+`require("diff.features.diffopt_profile")`: `names()`, `get(name)`,
+`set(name)`, `current()` (which profile `'diffopt'` currently matches, or
+`nil`), and `cycle()` (advance to the next one).
+
+## Gitsigns hunk peek
+
+`features.gitsigns_peek` (default `true`) binds `gh` in normal mode to
+[gitsigns.nvim](https://github.com/lewis6991/gitsigns.nvim)'s hunk preview
+(`preview_hunk_inline` if available, `preview_hunk` otherwise) — the same
+gitsigns surface this plugin's other diff-related bindings live under.
+`gitsigns` itself is required lazily, on the first `gh` press, not at setup;
+without it installed the keymap still exists and notifies instead of
+erroring. Setup-time only, like `diff_origin`/`diff_exit` — there is no
+runtime toggle command.
 
 ## Picker resolution
 
