@@ -96,10 +96,19 @@
 -- config
 -- #####################################################################
 
+---@alias DiffNvim.DiffProfile
+--- A named `diffopt` bundle — @see features/diffopt_profile/profiles.lua.
+---| '"minimal"'
+---| '"context"'
+---| '"review"'
+---| '"strict"'
+
 ---@class DiffNvim.Config.Features
----@field diff        boolean  Register the :Diff / :DiffClear commands
----@field diff_origin boolean  Register the :DiffOrig command
----@field diff_exit   boolean  Register the :DiffExit command + exit keymap
+---@field diff             boolean  Register the :Diff / :DiffClear commands
+---@field diff_origin      boolean  Register the :DiffOrig command
+---@field diff_exit        boolean  Register the :DiffExit command + exit keymap
+---@field diffopt_profile  boolean  Register the :DiffProfile command (cross-feature report finding F1)
+---@field gitsigns_peek    boolean  Bind `gh` to gitsigns.nvim's hunk preview (cross-feature report finding F2)
 
 ---@class DiffNvim.Config.Diff
 ---@field default_view      DiffNvim.View    Default layout when none is given
@@ -115,6 +124,7 @@
 ---@field stat_list         "off"|"qf"|"loc"  Also push output=stat's hunks to the quickfix/location list (default "off")
 ---@field stat_list_mode    "add"|"replace"   "add" accumulates across :Diff invocations (default), "replace" resets the list each time
 ---@field directory_max_files integer  Cap on files walked per side of a directory diff (default 2000) — see core/directory.lua
+---@field diffopt_profile   DiffNvim.DiffProfile|nil  Apply this profile to 'diffopt' once, at setup() — nil (default) leaves 'diffopt' untouched, diff.nvim's behaviour before this field existed
 
 ---@alias DiffNvim.Config.ExitScope
 ---| '"buffer"'  # Buffer-local mapping on plugin-created diff buffers (default)
@@ -137,11 +147,12 @@
 ---@field native_diffthis boolean  Also mirror the key onto buffers a native :diffthis puts into diffmode (scope="buffer" only). Off by default — see config/DEFAULTS.lua for the rationale.
 
 ---@class DiffNvim.Config.Commands
----@field diff         string  Name of the main diff command
----@field diff_clear   string  Name of the clear command
----@field diff_buffers string  Name of the buffer-picker diff command
----@field diff_orig    string  Name of the origin command
----@field diff_exit    string  Name of the exit command
+---@field diff           string  Name of the main diff command
+---@field diff_clear     string  Name of the clear command
+---@field diff_buffers   string  Name of the buffer-picker diff command
+---@field diff_orig      string  Name of the origin command
+---@field diff_exit      string  Name of the exit command
+---@field diff_profile   string  Name of the diffopt-profile command
 
 ---@class DiffNvim.Config
 ---@field features  DiffNvim.Config.Features
@@ -171,9 +182,11 @@
 ---@field use_pickers_nvim? boolean  Auto-detect pickers.nvim as the picker engine when select_fn is unset (default true)
 
 ---@class DiffNvim.Opts.Features
----@field diff?        boolean  Register the :Diff / :DiffClear commands
----@field diff_origin? boolean  Register the :DiffOrig command
----@field diff_exit?   boolean  Register the :DiffExit command + exit keymap
+---@field diff?             boolean  Register the :Diff / :DiffClear commands
+---@field diff_origin?      boolean  Register the :DiffOrig command
+---@field diff_exit?        boolean  Register the :DiffExit command + exit keymap
+---@field diffopt_profile?  boolean  Register the :DiffProfile command
+---@field gitsigns_peek?    boolean  Bind `gh` to gitsigns.nvim's hunk preview
 
 ---@class DiffNvim.Opts.Diff
 ---@field default_view?        DiffNvim.View    Default layout when none is given
@@ -189,6 +202,7 @@
 ---@field stat_list?           "off"|"qf"|"loc"  Also push output=stat's hunks to the quickfix/location list (default "off")
 ---@field stat_list_mode?      "add"|"replace"   "add" accumulates across :Diff invocations (default), "replace" resets the list each time
 ---@field directory_max_files? integer  Cap on files walked per side of a directory diff (default 2000) — see core/directory.lua
+---@field diffopt_profile?     DiffNvim.DiffProfile|nil  Apply this profile to 'diffopt' once, at setup()
 
 ---@class DiffNvim.Opts.Exit
 ---@field key?             string|string[]          Left-hand side(s) of the exit mapping
@@ -196,9 +210,10 @@
 ---@field native_diffthis? boolean  Also mirror the key onto buffers a native :diffthis puts into diffmode (scope="buffer" only). Off by default — see config/DEFAULTS.lua for the rationale.
 
 ---@class DiffNvim.Opts.Commands
----@field diff?         string  Name of the main diff command
----@field diff_clear?   string  Name of the clear command
----@field diff_buffers? string  Name of the buffer-picker diff command
----@field diff_orig?    string  Name of the origin command
----@field diff_exit?    string  Name of the exit command
+---@field diff?           string  Name of the main diff command
+---@field diff_clear?     string  Name of the clear command
+---@field diff_buffers?   string  Name of the buffer-picker diff command
+---@field diff_orig?      string  Name of the origin command
+---@field diff_exit?      string  Name of the exit command
+---@field diff_profile?   string  Name of the diffopt-profile command
 return {}

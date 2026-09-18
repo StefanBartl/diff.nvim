@@ -20,6 +20,14 @@ function M.register(cfg)
     require("diff.features.native_diffthis").register(cfg.exit)
   end
 
+  if cfg.features.gitsigns_peek then
+    require("diff.features.gitsigns_peek").register()
+  end
+
+  if cfg.features.diffopt_profile and cfg.diff.diffopt_profile ~= nil then
+    require("diff.features.diffopt_profile").set(cfg.diff.diffopt_profile)
+  end
+
   -- After usrcmds: the shortcuts point at commands that must already exist,
   -- and they read the same features/commands config to decide what is even
   -- registrable.

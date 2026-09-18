@@ -94,6 +94,31 @@ function M.check()
     vim.health.info("plugin guard not set (call require('diff').setup())")
   end
 
+  vim.health.start("diff: diffopt profiles")
+  local diffopt_profile = require("diff.features.diffopt_profile")
+  local names = diffopt_profile.names()
+  if #names == 0 then
+    vim.health.error("no diff profiles defined")
+  else
+    vim.health.ok(("%d profile(s): %s"):format(#names, table.concat(names, ", ")))
+    local current = diffopt_profile.current()
+    if current then
+      vim.health.ok(("'diffopt' matches profile '%s'"):format(current))
+    else
+      vim.health.info("'diffopt' matches no profile -- set by hand, or a profile was edited")
+    end
+  end
+
+  vim.health.start("diff: gitsigns peek (gh)")
+  local cfg = require("diff.config").get()
+  if not cfg.features.gitsigns_peek then
+    vim.health.info("features.gitsigns_peek = false -- this section has nothing to report")
+  elseif pcall(require, "gitsigns") then
+    vim.health.ok("gitsigns.nvim is available -- 'gh' previews the hunk under the cursor")
+  else
+    vim.health.info("gitsigns.nvim is not installed -- 'gh' notifies instead of previewing")
+  end
+
   -- The declared external tools (docs/install.json), reported out of the
   -- spec rather than listed a second time by hand. Silent when lib.nvim.deps
   -- is absent (an older lib.nvim) or this plugin ships no spec.

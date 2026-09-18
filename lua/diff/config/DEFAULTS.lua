@@ -11,6 +11,8 @@ local DEFAULTS = {
     diff = true,
     diff_origin = true,
     diff_exit = true,
+    diffopt_profile = true,
+    gitsigns_peek = true,
   },
   diff = {
     default_view = "vsplit",
@@ -20,6 +22,14 @@ local DEFAULTS = {
     -- for stacked). Kept separate from `default_view` because :DiffOrig is
     -- always a native diffmode split, never "inline".
     default_orig_view = "vsplit",
+    -- A named profile to apply to 'diffopt' once, at setup() — see
+    -- features/diffopt_profile/. Unset by default: this field did not exist
+    -- before the cross-feature report's F1 finding moved diff-profile
+    -- ownership here, and an unset 'diffopt' is diff.nvim's original,
+    -- unsurprising behaviour. Set e.g. "review" to opt in, or call
+    -- require("diff.features.diffopt_profile").set(name) / :DiffProfile at
+    -- any time regardless of this default.
+    diffopt_profile = nil,
     algorithm = "histogram",
     ctxlen = 3,
     -- Word/char-level highlighting of changed spans in view=inline/float
@@ -86,6 +96,7 @@ local DEFAULTS = {
     diff_buffers = "DiffBuffers",
     diff_orig = "DiffOrig",
     diff_exit = "DiffExit",
+    diff_profile = "DiffProfile",
   },
   select_fn = nil,
   -- Auto-detect pickers.nvim (StefanBartl/pickers.nvim) and use its fuzzy

@@ -115,6 +115,29 @@ function M.register(cfg)
       },
     })
   end
+
+  if cfg.features.diffopt_profile then
+    local diffopt_profile = require("diff.features.diffopt_profile")
+    local notify = require("diff.util.notify")
+
+    composer.verb(names.diff_profile, {
+      desc = "Apply a named 'diffopt' profile  :DiffProfile {name}",
+      routes = {
+        {
+          path = {},
+          args = { { name = "profile", type = "STRING", enum = diffopt_profile.names() } },
+          run = function(ctx)
+            local ok, err = pcall(diffopt_profile.set, ctx.args.profile)
+            if not ok then
+              notify.error(("diff profile '%s': %s"):format(ctx.args.profile, tostring(err)))
+              return
+            end
+            notify.info(("diff profile: %s"):format(ctx.args.profile))
+          end,
+        },
+      },
+    })
+  end
 end
 
 return M
