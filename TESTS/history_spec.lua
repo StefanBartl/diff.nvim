@@ -153,9 +153,11 @@ return function(H)
 
       local argv = get().cmd
       eq(argv[1], "git", "argv[1] is the bare binary name")
-      eq(argv[2], "-C", "argv[2] is -C (no shell cd)")
-      eq(argv[3], vim.fs.normalize(root), "-C gets the normalized repo root")
-      eq(argv[4], "log", "argv[4] is the log subcommand")
+      eq(argv[2], "-c", "argv[2] is -c (a global option, before the subcommand)")
+      eq(argv[3], "core.quotePath=false", "core.quotePath is forced off")
+      eq(argv[4], "-C", "argv[4] is -C (no shell cd)")
+      eq(argv[5], vim.fs.normalize(root), "-C gets the normalized repo root")
+      eq(argv[6], "log", "argv[6] is the log subcommand")
       ok(vim.tbl_contains(argv, "--follow"), "--follow is passed (renames are tracked)")
       ok(vim.tbl_contains(argv, "--name-status"), "--name-status is passed (parse() needs it)")
       ok(vim.tbl_contains(argv, "--max-count=50"), "max_entries becomes --max-count")
@@ -413,5 +415,179 @@ return function(H)
     vim.fn.executable = saved_executable
     package.loaded["diff.core.git"] = nil
     package.loaded["diff.core.history"] = nil
+  end
+
+  -- M.run -- the [path] positional survives a path containing "=" ------------
+  -- The bug this guards: a blanket "%a+=[^%s]+" gsub matches that shape
+  -- anywhere in raw_args, not just a whole key=value token -- "config=prod.lua"
+  -- disappeared entirely (path fell back to the current buffer) and
+  -- "src/a=b.lua" was truncated to the directory "src/".
+  do
+    local saved_system = vim.system
+    local saved_executable = vim.fn.executable
+    local saved_notify = vim.notify
+
+    ---@diagnostic disable-next-line: duplicate-set-field
+    vim.fn.executable = function(name)
+      if name == "git" then
+        return 1
+      end
+      return saved_executable(name)
+    end
+    ---@diagnostic disable-next-line: duplicate-set-field
+    vim.notify = function() end
+
+    local root = H.tmpdir():gsub("/$", "")
+    vim.fn.mkdir(root .. "/.git", "p")
+
+    ---Run `:DiffHistory <abs path>` and report the pathspec (last argv
+    ---element) `M.log`'s `git log` invocation actually used.
+    ---@param filename string  Created directly under `root`
+    ---@return string|nil
+    local function captured_pathspec(filename)
+      local abs = root .. "/" .. filename
+      H.write_file(abs, { "x" })
+
+      local captured = nil
+      ---@diagnostic disable-next-line: duplicate-set-field
+      vim.system = function(cmd, _, cb)
+        captured = cmd[#cmd]
+        -- Empty history: M.run reports "no history" and stops right there,
+        -- well before the picker -- all that matters here is the argv.
+        vim.schedule(function()
+          cb({ code = 0, stdout = "", stderr = "" })
+        end)
+        return { kill = function() end }
+      end
+
+      package.loaded["diff.core.history"] = nil
+      package.loaded["diff.core.git"] = nil
+      local h = require("diff.core.history")
+
+      local done = false
+      h.run(abs, {
+        on_done = function()
+          done = true
+        end,
+      })
+      vim.wait(5000, function()
+        return done
+      end, 5)
+
+      return captured
+    end
+
+    eq(
+      captured_pathspec("config=prod.lua"),
+      "config=prod.lua",
+      "a bare path shaped like key=value is not swallowed (falls back to the current buffer)"
+    )
+    eq(
+      captured_pathspec("src/a=b.lua"),
+      "src/a=b.lua",
+      "a path with '=' past its first component is not truncated into a directory"
+    )
+    eq(
+      captured_pathspec("plain/path.lua"),
+      "plain/path.lua",
+      "an ordinary path is unaffected by the fix"
+    )
+
+    vim.notify = saved_notify
+    vim.system = saved_system
+    vim.fn.executable = saved_executable
+    package.loaded["diff.core.history"] = nil
+    package.loaded["diff.core.git"] = nil
+  end
+
+  -- M.run -- on_done fires exactly once even when the picker answers twice --
+  -- (see TESTS/on_done_spec.lua's identical scenario for core.run itself --
+  -- core/init.lua's `reporters()` is the pattern this guard is meant to
+  -- match). Before the fix, M.run's own unguarded `fail` and the raw
+  -- `run_opts.on_done` handed straight into `M.diff_entry` -> `core.execute`
+  -- (which wraps *that* in its own, separate guard) were two independent
+  -- "fired" flags: a cancel from the first callback plus a real choice from
+  -- the second produced one `fail` and one `done` -- two calls.
+  do
+    local saved_system = vim.system
+    local saved_executable = vim.fn.executable
+    local saved_notify = vim.notify
+    local config = require("diff.config")
+
+    ---@diagnostic disable-next-line: duplicate-set-field
+    vim.fn.executable = function(name)
+      if name == "git" then
+        return 1
+      end
+      return saved_executable(name)
+    end
+
+    local root = H.tmpdir():gsub("/$", "")
+    vim.fn.mkdir(root .. "/.git", "p")
+    local file = root .. "/double.lua"
+    H.write_file(file, { "x" })
+
+    local RS, FS = "\1", "\31"
+    local log_stdout = RS
+      .. table.concat({ "aaa111", "aaa", "2026-04-01", "Ada", "one commit" }, FS)
+      .. "\nM double.lua\n"
+
+    ---@diagnostic disable-next-line: duplicate-set-field
+    vim.system = function(cmd, _, cb)
+      local is_log = vim.tbl_contains(cmd, "log")
+      vim.schedule(function()
+        if is_log then
+          cb({ code = 0, stdout = log_stdout, stderr = "" })
+        else
+          -- git show, for both sides diff_entry resolves.
+          cb({ code = 0, stdout = "content\n", stderr = "" })
+        end
+      end)
+      return { kill = function() end }
+    end
+
+    package.loaded["diff.core.history"] = nil
+    package.loaded["diff.core.git"] = nil
+    local h = require("diff.core.history")
+
+    local buf = vim.api.nvim_create_buf(false, true)
+    vim.api.nvim_set_current_buf(buf)
+    vim.api.nvim_buf_set_name(buf, file)
+
+    ---@diagnostic disable-next-line: duplicate-set-field
+    vim.notify = function() end
+
+    local cfg = config.get()
+    local prev_select = cfg.select_fn
+    cfg.select_fn = function(items, _, cb)
+      cb(nil, nil) -- a cancel ...
+      cb(items[1], 1) -- ... immediately followed by a real choice
+    end
+
+    local calls = 0
+    -- output=stat: no window gets opened, so nothing here depends on the
+    -- origin window/buffer still being current by the time it resolves.
+    h.run("output=stat", {
+      on_done = function()
+        calls = calls + 1
+      end,
+    })
+    vim.wait(5000, function()
+      return calls >= 1
+    end, 5)
+    -- Give a second, buggy call (if the guard regressed) time to surface too.
+    vim.wait(200, function()
+      return false
+    end, 5)
+
+    cfg.select_fn = prev_select
+    vim.notify = saved_notify
+    vim.system = saved_system
+    vim.fn.executable = saved_executable
+    package.loaded["diff.core.history"] = nil
+    package.loaded["diff.core.git"] = nil
+    pcall(vim.api.nvim_buf_delete, buf, { force = true })
+
+    eq(calls, 1, "a picker answering twice still produces exactly one on_done from :DiffHistory")
   end
 end
