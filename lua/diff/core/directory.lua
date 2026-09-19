@@ -11,6 +11,7 @@
 --- also diff its VCS internals.
 
 local fn = vim.fn
+local expand_path = require("lib.nvim.cross.fs.expand_path")
 
 local notify = require("diff.util.notify")
 local render = require("diff.core.render")
@@ -35,7 +36,9 @@ function M.is_directory_spec(spec)
   if spec:sub(1, 4) == "git:" or spec:find("^https?://") then
     return false
   end
-  return fn.isdirectory(fn.expand(spec)) == 1
+  -- expand_path, not fn.expand (SEC-34): `spec` is the raw `:Diff <spec>`
+  -- argument -- fn.expand() would run a backtick span through &shell.
+  return fn.isdirectory(expand_path(spec)) == 1
 end
 
 ---@internal

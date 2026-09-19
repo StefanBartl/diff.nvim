@@ -6,6 +6,7 @@
 --- surface errors. Also parses the raw `key=value` argument string.
 
 local fn = vim.fn
+local expand_path = require("lib.nvim.cross.fs.expand_path")
 local api = vim.api
 
 local validate = require("diff.util.validate")
@@ -124,7 +125,10 @@ function M.resolve_lines(spec, label)
   end
 
   -- file path ----------------------------------------------------------------
-  local path = fn.expand(tostring(spec))
+  -- expand_path, not fn.expand (SEC-34): `spec` may be the raw diff-target
+  -- argument the user typed -- fn.expand() would run a backtick span
+  -- through &shell.
+  local path = expand_path(tostring(spec))
   if fn.filereadable(path) ~= 1 then
     return nil, string.format("%s: file not readable: %s", label, path)
   end
