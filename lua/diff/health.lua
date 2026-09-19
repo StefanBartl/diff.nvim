@@ -94,6 +94,18 @@ function M.check()
     vim.health.info("plugin guard not set (call require('diff').setup())")
   end
 
+  vim.health.start("diff: setup() options")
+  -- Unknown top-level/nested option or invalid value from the last setup()
+  -- call (ERR-50, ERR-22) -- dropped before the merge, reported here.
+  local cfg_issues = require("diff.config").issues()
+  if #cfg_issues == 0 then
+    vim.health.ok("No unknown or invalid setup() options")
+  else
+    for _, issue in ipairs(cfg_issues) do
+      vim.health.warn(issue)
+    end
+  end
+
   vim.health.start("diff: diffopt profiles")
   local diffopt_profile = require("diff.features.diffopt_profile")
   local names = diffopt_profile.names()
