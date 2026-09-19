@@ -33,7 +33,11 @@ function M.run()
     return
   end
 
-  local path = fn.expand(name)
+  -- fnamemodify, not fn.expand() (SEC-34): `name` is a buffer name, which
+  -- can be an attacker-chosen filename (e.g. from a cloned repo) containing
+  -- a backtick span -- fn.expand() would run that through &shell, where
+  -- fnamemodify's ":p" only normalizes to an absolute path.
+  local path = fn.fnamemodify(name, ":p")
   if fn.filereadable(path) ~= 1 then
     notify.error("file is not readable on disk: " .. path)
     return
