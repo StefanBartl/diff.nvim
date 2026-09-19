@@ -182,6 +182,13 @@ use_pickers_nvim ~
   ui.kit chooser instead (which still honors a real `vim.ui.select`
   override), even if pickers.nvim is installed. Default: `true`.
 
+`setup()` validates opts before merging them over the defaults above: an
+unknown key or a value that doesn't fit its option is dropped instead of
+silently reaching the merge (the default applies to that field, the rest of
+opts still merges normally), and every dropped entry is listed under
+|:checkhealth| diff. `setup()` itself never aborts or errors over a
+validation issue.
+
 ------------------------------------------------------------------------------
 4.1 Picker resolution                                *diff-picker-resolution*
 
@@ -245,8 +252,10 @@ Native :diffthis ~
 <
 
 Compare a source (left) with a target (right). Arguments use a `key=value`
-grammar in any order. Unknown keys are ignored. Adding `base=` turns this
-into a three-way diff — see |diff-three-way|.
+grammar in any order. A key outside target=/source=/base=/view=/output= has
+no effect and is warned about (typically a typo, e.g. veiw=inline), rather
+than being silently indistinguishable from not typing it at all. Adding
+base= turns this into a three-way diff — see |diff-three-way|.
 
 When invoked with a range (e.g. a visual selection, `:'<,'>Diff`) and
 `source=current` (the default), only the selected lines are used as the
