@@ -191,22 +191,17 @@ return function(H)
     )
   end
 
-  -- BUG: a file that cannot be read escapes as a raw E484 --------------------
-  -- `list_files` walks the tree, then `diff_trees` reads every entry with a
-  -- bare `fn.readfile`. Anything that makes a listed file unreadable between
-  -- those two steps -- a build directory being rewritten, a checkout switching
-  -- branches, a permission or lock problem, a file removed by another process
-  -- -- throws out of `diff_trees`, out of `directory.run` (past its own
-  -- `notify.error(...)`/`return nil, err` contract) and out of `core.execute`,
-  -- so the user sees Vim's `E484: Can't open file ...` instead of the
-  -- plugin's "could not diff directories". The same throw also means the
-  -- caller's `on_done` never fires at all, so an integrating plugin waits
-  -- forever for a diff that already died. Same family as the guarded
-  -- `pcall(fn.writefile, ...)` twelve lines below it in this very module --
-  -- and the same failure `render.side_by_side`'s `split_into` was pcall'd to
-  -- close, for exactly the reason given there ("an error would escape
-  -- core.execute and take every cleanup path with it"). The directory
-  -- dispatch in `core.execute` is the one route that still has it.
+  -- A file that cannot be read is reported, not thrown ------------------------
+  -- `list_files` walks the tree, then `diff_trees` reads every entry. Anything
+  -- that makes a listed file unreadable between those two steps -- a build
+  -- directory being rewritten, a checkout switching branches, a permission or
+  -- lock problem, a file removed by another process -- is caught by a `pcall`
+  -- around each `fn.readfile` and turned into `directory.run`'s own
+  -- `(nil, err)` contract instead of escaping as Vim's raw `E484`. Same family
+  -- as the guarded `pcall(fn.writefile, ...)` twelve lines below it in this
+  -- very module, and the same failure `render.side_by_side`'s `split_into` was
+  -- pcall'd to close, for exactly the reason given there ("an error would
+  -- escape core.execute and take every cleanup path with it").
   --
   -- The failure is injected through `vim.fn.readfile` (which `directory.lua`
   -- reaches through a captured `vim.fn` *table*, so the patch lands) rather
@@ -227,33 +222,52 @@ return function(H)
       return saved_readfile(path, ...)
     end
 
-    local run_ok, run_err = pcall(directory.run, src, tgt, "src", "tgt", "stat", cfg)
+    local run_ok, run_result, run_err = pcall(directory.run, src, tgt, "src", "tgt", "stat", cfg)
 
-    -- And the same through the public entry point, where it also swallows
-    -- the completion callback.
-    local calls = 0
+    -- And the same through the public entry point, where on_done must still
+    -- fire -- with the failure, not a hang.
+    local calls, seen_err = 0, nil
     local core_ok =
       pcall(require("diff.core").run, string.format("source=%s target=%s", src, tgt), nil, {
-        on_done = function()
+        on_done = function(_, err)
           calls = calls + 1
+          seen_err = err
         end,
       })
 
     vim.fn.readfile = saved_readfile
 
-    eq(
-      run_ok,
-      false,
-      "BUG: an unreadable file throws out of directory.run instead of being reported"
-    )
+    ok(run_ok, "an unreadable file is reported, not thrown, out of directory.run")
+    eq(run_result, nil, "and directory.run yields no result on that path")
     ok(
       tostring(run_err):find("E484", 1, true) ~= nil,
-      "BUG: what escapes is Vim's raw E484, not the module's own message (got: "
-        .. tostring(run_err)
-        .. ")"
+      "the module's own message still names the underlying E484 (got: " .. tostring(run_err) .. ")"
     )
-    eq(core_ok, false, "BUG: and it escapes core.run the same way, reaching :Diff unhandled")
-    eq(calls, 0, "BUG: on_done never fires, so an API caller waits forever")
+    ok(core_ok, "core.run does not throw either")
+    eq(calls, 1, "on_done fires exactly once, with the failure")
+    ok(
+      tostring(seen_err):find("E484", 1, true) ~= nil,
+      "on_done's err names the underlying E484 (got: " .. tostring(seen_err) .. ")"
+    )
+  end
+
+  -- "could not diff" is not "no differences" (ERR-11) ------------------------
+  -- A bad `diff.algorithm` makes `compute_stats` return `nil, err` for every
+  -- present-in-both-trees file. That must surface as an error, not collapse
+  -- onto the same "No differences found" a genuinely identical tree reports.
+  do
+    local src, tgt = tmproot(), tmproot()
+    H.write_file(src .. "/a.txt", { "one" })
+    H.write_file(tgt .. "/a.txt", { "two" })
+
+    local bad_cfg = vim.tbl_extend("force", cfg, { algorithm = "not-a-real-algorithm" })
+    local result, err = directory.run(src, tgt, "src", "tgt", "stat", bad_cfg)
+
+    eq(result, nil, "a tree that cannot be diffed yields no result")
+    ok(
+      type(err) == "string" and err ~= "" and err ~= "No differences found",
+      "and a distinct error, not the empty-but-fine message (got: " .. tostring(err) .. ")"
+    )
   end
 
   require("diff.core.scratch").cleanup_all()

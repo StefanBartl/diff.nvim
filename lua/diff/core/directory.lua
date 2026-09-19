@@ -136,19 +136,38 @@ local function diff_trees(source_dir, target_dir, algorithm, ctxlen, max_files)
   for _, rel in ipairs(union_sorted(src_files, tgt_files)) do
     local in_src, in_tgt = src_set[rel] == true, tgt_set[rel] == true
     if in_src and in_tgt then
-      local a_lines = fn.readfile(source_dir .. "/" .. rel)
-      local b_lines = fn.readfile(target_dir .. "/" .. rel)
-      local stats = render.compute_stats(a_lines, b_lines, algorithm, ctxlen)
-      if stats and (stats.added > 0 or stats.removed > 0) then
+      local a_ok, a_lines = pcall(fn.readfile, source_dir .. "/" .. rel)
+      if not a_ok then
+        return nil, string.format("could not read %s/%s: %s", source_dir, rel, a_lines)
+      end
+      local b_ok, b_lines = pcall(fn.readfile, target_dir .. "/" .. rel)
+      if not b_ok then
+        return nil, string.format("could not read %s/%s: %s", target_dir, rel, b_lines)
+      end
+      -- Distinguish "genuinely unchanged" (stats present, zero hunks) from
+      -- "diff could not be computed" (stats nil) -- collapsing the latter
+      -- into the former would silently under-report a broken diff.algorithm
+      -- as "no differences" (ERR-11).
+      local stats, stats_err = render.compute_stats(a_lines, b_lines, algorithm, ctxlen)
+      if not stats then
+        return nil, stats_err or string.format("could not diff %s", rel)
+      end
+      if stats.added > 0 or stats.removed > 0 then
         entries[#entries + 1] =
           { rel = rel, status = "M", added = stats.added, removed = stats.removed }
       end
     elseif in_tgt then
-      local n = #fn.readfile(target_dir .. "/" .. rel)
-      entries[#entries + 1] = { rel = rel, status = "A", added = n, removed = 0 }
+      local ok, lines = pcall(fn.readfile, target_dir .. "/" .. rel)
+      if not ok then
+        return nil, string.format("could not read %s/%s: %s", target_dir, rel, lines)
+      end
+      entries[#entries + 1] = { rel = rel, status = "A", added = #lines, removed = 0 }
     else
-      local n = #fn.readfile(source_dir .. "/" .. rel)
-      entries[#entries + 1] = { rel = rel, status = "D", added = 0, removed = n }
+      local ok, lines = pcall(fn.readfile, source_dir .. "/" .. rel)
+      if not ok then
+        return nil, string.format("could not read %s/%s: %s", source_dir, rel, lines)
+      end
+      entries[#entries + 1] = { rel = rel, status = "D", added = 0, removed = #lines }
     end
   end
   return entries, nil
