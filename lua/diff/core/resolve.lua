@@ -14,19 +14,38 @@ local validate = require("diff.util.validate")
 local M = {}
 
 ---Parse a raw argument string of the form `key=value key=value …`.
----Unknown keys are kept so future options stay forward-compatible.
+---Unknown keys are kept in the result so future options stay
+---forward-compatible, but when `known` is given they are also listed in the
+---second return value -- a misspelled key (`veiw=inline`) must not be
+---indistinguishable from no key at all (ERR-10): the caller can warn instead
+---of silently substituting a default for what looks like a typo.
 ---@param raw string
----@return table<string, string>
-function M.parse_args(raw)
+---@param known? string[]  Recognized keys for this call site; omit to skip the unknown-key check entirely
+---@return table<string, string> kv
+---@return string[] unknown  Keys present in `raw` but not in `known` (always empty when `known` is omitted)
+function M.parse_args(raw, known)
   ---@type table<string, string>
   local out = {}
+  ---@type string[]
+  local unknown = {}
   if type(raw) ~= "string" then
-    return out
+    return out, unknown
+  end
+  ---@type table<string, boolean>|nil
+  local known_set = nil
+  if type(known) == "table" then
+    known_set = {}
+    for _, k in ipairs(known) do
+      known_set[k] = true
+    end
   end
   for key, value in raw:gmatch("(%a+)=([^%s]+)") do
     out[key] = value
+    if known_set and not known_set[key] then
+      unknown[#unknown + 1] = key
+    end
   end
-  return out
+  return out, unknown
 end
 
 ---Split raw text into diff lines, the way every other source in diff.nvim

@@ -3,9 +3,12 @@
 ## `:[range]Diff [target=…] [source=…] [base=…] [view=…] [output=…]`
 
 Compares a **source** (left) with a **target** (right). Arguments use a
-`key=value` grammar, in any order; unknown keys are ignored. Adding `base=`
-turns this into a **three-way diff** (see [Three-way diff](three-way-diff.md)) —
-a native three-window diffmode for merge-conflict workflows.
+`key=value` grammar, in any order; a key outside `target=`/`source=`/`base=`/
+`view=`/`output=` has no effect and is warned about (typically a typo, e.g.
+`veiw=inline`), rather than being silently indistinguishable from not typing
+it at all. Adding `base=` turns this into a **three-way diff** (see
+[Three-way diff](three-way-diff.md)) — a native three-window diffmode for
+merge-conflict workflows.
 
 When invoked with a **range** (e.g. a visual selection, `:'<,'>Diff`) and
 `source=current` (the default), only the selected lines are used as the
@@ -88,7 +91,10 @@ Capped at `opts.diff.directory_max_files` (default 2000) per side — errors
 rather than silently walking an unexpectedly huge tree. See
 [Configuration](configuration.md) for `directory_max_files` and how
 directory-diff `output=stat` also feeds `stat_list` (below) with one
-real, jump-able entry per changed file.
+real, jump-able entry per changed file. A file that becomes unreadable
+mid-walk, or whose diff can't be computed at all (e.g. an invalid
+`diff.algorithm`), is reported as an error rather than being silently
+treated as unchanged.
 
 **Image files** — when both `source=` and `target=` are readable
 raster-image paths (`.png`/`.jpg`/`.jpeg`/`.gif`/`.webp`/`.bmp`; `.svg` is

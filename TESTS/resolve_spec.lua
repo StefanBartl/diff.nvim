@@ -14,9 +14,30 @@ return function(H)
   eq(kv.view, "inline", "parse view")
   eq(kv.output, "prompt", "parse output")
 
-  eq(next(resolve.parse_args("")), nil, "empty args parse to empty table")
+  -- Parenthesized to truncate to the first return value only -- parse_args
+  -- now returns two, and next()'s second positional arg must be a key
+  -- already in the table, not the second return value passed straight through.
+  eq(next((resolve.parse_args(""))), nil, "empty args parse to empty table")
   ---@diagnostic disable-next-line: param-type-mismatch
-  eq(next(resolve.parse_args(nil)), nil, "non-string args parse to empty table")
+  eq(next((resolve.parse_args(nil))), nil, "non-string args parse to empty table")
+
+  -- parse_args: unknown-key reporting (ERR-10) ------------------------------
+  -- A misspelled key must not read the same as no key at all: it still lands
+  -- in the returned table (forward-compatible), but is also named in the
+  -- second return value so a caller can warn instead of staying silent.
+  do
+    local kv2, unknown = resolve.parse_args("veiw=inline target=x", { "target", "view", "output" })
+    eq(kv2.veiw, "inline", "an unrecognized key is still kept in the table")
+    eq(#unknown, 1, "exactly one key was not recognized")
+    eq(unknown[1], "veiw", "the unrecognized key is named")
+
+    local _, none_unknown =
+      resolve.parse_args("target=x view=inline", { "target", "view", "output" })
+    eq(#none_unknown, 0, "no unknown keys when every key is recognized")
+
+    local _, skipped = resolve.parse_args("target=x", nil)
+    eq(#skipped, 0, "omitting `known` skips the check entirely")
+  end
 
   -- resolve_lines: clipboard ----------------------------------------------
   local saved = vim.fn.getreg("+")
@@ -110,4 +131,35 @@ return function(H)
     "alpha|beta",
     "resolve_lines: a CRLF clipboard yields the same lines as a buffer would"
   )
+
+  -- End-to-end: a misspelled :Diff key is warned about, not silently applied
+  -- as though it had never been typed (ERR-10).
+  do
+    local core = require("diff.core")
+    local target_buf = H.scratch()
+    vim.api.nvim_buf_set_lines(target_buf, 0, -1, false, { "line" })
+
+    local msgs = {}
+    local saved_notify = vim.notify
+    -- Test double over a typed surface; restored right after the case.
+    ---@diagnostic disable-next-line: duplicate-set-field
+    vim.notify = function(m)
+      msgs[#msgs + 1] = tostring(m)
+    end
+    local calls = 0
+    core.run(string.format("veiw=inline target=%d output=prompt", target_buf), nil, {
+      on_done = function()
+        calls = calls + 1
+      end,
+    })
+    vim.notify = saved_notify
+
+    eq(calls, 1, "the diff still runs -- an unknown key is a warning, not an abort")
+    ok(
+      table.concat(msgs, "\n"):find("Unknown arg key", 1, true) ~= nil,
+      "and a misspelled key is named, not silently substituted (got: "
+        .. table.concat(msgs, " | ")
+        .. ")"
+    )
+  end
 end

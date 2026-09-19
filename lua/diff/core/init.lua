@@ -24,6 +24,31 @@ local VALID_VIEWS = { "vsplit", "split", "inline", "tab", "float" }
 ---@type string[]
 local VALID_OUTPUTS = { "buffer", "prompt", "file", "clipboard", "stat" }
 
+---@type string[]  Recognized `key=value` args for :Diff / M.run
+local KNOWN_RUN_KEYS = { "target", "source", "base", "view", "output" }
+
+---@type string[]  Recognized `key=value` args for :DiffBuffers / M.run_buffers
+local KNOWN_RUN_BUFFERS_KEYS = { "view", "output" }
+
+---@internal
+---Warn about any arg key `parse_args` did not recognize (ERR-10) -- a
+---misspelled key must not read the same as no key at all.
+---@param unknown string[]
+---@param known string[]
+---@return nil
+local function warn_unknown_keys(unknown, known)
+  if #unknown == 0 then
+    return
+  end
+  notify.warn(
+    string.format(
+      "Unknown arg key(s): %s -- ignoring (accepted: %s)",
+      table.concat(unknown, ", "),
+      table.concat(known, ", ")
+    )
+  )
+end
+
 -- Picker choice labels (see pick_specifier).
 local CHOICE_CURRENT = "current buffer"
 local CHOICE_CLIPBOARD = "clipboard"
@@ -738,7 +763,9 @@ function M.run(raw_args, range, run_opts)
   }
 
   local cfg = config.get().diff
-  local kv = resolve.parse_args(type(raw_args) == "string" and raw_args or "")
+  local kv, unknown_kv =
+    resolve.parse_args(type(raw_args) == "string" and raw_args or "", KNOWN_RUN_KEYS)
+  warn_unknown_keys(unknown_kv, KNOWN_RUN_KEYS)
 
   -- target=git:<rev1>..<rev2> is sugar for diffing the file directly between
   -- two revisions, bypassing the working buffer entirely: expands to
@@ -883,7 +910,9 @@ function M.run_buffers(raw_args, run_opts)
   }
 
   local cfg = config.get().diff
-  local kv = resolve.parse_args(type(raw_args) == "string" and raw_args or "")
+  local kv, unknown_kv =
+    resolve.parse_args(type(raw_args) == "string" and raw_args or "", KNOWN_RUN_BUFFERS_KEYS)
+  warn_unknown_keys(unknown_kv, KNOWN_RUN_BUFFERS_KEYS)
 
   local view, output = resolve_view_output(kv, cfg)
   if not view then
