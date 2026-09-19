@@ -417,6 +417,171 @@ return function(H)
     package.loaded["diff.core.history"] = nil
   end
 
+  -- diff_entry -- ctx.anchor, not ctx.source_bufnr, decides the repo root --
+  -- The bug this guards: core.execute's git-spec resolution used to derive
+  -- its repo-root anchor solely from ctx.source_bufnr's buffer name, even
+  -- for M.diff_entry's fully-qualified git:<sha>:<path> specs, which carry
+  -- everything git needs *except* a directory to run -C from. M.log never
+  -- touches ctx.source_bufnr at all (it resolves its own root straight from
+  -- the [path] argument or the current buffer, whichever ran the listing),
+  -- so an unnamed current buffer -- or one that simply belongs to a
+  -- *different* git repository than the file :DiffHistory was pointed at --
+  -- made every picker selection fail (or, worse, resolve against the wrong
+  -- repository) right after the listing step had already succeeded. ---------
+  do
+    local saved_system = vim.system
+    local saved_executable = vim.fn.executable
+
+    ---@diagnostic disable-next-line: duplicate-set-field
+    vim.fn.executable = function(name)
+      if name == "git" then
+        return 1
+      end
+      return saved_executable(name)
+    end
+
+    local right_root = H.tmpdir():gsub("/$", "")
+    vim.fn.mkdir(right_root .. "/.git", "p")
+    local right_file = right_root .. "/src/current/name.lua"
+    H.write_file(right_file, { "x" })
+
+    -- An unrelated second repository -- only its existence matters: it
+    -- proves *which* root a call used, by being the wrong one to pick.
+    local wrong_root = H.tmpdir():gsub("/$", "")
+    vim.fn.mkdir(wrong_root .. "/.git", "p")
+    local wrong_file = wrong_root .. "/other.lua"
+    H.write_file(wrong_file, { "y" })
+
+    ---Install a vim.system double that appends each call's argv to `into` and
+    ---echoes the object (its last argv element) back as stdout.
+    ---@param into string[][]
+    ---@return nil
+    local function stub_system_capturing(into)
+      ---@diagnostic disable-next-line: duplicate-set-field
+      vim.system = function(cmd, _, cb)
+        into[#into + 1] = cmd
+        vim.schedule(function()
+          cb({ code = 0, stdout = (cmd[#cmd] or "") .. "\n", stderr = "" })
+        end)
+        return { kill = function() end }
+      end
+    end
+
+    package.loaded["diff.core.git"] = nil
+    package.loaded["diff.core.history"] = nil
+    local h = require("diff.core.history")
+
+    local entry = {
+      sha = "deadbeef",
+      short = "dead",
+      date = "2026-03-01",
+      author = "Ada",
+      subject = "x",
+      path = "src/current/name.lua",
+      parent_path = "src/current/name.lua",
+    }
+
+    -- Case 1: an UNNAMED current buffer, correct anchor -----------------------
+    do
+      local calls = {}
+      stub_system_capturing(calls)
+      local buf = vim.api.nvim_create_buf(false, true) -- deliberately unnamed
+      local ctx = {
+        source_bufnr = buf,
+        origin_win = vim.api.nvim_get_current_win(),
+        range = nil,
+        anchor = right_file,
+      }
+      local out = {}
+      local saved_notify = vim.notify
+      ---@diagnostic disable-next-line: duplicate-set-field
+      vim.notify = function(m)
+        out[#out + 1] = m
+      end
+      h.diff_entry(entry, ctx, { view = "vsplit", output = "stat" })
+      vim.wait(5000, function()
+        return #out > 0
+      end, 5)
+      vim.notify = saved_notify
+
+      ok(#out > 0, "unnamed buffer + anchor: still produced a notification")
+      ok(
+        not (out[#out]):find("needs a file", 1, true),
+        "unnamed buffer + anchor: no 'needs a file-backed buffer' error (got: "
+          .. tostring(out[#out])
+          .. ")"
+      )
+      eq(#calls, 2, "unnamed buffer + anchor: resolved exactly two sides")
+      for _, cmd in ipairs(calls) do
+        eq(
+          cmd[3],
+          vim.fs.normalize(right_root),
+          "unnamed buffer + anchor: -C uses the anchor's root, not the (nonexistent) buffer name's"
+        )
+      end
+    end
+
+    -- Case 2: current buffer belongs to a DIFFERENT repo than the anchor ------
+    do
+      local calls = {}
+      stub_system_capturing(calls)
+      local buf = vim.api.nvim_create_buf(false, true)
+      vim.api.nvim_buf_set_name(buf, wrong_file)
+      local ctx = {
+        source_bufnr = buf,
+        origin_win = vim.api.nvim_get_current_win(),
+        range = nil,
+        anchor = right_file,
+      }
+      h.diff_entry(entry, ctx, { view = "vsplit", output = "stat" })
+      vim.wait(5000, function()
+        return #calls >= 2
+      end, 5)
+
+      eq(#calls, 2, "cross-repo buffer + anchor: resolved exactly two sides")
+      for _, cmd in ipairs(calls) do
+        eq(
+          cmd[3],
+          vim.fs.normalize(right_root),
+          "cross-repo buffer + anchor: -C uses the anchor's repo, not the current buffer's unrelated one"
+        )
+      end
+    end
+
+    -- Case 3: no anchor set (plain :Diff/:DiffBuffers shape) still falls back
+    -- to source_bufnr's own name, unchanged from before this fix. ------------
+    do
+      local calls = {}
+      stub_system_capturing(calls)
+      local buf = vim.api.nvim_create_buf(false, true)
+      vim.api.nvim_buf_set_name(buf, right_file)
+      local ctx = {
+        source_bufnr = buf,
+        origin_win = vim.api.nvim_get_current_win(),
+        range = nil,
+        -- anchor omitted entirely
+      }
+      h.diff_entry(entry, ctx, { view = "vsplit", output = "stat" })
+      vim.wait(5000, function()
+        return #calls >= 2
+      end, 5)
+
+      eq(#calls, 2, "no anchor: resolved exactly two sides")
+      for _, cmd in ipairs(calls) do
+        eq(
+          cmd[3],
+          vim.fs.normalize(right_root),
+          "no anchor: falls back to source_bufnr's own name, as before"
+        )
+      end
+    end
+
+    vim.system = saved_system
+    vim.fn.executable = saved_executable
+    package.loaded["diff.core.git"] = nil
+    package.loaded["diff.core.history"] = nil
+  end
+
   -- M.run -- the [path] positional survives a path containing "=" ------------
   -- The bug this guards: a blanket "%a+=[^%s]+" gsub matches that shape
   -- anywhere in raw_args, not just a whole key=value token -- "config=prod.lua"

@@ -296,11 +296,6 @@ function M.run(raw_args, run_opts)
   end
 
   local source_bufnr = api.nvim_get_current_buf()
-  local ctx = {
-    source_bufnr = source_bufnr,
-    origin_win = api.nvim_get_current_win(),
-    range = nil,
-  }
 
   -- Whatever is left after stripping every recognized key=value TOKEN is the
   -- optional path positional. Unlike a blanket "%a+=[^%s]+" gsub (which
@@ -320,6 +315,24 @@ function M.run(raw_args, run_opts)
   end
   local path = table.concat(path_words, " ")
   local bufname = (path ~= "") and path or api.nvim_buf_get_name(source_bufnr)
+
+  -- ctx.anchor carries this same `bufname` into every later git:<rev>:<path>
+  -- resolution (via M.diff_entry -> core.execute -> git.resolve), so the
+  -- repo-root lookup for a picked commit's diff always uses the same anchor
+  -- M.log already used to list its commits -- not source_bufnr's name. Those
+  -- two can disagree: source_bufnr is whatever buffer was current when
+  -- :DiffHistory ran, which may be unnamed (an empty scratch buffer has no
+  -- name for git.resolve to anchor on at all) or may simply belong to a
+  -- different git repository than the file `bufname` names (two repos open
+  -- in one session). Without this, M.log's listing step would succeed --
+  -- it never touches source_bufnr -- while every picker selection afterward
+  -- failed or silently ran `-C` against the wrong repository.
+  local ctx = {
+    source_bufnr = source_bufnr,
+    origin_win = api.nvim_get_current_win(),
+    range = nil,
+    anchor = bufname,
+  }
 
   M.log(bufname, cfg.history_max_entries, function(entries, err)
     if not entries then
