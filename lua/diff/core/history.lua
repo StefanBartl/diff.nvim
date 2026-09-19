@@ -122,6 +122,15 @@ function M.log(bufname, max_entries, cb)
   local fmt = RS .. "%H" .. FS .. "%h" .. FS .. "%ad" .. FS .. "%an" .. FS .. "%s"
   local argv = {
     "git",
+    -- Without this, git quotes any path containing a non-ASCII byte as a
+    -- double-quoted, backslash-octal-escaped string ("m\303\274ller.lua"
+    -- for "müller.lua") in --name-status output. M.parse doesn't undo that
+    -- quoting, so the escaped literal -- quote marks, backslashes and all --
+    -- would end up as entry.path/parent_path and get embedded verbatim in
+    -- the git:<sha>:<path> spec M.diff_entry builds, which then can't
+    -- resolve: "git show" wants the real path, not its quoted display form.
+    "-c",
+    "core.quotePath=false",
     "-C",
     root,
     "log",
@@ -190,11 +199,27 @@ function M.diff_entry(entry, ctx, opts, on_done)
 end
 
 ---One picker-list line per entry: short hash, date, author, subject.
+---
+---The author column is padded to a fixed width by hand rather than through
+---`string.format`'s own `%-15s`, which pads to a *byte* count -- correct for
+---an ASCII name, but too short for one with any multi-byte UTF-8 character
+---(every byte past the first counts against the 15 even though it takes up
+---no extra column), so a merely non-ASCII author name throws off every
+---column after it, one row at a time.
 ---@internal
 ---@param entry DiffNvim.HistoryEntry
 ---@return string
 local function format_entry(entry)
-  return string.format("%s  %s  %-15s  %s", entry.short, entry.date, entry.author, entry.subject)
+  local author = entry.author or ""
+  local pad = math.max(0, 15 - vim.fn.strdisplaywidth(author))
+  return string.format(
+    "%s  %s  %s%s  %s",
+    entry.short,
+    entry.date,
+    author,
+    string.rep(" ", pad),
+    entry.subject
+  )
 end
 
 ---Parse `raw_args` (`[path] [view=…] [output=…]`) and run the interactive
@@ -207,6 +232,34 @@ function M.run(raw_args, run_opts)
   local core = require("diff.core")
   local config = require("diff.config")
   local resolve = require("diff.core.resolve")
+
+  -- One guard for every on_done call site in this whole function --
+  -- including the one four levels of callback deep, past the picker -- not
+  -- a separate one per branch. `core/init.lua`'s `reporters()` exists for
+  -- exactly this reason (see its own doc comment): a picker backend that
+  -- invokes its choice callback twice must still only ever produce one
+  -- on_done call, and that only holds if every branch shares the same
+  -- "fired" flag. The last call below hands this same `once` on into
+  -- `M.diff_entry` -> `core.execute` (which wraps it in *another* guard of
+  -- its own) rather than the raw `run_opts.on_done` -- two independently-
+  -- guarded call sites would each let the other's single call through.
+  local run_on_done = type(run_opts) == "table" and run_opts.on_done or nil
+  local done_fired = false
+  local function once(result, err)
+    if done_fired then
+      return
+    end
+    done_fired = true
+    if type(run_on_done) == "function" then
+      local ok, caller_err = pcall(run_on_done, result, err)
+      if not ok then
+        notify.error("on_done failed: " .. tostring(caller_err))
+      end
+    end
+  end
+  local function fail(err)
+    once(nil, err)
+  end
 
   local cfg = config.get().diff
   local kv, unknown_kv = resolve.parse_args(type(raw_args) == "string" and raw_args or "", {
@@ -229,9 +282,7 @@ function M.run(raw_args, run_opts)
   if not validate.is_one_of(view, valid_views) then
     local err = string.format("Unknown view=%q  (valid: %s)", view, table.concat(valid_views, ", "))
     notify.error(err)
-    if type(run_opts) == "table" and type(run_opts.on_done) == "function" then
-      pcall(run_opts.on_done, nil, err)
-    end
+    fail(err)
     return
   end
 
@@ -240,9 +291,7 @@ function M.run(raw_args, run_opts)
     local err =
       string.format("Unknown output=%q  (valid: %s)", output, table.concat(valid_outputs, ", "))
     notify.error(err)
-    if type(run_opts) == "table" and type(run_opts.on_done) == "function" then
-      pcall(run_opts.on_done, nil, err)
-    end
+    fail(err)
     return
   end
 
@@ -253,20 +302,24 @@ function M.run(raw_args, run_opts)
     range = nil,
   }
 
-  -- Whatever is left after stripping every recognized key=value pair is the
-  -- optional path positional -- same simple, non-quote-aware token model
-  -- core.resolve.parse_args already uses for this grammar.
-  local path = vim.trim((raw_args or ""):gsub("%a+=[^%s]+", ""))
-  local bufname = (path ~= "") and path or api.nvim_buf_get_name(source_bufnr)
-
-  local function fail(err)
-    if type(run_opts) == "table" and type(run_opts.on_done) == "function" then
-      local ok, caller_err = pcall(run_opts.on_done, nil, err)
-      if not ok then
-        notify.error("on_done failed: " .. tostring(caller_err))
-      end
+  -- Whatever is left after stripping every recognized key=value TOKEN is the
+  -- optional path positional. Unlike a blanket "%a+=[^%s]+" gsub (which
+  -- matches that shape anywhere in the string, not just a whole token -- a
+  -- path like "src/a=b.lua" loses everything from its embedded "a=b.lua"
+  -- onward, silently turning into the directory "src/"), this only drops
+  -- whole tokens that spell exactly "view=…" or "output=…" -- the two keys
+  -- this command actually accepts -- so a path survives unless a whole
+  -- argument literally IS one of those two tokens. A bare filename that
+  -- merely *looks* like a key=value pair (e.g. "config=prod.lua") survives
+  -- too, since "config" isn't a key this command recognizes.
+  local path_words = {}
+  for _, word in ipairs(vim.split(vim.trim(raw_args or ""), "%s+", { trimempty = true })) do
+    if not (word:match("^view=[^%s]+$") or word:match("^output=[^%s]+$")) then
+      path_words[#path_words + 1] = word
     end
   end
+  local path = table.concat(path_words, " ")
+  local bufname = (path ~= "") and path or api.nvim_buf_get_name(source_bufnr)
 
   M.log(bufname, cfg.history_max_entries, function(entries, err)
     if not entries then
@@ -298,7 +351,7 @@ function M.run(raw_args, run_opts)
       M.diff_entry(entry, ctx, {
         view = view --[[@as DiffNvim.View]],
         output = output --[[@as DiffNvim.Output]],
-      }, run_opts and run_opts.on_done)
+      }, once)
     end)
   end)
 end
