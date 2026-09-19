@@ -41,13 +41,21 @@ function M.create(lines, name, filetype)
 end
 
 ---Mark this buffer as one diff.nvim should clean up (for buffers it did not
----itself create, e.g. the origin snapshot).
+---itself create, e.g. the origin snapshot). A no-op if `bufnr` is already
+---tracked -- otherwise a double-track would inflate `active_count` beyond
+---the number of distinct live buffers.
 ---@param bufnr integer
 ---@return nil
 function M.track(bufnr)
-  if validate.buf_valid(bufnr) then
-    _bufs[#_bufs + 1] = bufnr
+  if not validate.buf_valid(bufnr) then
+    return
   end
+  for _, tracked in ipairs(_bufs) do
+    if tracked == bufnr then
+      return
+    end
+  end
+  _bufs[#_bufs + 1] = bufnr
 end
 
 ---Wipe a scratch buffer and stop tracking it.
