@@ -53,6 +53,7 @@ local KNOWN = {
     diff = { ok = is_boolean, expect = "a boolean" },
     diff_origin = { ok = is_boolean, expect = "a boolean" },
     diff_exit = { ok = is_boolean, expect = "a boolean" },
+    diff_history = { ok = is_boolean, expect = "a boolean" },
     diffopt_profile = { ok = is_boolean, expect = "a boolean" },
     gitsigns_peek = { ok = is_boolean, expect = "a boolean" },
   },
@@ -112,6 +113,7 @@ local KNOWN = {
       expect = 'one of "add", "replace"',
     },
     directory_max_files = { ok = is_pos_int, expect = "a positive integer" },
+    history_max_entries = { ok = is_pos_int, expect = "a positive integer" },
   },
   keymaps = true,
   exit = {

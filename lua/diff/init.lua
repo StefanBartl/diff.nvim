@@ -110,6 +110,17 @@ function M.diff_origin()
   require("diff.features.origin").run()
 end
 
+---List the commits that touched a file (`git log --follow`) and, once one is
+---picked, diff it against its parent. `raw_args` accepts an optional leading
+---path (defaults to the current buffer) plus the same `view=`/`output=`
+---grammar as `:Diff`; `opts.on_done` works exactly as it does for `M.run`.
+---@param raw_args? string
+---@param opts? DiffNvim.RunOpts
+---@return nil
+function M.diff_history(raw_args, opts)
+  require("diff.core.history").run(raw_args or "", opts)
+end
+
 ---Leave diff mode from anywhere.
 ---@return nil
 function M.exit()

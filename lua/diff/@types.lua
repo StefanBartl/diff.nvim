@@ -92,6 +92,16 @@
 ---@field origin_win   integer         Window that was active at invocation
 ---@field range        DiffNvim.Range|nil  Selected span when :Diff got a range
 
+---@class DiffNvim.HistoryEntry
+--- One commit from `core/history.lua`'s `git log --follow` walk of a file.
+---@field sha          string  Full commit hash
+---@field short        string  Abbreviated commit hash
+---@field date         string  Author date, `--date=short` (YYYY-MM-DD)
+---@field author       string  Author name
+---@field subject      string  First line of the commit message
+---@field path         string  The file's path (relative to the repo root) at this commit -- may differ from the current path across a rename `--follow` crossed
+---@field parent_path  string  The file's path at the parent commit -- same as `path` outside a rename
+
 -- #####################################################################
 -- config
 -- #####################################################################
@@ -107,6 +117,7 @@
 ---@field diff             boolean  Register the :Diff / :DiffClear commands
 ---@field diff_origin      boolean  Register the :DiffOrig command
 ---@field diff_exit        boolean  Register the :DiffExit command + exit keymap
+---@field diff_history     boolean  Register the :DiffHistory command
 ---@field diffopt_profile  boolean  Register the :DiffProfile command (cross-feature report finding F1)
 ---@field gitsigns_peek    boolean  Bind `gh` to gitsigns.nvim's hunk preview (cross-feature report finding F2)
 
@@ -124,6 +135,7 @@
 ---@field stat_list         "off"|"qf"|"loc"  Also push output=stat's hunks to the quickfix/location list (default "off")
 ---@field stat_list_mode    "add"|"replace"   "add" accumulates across :Diff invocations (default), "replace" resets the list each time
 ---@field directory_max_files integer  Cap on files walked per side of a directory diff (default 2000) — see core/directory.lua
+---@field history_max_entries integer  Cap on commits `:DiffHistory` walks (`git log --max-count`, default 200) — see core/history.lua
 ---@field diffopt_profile   DiffNvim.DiffProfile|nil  Apply this profile to 'diffopt' once, at setup() — nil (default) leaves 'diffopt' untouched, diff.nvim's behaviour before this field existed
 
 ---@alias DiffNvim.Config.ExitScope
@@ -139,6 +151,7 @@
 ---@field diff_merge?   string  `:Diff base=git:HEAD target=git:MERGE_HEAD`
 ---@field diff_buffers? string  `:DiffBuffers`
 ---@field diff_orig?    string  `:DiffOrig` (needs `features.diff_origin`)
+---@field diff_history? string  `:DiffHistory` (needs `features.diff_history`)
 ---@field diff_clear?   string  `:DiffClear`
 
 ---@class DiffNvim.Config.Exit
@@ -151,6 +164,7 @@
 ---@field diff_clear     string  Name of the clear command
 ---@field diff_buffers   string  Name of the buffer-picker diff command
 ---@field diff_orig      string  Name of the origin command
+---@field diff_history   string  Name of the file-history command
 ---@field diff_exit      string  Name of the exit command
 ---@field diff_profile   string  Name of the diffopt-profile command
 
@@ -185,6 +199,7 @@
 ---@field diff?             boolean  Register the :Diff / :DiffClear commands
 ---@field diff_origin?      boolean  Register the :DiffOrig command
 ---@field diff_exit?        boolean  Register the :DiffExit command + exit keymap
+---@field diff_history?     boolean  Register the :DiffHistory command
 ---@field diffopt_profile?  boolean  Register the :DiffProfile command
 ---@field gitsigns_peek?    boolean  Bind `gh` to gitsigns.nvim's hunk preview
 
@@ -202,6 +217,7 @@
 ---@field stat_list?           "off"|"qf"|"loc"  Also push output=stat's hunks to the quickfix/location list (default "off")
 ---@field stat_list_mode?      "add"|"replace"   "add" accumulates across :Diff invocations (default), "replace" resets the list each time
 ---@field directory_max_files? integer  Cap on files walked per side of a directory diff (default 2000) — see core/directory.lua
+---@field history_max_entries? integer  Cap on commits `:DiffHistory` walks (`git log --max-count`, default 200)
 ---@field diffopt_profile?     DiffNvim.DiffProfile|nil  Apply this profile to 'diffopt' once, at setup()
 
 ---@class DiffNvim.Opts.Exit
@@ -214,6 +230,7 @@
 ---@field diff_clear?     string  Name of the clear command
 ---@field diff_buffers?   string  Name of the buffer-picker diff command
 ---@field diff_orig?      string  Name of the origin command
+---@field diff_history?   string  Name of the file-history command
 ---@field diff_exit?      string  Name of the exit command
 ---@field diff_profile?   string  Name of the diffopt-profile command
 return {}

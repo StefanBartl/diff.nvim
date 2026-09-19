@@ -9,13 +9,16 @@ diff.run("target=…", opts)    -- equivalent to :Diff …
 diff.clear()                  -- equivalent to :DiffClear
 diff.diff_buffers(args, opts) -- equivalent to :DiffBuffers (buffer picker)
 diff.diff_origin()            -- equivalent to :DiffOrig
+diff.diff_history(args, opts) -- equivalent to :DiffHistory (file-history picker)
 diff.exit()                   -- equivalent to :DiffExit
 diff.status()                 -- statusline string: "diff:N" while active, "" otherwise
 ```
 
-`diff.run` and `diff.diff_buffers` take the same `key=value` argument string
-as their commands (see [Commands](commands.md)), plus an optional table of
-caller-side options — currently just `on_done`.
+`diff.run`, `diff.diff_buffers` and `diff.diff_history` take the same
+`key=value` argument string as their commands (see [Commands](commands.md)),
+plus an optional table of caller-side options — currently just `on_done`.
+`diff.diff_history`'s `args` additionally accepts a leading path, exactly
+like `:DiffHistory [path] [view=…] [output=…]`.
 
 ## Knowing when a diff has finished: `on_done`
 

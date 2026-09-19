@@ -45,6 +45,13 @@ When `target=` is omitted, an interactive picker is shown.
 inside a git repository. Runs `git show <rev>:<relpath>` off the main loop
 (async); no shell is spawned.
 
+**`git:{rev}:{path}`** — resolves an **explicit path** (relative to the repo
+root) at a git revision, instead of the current buffer's own path. Mainly
+useful across a rename: `:DiffHistory` (below) uses it so a revision from
+before the rename asks git for the name the file had *at that revision*,
+not the name it has now. `{path}` is everything after the first `:` — a
+revision name itself cannot contain one.
+
 **`target=git:{rev1}..{rev2}`** — diffs the current file directly between
 two revisions, instead of one revision against the working buffer: sugar for
 `source=git:{rev1} target=git:{rev2}`, and it overrides any `source=` given
@@ -215,6 +222,32 @@ Diffs the current buffer against its last-saved version on disk — "what
 changed since the last save". The snapshot buffer is tracked and cleaned up by
 `:DiffClear`.
 
+## `:DiffHistory [path] [view=…] [output=…]`
+
+Lists the commits that touched a file (`git log --follow`, so a rename is
+tracked back through it), newest first, in a picker (the same picker as
+`:Diff` — see [Configuration › Picker resolution](configuration.md#picker-resolution)).
+Picking one diffs that commit against its parent — `view=`/`output=` apply
+to that diff exactly as they do for `:Diff`. `path` defaults to the current
+buffer's file; give one explicitly to browse a different file's history
+without switching to it first.
+
+Requires the same `git`/`vim.system` availability as `git:{rev}` above.
+Across a rename, the diff still compares the right two paths — the file's
+name at the picked commit against its name at the parent — via the
+`git:{rev}:{path}` spec (above), not the current buffer's path. Capped at
+`diff.history_max_entries` commits (default 200 — see
+[Configuration](configuration.md)); a file with more history than that only
+shows the most recent ones. The very first commit of a file's history has
+no parent to diff against and reports an error rather than diffing against
+an empty tree — a deliberate scope cut, not an oversight.
+
+```vim
+:DiffHistory                        " browse the current buffer's history
+:DiffHistory lua/init.lua           " browse a specific file's history
+:DiffHistory output=stat            " pick a revision, get a +/- summary instead of a split
+```
+
 ## `:DiffExit`
 
 Leaves diff mode from anywhere (`diffoff!`).
@@ -245,4 +278,5 @@ Not a command but worth listing here: with `features.gitsigns_peek` on
 :Diff source=<Tab>     → source=current  source=clipboard  source=ask  source=git:HEAD
 :Diff target=<Tab>     → target=clipboard  target=ask  target=git:HEAD  (+ file paths)
 :Diff base=<Tab>       → base=clipboard  base=ask  base=git:HEAD  (+ file paths)
+:DiffHistory <Tab>     → a file path, then view=  output=
 ```

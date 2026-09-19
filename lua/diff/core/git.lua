@@ -3,10 +3,15 @@
 ---
 --- Resolution layer for git-backed sources/targets. A specifier of the form
 --- `git:HEAD`, `git:HEAD~1`, `git:<sha>`, or `git:<branch>` resolves to the
---- content of the *current file* at that revision. `git show` is a subprocess,
---- so `M.resolve` runs `vim.system` with a callback (cross-platform, no shell)
---- and delivers the result through `cb`, like `core/url.lua`; everything up to
---- the spawn stays synchronous. Never notifies — hands back `(lines, err)`.
+--- content of the *current file* at that revision. A specifier of the form
+--- `git:<rev>:<path>` instead resolves an explicit path (relative to the repo
+--- root), regardless of the buffer :Diff was invoked from -- `core/history.lua`
+--- is the one caller that needs this: a revision from before a rename tracked
+--- a different path than the one the current buffer holds. `git show` is a
+--- subprocess, so `M.resolve` runs `vim.system` with a callback (cross-platform,
+--- no shell) and delivers the result through `cb`, like `core/url.lua`;
+--- everything up to the spawn stays synchronous. Never notifies — hands back
+--- `(lines, err)`.
 
 local fn = vim.fn
 
@@ -19,12 +24,13 @@ function M.is_git_spec(spec)
   return type(spec) == "string" and spec:sub(1, 4) == "git:"
 end
 
----@internal
 ---Find the git repository root by walking up from `start_dir`.
 ---Handles both a `.git` directory and a `.git` file (submodules/worktrees).
+---Exported for `core/history.lua`, which needs the same root-finding walk to
+---resolve `git log`'s `-C` argument before any commit has been picked.
 ---@param start_dir string
 ---@return string|nil root  Normalized repo root, or nil when not in a repo
-local function repo_root(start_dir)
+function M.repo_root(start_dir)
   local hit = vim.fs.find(".git", { path = start_dir, upward = true })[1]
   if not hit then
     return nil
@@ -40,8 +46,8 @@ end
 ---could be two of them back to back. Everything up to the spawn stays
 ---synchronous, so an invalid specifier still reports through `cb` in the same
 ---tick, exactly as before.
----@param spec string   A `git:<rev>` specifier
----@param bufname string The name (path) of the buffer :Diff was invoked from
+---@param spec string   A `git:<rev>` or `git:<rev>:<path>` specifier
+---@param bufname string The name (path) of the buffer :Diff was invoked from -- only used to locate the repo root when `spec` carries no explicit path
 ---@param label string  "target"|"source" — used only in error text
 ---@param cb fun(lines: string[]|nil, err: string|nil)  invoked on the main loop
 ---@return nil
@@ -60,21 +66,44 @@ function M.resolve(spec, bufname, label, cb)
     return cb(nil, label .. ": empty git revision (use git:HEAD, git:<sha>, …)")
   end
 
+  -- git:<rev>:<path> carries its own path, relative to the repo root --
+  -- core/history.lua's way of asking for a revision at a path other than the
+  -- current buffer's (a rename may mean the file lived under a different
+  -- name at that revision). The first ":" is the split point: a revision
+  -- name cannot itself contain one.
+  local explicit_path = nil
+  local colon = rev:find(":", 1, true)
+  if colon then
+    explicit_path = rev:sub(colon + 1)
+    rev = rev:sub(1, colon - 1)
+    if rev == "" then
+      return cb(nil, label .. ": empty git revision before ':' in " .. spec)
+    end
+    if explicit_path == "" then
+      return cb(nil, label .. ": empty path after git:" .. rev .. ":")
+    end
+  end
+
   if type(bufname) ~= "string" or bufname == "" then
     return cb(nil, label .. ": git:" .. rev .. " needs a file-backed buffer")
   end
 
   local abspath = vim.fs.normalize(fn.fnamemodify(bufname, ":p"))
-  local root = repo_root(vim.fs.dirname(abspath))
+  local root = M.repo_root(vim.fs.dirname(abspath))
   if not root then
     return cb(nil, label .. ": not inside a git repository")
   end
 
-  -- Path relative to the repo root, with forward slashes (git wants those).
-  if abspath:sub(1, #root + 1) ~= root .. "/" then
-    return cb(nil, label .. ": file is outside the git repo root")
+  local rel
+  if explicit_path then
+    rel = explicit_path
+  else
+    -- Path relative to the repo root, with forward slashes (git wants those).
+    if abspath:sub(1, #root + 1) ~= root .. "/" then
+      return cb(nil, label .. ": file is outside the git repo root")
+    end
+    rel = abspath:sub(#root + 2)
   end
-  local rel = abspath:sub(#root + 2)
 
   local object = rev .. ":" .. rel
   local ok = pcall(function()

@@ -114,6 +114,39 @@ alongside it. Only recognized in `target=`.
   (`M.split_git_range`)
 - **Config:** none — checked by `:checkhealth diff`
 
+## `:DiffHistory` — file history (2026-09-19)
+
+Lists the commits that touched a file (`git log --follow --name-status`,
+newest first) in a picker, and diffs whichever one is picked against its
+parent. `git:{rev}` above answers "show me this file at one specific
+revision"; `:DiffHistory` answers "show me the file's whole revision list,
+and let me pick one" — the two together are diffview.nvim's side-by-side
+diff and file-history views, without diffview.nvim.
+
+`--follow` means a rename is tracked backward through it, not just the
+commit that touched the file's *current* name. Diffing across a rename
+needs the file's two different names — the one it had at the picked commit
+and the one it had at the parent — which `--name-status` (rather than
+`--name-only`) hands back per commit: a rename/copy status line
+(`R100 old<TAB>new`) names both, everything else names one path used on
+both sides. Each side is then resolved via `git:{rev}:{path}` — the
+explicit-path form of `git:{rev}` above, which asks for a given path
+regardless of what the current buffer holds. The diff itself opens through
+the exact same `view=`/`output=` handling as `:Diff` — no separate
+rendering path.
+
+A merge commit's `--name-status` line is normally omitted by `git log`
+itself; that entry falls back to the path that matched the file in the
+first place, since there is nothing else to read one from. The very first
+commit of a file's history has no parent to diff against and reports an
+error rather than diffing it against an empty tree.
+
+- **Module:** `lua/diff/core/history.lua`, `lua/diff/core/git.lua`
+  (`git:{rev}:{path}`)
+- **Config:** `opts.diff.history_max_entries` (default `200`) — caps commits
+  walked (`git log --max-count`); `opts.features.diff_history` (default
+  `true`) — registers the command
+
 ## Directory diff (`source=`/`target=` both directories)
 
 When both sides resolve to real, existing directories, `:Diff` compares the
@@ -261,7 +294,7 @@ always works regardless of scope.
 
 Fixed-invocation shortcuts for the invocations long enough to be worth a key:
 `:Diff target=git:HEAD` and the merge-conflict form
-(`base=git:HEAD target=git:MERGE_HEAD`), plus the three standalone commands.
+(`base=git:HEAD target=git:MERGE_HEAD`), plus the four standalone commands.
 
 **Nothing is bound by default.** diff.nvim deliberately imposes no leader
 mappings, and that has not changed — the shortcuts exist so you don't have to
@@ -274,7 +307,7 @@ warning rather than bound to something that errors on first press.
 
 - **Module:** `lua/diff/bindings/keymaps.lua` (`register_shortcuts`,
   `SHORTCUTS`)
-- **Keymaps:** `keymaps.{diff,diff_head,diff_merge,diff_buffers,diff_orig,diff_clear}`
+- **Keymaps:** `keymaps.{diff,diff_head,diff_merge,diff_buffers,diff_orig,diff_history,diff_clear}`
   ([BINDINGS.md](BINDINGS.md#optional-shortcuts))
 - **Config:** `opts.keymaps` (default `{}`)
 - **Tests:** `TESTS/keymaps_spec.lua`
@@ -327,7 +360,7 @@ defaults, not fixed identifiers.
 - **Module:** `lua/diff/bindings/usrcmds.lua`
 - **Config:** `opts.commands.diff`, `opts.commands.diff_clear`,
   `opts.commands.diff_buffers`, `opts.commands.diff_orig`,
-  `opts.commands.diff_exit`
+  `opts.commands.diff_history`, `opts.commands.diff_exit`
 
 ## Statusline component
 

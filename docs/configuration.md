@@ -8,6 +8,7 @@ require("diff").setup({
     diff            = true,   -- register :Diff / :DiffClear
     diff_origin     = true,   -- register :DiffOrig
     diff_exit       = true,   -- register :DiffExit + exit keymap
+    diff_history    = true,   -- register :DiffHistory
     diffopt_profile = true,   -- register :DiffProfile
     gitsigns_peek   = true,   -- bind `gh` to gitsigns.nvim's hunk preview
   },
@@ -26,6 +27,7 @@ require("diff").setup({
     stat_list         = "off",       -- "off"|"qf"|"loc" — also push output=stat's hunks to a list
     stat_list_mode    = "add",       -- "add"|"replace" — accumulate across :Diff calls, or reset each time
     directory_max_files = 2000,      -- cap on files walked per side of a directory diff
+    history_max_entries = 200,       -- cap on commits :DiffHistory walks (git log --max-count)
   },
   exit = {
     key             = "<Esc><Esc>", -- exit mapping; a list binds several, e.g. { "<Esc><Esc>", "<C-c>" }
@@ -38,6 +40,7 @@ require("diff").setup({
     -- diff_merge   = "<leader>dm", -- :Diff base=git:HEAD target=git:MERGE_HEAD
     -- diff_buffers = "<leader>db", -- :DiffBuffers
     -- diff_orig    = "<leader>do", -- :DiffOrig
+    -- diff_history = "<leader>dH", -- :DiffHistory
     -- diff_clear   = "<leader>dc", -- :DiffClear
   },
   commands = {
@@ -45,6 +48,7 @@ require("diff").setup({
     diff_clear   = "DiffClear",
     diff_buffers = "DiffBuffers",
     diff_orig    = "DiffOrig",
+    diff_history = "DiffHistory",
     diff_exit    = "DiffExit",
     diff_profile = "DiffProfile",
   },
@@ -107,6 +111,12 @@ the per-file summary (see [Commands](commands.md)) — this caps how many
 files it will walk per side before erroring instead of silently continuing
 on an unexpectedly huge tree. Hidden path segments (`.git`, `.hg`, …) are
 always excluded from the walk and don't count against the cap.
+
+`diff.history_max_entries` (default `200`): `:DiffHistory` (see
+[Commands](commands.md)) caps `git log --follow`'s own `--max-count` at this
+many commits — a file with more history than that only lists the most
+recent entries, the same reasoning as `directory_max_files` applied to a
+commit walk instead of a file tree.
 
 ## Diffopt profiles
 
