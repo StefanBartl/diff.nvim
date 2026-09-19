@@ -38,6 +38,41 @@ return function(H)
   eq(n.diff.default_orig_view, "split", "nested override applied")
   eq(n.diff.default_view, "vsplit", "nested sibling kept from defaults")
 
+  -- unknown key dropped before the merge, reported via issues() (ERR-50) ----
+  -- A typo in a nested option (`diff_orgin` for `diff_origin`) must not
+  -- vanish silently into the default with nothing anywhere able to tell.
+  config.setup({ features = { diff_orgin = false } })
+  local u = config.get()
+  eq(u.features.diff_origin, true, "the real option keeps its default -- the typo never touched it")
+  local unknown_issues = config.issues()
+  ok(#unknown_issues > 0, "the typo is recorded as an issue")
+  ok(
+    table.concat(unknown_issues, "\n"):find("diff_orgin", 1, true) ~= nil,
+    "and names the offending key"
+  )
+
+  -- invalid value degrades to its own default, reported via issues() (ERR-22)
+  -- A typo'd algorithm must not reach every vim.diff call unchecked.
+  config.setup({ diff = { algorithm = "not-a-real-algorithm", ctxlen = -1 } })
+  local bad = config.get()
+  eq(
+    bad.diff.algorithm,
+    "histogram",
+    "an invalid algorithm degrades to the default, not aborting setup"
+  )
+  eq(bad.diff.ctxlen, 3, "a negative ctxlen degrades to the default too")
+  local value_issues = config.issues()
+  eq(#value_issues, 2, "both bad values are recorded as issues")
+
+  -- setup() never aborts over a validation issue (ERR-22) -- the rest of the
+  -- config still merges normally alongside the degraded fields.
+  config.setup({ diff = { algorithm = "bogus", ctxlen = 5 } })
+  eq(config.get().diff.ctxlen, 5, "a sibling value in the same setup() call still applies")
+
+  -- issues() reflects only the LAST setup() call, not an accumulation
+  config.setup({})
+  eq(#config.issues(), 0, "a clean setup() call clears the previous issues")
+
   -- reset for subsequent specs
   config.setup({})
 end

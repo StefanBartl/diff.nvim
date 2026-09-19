@@ -219,6 +219,31 @@ return function(H)
     )
   end
 
+  -- setup() options: clean vs. rejected (ERR-50, ERR-22) ----------------------
+  do
+    local config = require("diff.config")
+    config.setup({})
+    local clean = record()
+    ok(
+      clean.text:find("No unknown or invalid setup() options", 1, true) ~= nil,
+      "a clean setup() reports nothing to fix"
+    )
+
+    config.setup({ features = { diff_orgin = false }, diff = { algorithm = "bogus" } })
+    local dirty = record()
+    ok(
+      dirty.text:find("warn: unknown option 'features.diff_orgin'", 1, true) ~= nil,
+      "an unknown key from the last setup() call is surfaced as a warning"
+    )
+    ok(
+      dirty.text:find("warn: option 'diff.algorithm' must be", 1, true) ~= nil,
+      "an invalid value from the last setup() call is surfaced as a warning"
+    )
+
+    -- Leave config clean for whatever spec runs after this one.
+    config.setup({})
+  end
+
   -- Regression: lib.nvim missing -----------------------------------------
   -- `check()` has a dedicated branch for "lib.nvim not found", reports it as
   -- an error with an install hint, and used to end unconditionally with
