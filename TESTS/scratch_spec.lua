@@ -150,26 +150,16 @@ return function(H)
     scratch.track("nonsense")
     eq(scratch.active_count(), 0, "track() refuses a non-number")
 
-    -- BUG: track() does not check whether the buffer is *already* tracked, so
-    -- adopting one twice (or adopting a buffer create() already registered)
-    -- parks a second entry for the same handle. active_count() counts entries,
-    -- not distinct buffers, and that count is exactly what diff.status()
-    -- prints in the statusline -- so one diff can report "diff:3". Nothing in
-    -- lua/ calls track() today, which is why this has stayed invisible; it is
-    -- a documented public entry point ("for buffers it did not itself create",
-    -- see the function's own doc comment), so an integrating plugin reaches it
-    -- first. cleanup_all()/wipe_on_exit() are unaffected -- they re-check
-    -- validity per entry, so the duplicates are simply skipped.
+    -- track() de-duplicates: adopting the same handle twice (or adopting a
+    -- buffer create() already registered) must not inflate active_count()
+    -- beyond the number of distinct live buffers, since that count is what
+    -- diff.status() prints in the statusline.
     local buf = scratch.create({ "x" }, "[Diff] dup-track")
     scratch.track(buf)
     scratch.track(buf)
-    eq(
-      scratch.active_count(),
-      3,
-      "BUG: one buffer tracked three times counts as three active diffs"
-    )
-    eq(require("diff").status(), "diff:3", "BUG: and the statusline reports it as three")
-    eq(scratch.cleanup_all(), 1, "cleanup_all still wipes it exactly once")
+    eq(scratch.active_count(), 1, "tracking the same buffer twice still counts as one")
+    eq(require("diff").status(), "diff:1", "and the statusline reports it as one")
+    eq(scratch.cleanup_all(), 1, "cleanup_all wipes it exactly once")
     eq(scratch.active_count(), 0, "and the registry ends up empty either way")
   end
 
