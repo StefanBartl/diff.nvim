@@ -85,12 +85,12 @@ end
 ---calls back immediately, so callers never need to know which path was taken.
 ---@param spec DiffNvim.Source|DiffNvim.Target
 ---@param label string
----@param source_bufnr integer
+---@param ctx DiffNvim.Context
 ---@param range DiffNvim.Range|nil
 ---@internal
 ---@param callback fun(lines: string[]|nil, err: string|nil): nil
 ---@return nil
-local function resolve_side_async(spec, label, source_bufnr, range, callback)
+local function resolve_side_async(spec, label, ctx, range, callback)
   if url.is_url_spec(spec) then
     url.fetch(spec --[[@as string]], label, {
       timeout_ms = config.get().diff.url_timeout_ms,
@@ -105,12 +105,20 @@ local function resolve_side_async(spec, label, source_bufnr, range, callback)
   -- three-way diff resolves two sides and would otherwise block twice.
   local git = require("diff.core.git")
   if git.is_git_spec(spec) then
-    local bufname = validate.buf_valid(source_bufnr) and api.nvim_buf_get_name(source_bufnr) or ""
+    -- ctx.anchor overrides the buffer-derived name: a `git:<rev>:<path>`
+    -- explicit-path spec's repo-root lookup has nothing to do with whatever
+    -- buffer happened to be current when :Diff (or a caller like
+    -- core/history.lua) was invoked, and using it anyway breaks for an
+    -- unnamed current buffer or one that lives in a different repository
+    -- than the explicit path names -- see core/history.lua's own doc
+    -- comment on why it sets ctx.anchor.
+    local bufname = ctx.anchor
+      or (validate.buf_valid(ctx.source_bufnr) and api.nvim_buf_get_name(ctx.source_bufnr) or "")
     git.resolve(spec --[[@as string]], bufname, label, callback)
     return
   end
 
-  callback(resolve_side(spec, label, source_bufnr, range))
+  callback(resolve_side(spec, label, ctx.source_bufnr, range))
 end
 
 ---A label always has to stay on one line: `with_header` writes exactly two
@@ -222,7 +230,7 @@ end
 local function execute_three_way(opts, ctx, on_done)
   local done, fail = reporters(on_done)
 
-  resolve_side_async(opts.base, "base", ctx.source_bufnr, nil, function(base_lines, base_err)
+  resolve_side_async(opts.base, "base", ctx, nil, function(base_lines, base_err)
     if not base_lines then
       base_err = base_err or "could not resolve base"
       notify.error(base_err)
@@ -230,7 +238,7 @@ local function execute_three_way(opts, ctx, on_done)
       return
     end
 
-    resolve_side_async(opts.target, "target", ctx.source_bufnr, nil, function(tgt_lines, tgt_err)
+    resolve_side_async(opts.target, "target", ctx, nil, function(tgt_lines, tgt_err)
       if not tgt_lines then
         tgt_err = tgt_err or "could not resolve target"
         notify.error(tgt_err)
@@ -389,7 +397,7 @@ function M.execute(opts, ctx, on_done)
     if not uses_origin_buffer then
       -- The visual range applies to the source side only (the selection lives
       -- in the buffer that was current when :Diff was invoked).
-      resolve_side_async(opts.source, "source", ctx.source_bufnr, ctx.range, callback)
+      resolve_side_async(opts.source, "source", ctx, ctx.range, callback)
       return
     end
     if not validate.buf_valid(ctx.source_bufnr) then
@@ -410,7 +418,7 @@ function M.execute(opts, ctx, on_done)
       return
     end
 
-    resolve_side_async(opts.target, "target", ctx.source_bufnr, nil, function(tgt_lines, tgt_err)
+    resolve_side_async(opts.target, "target", ctx, nil, function(tgt_lines, tgt_err)
       if not tgt_lines then
         tgt_err = tgt_err or "could not resolve target"
         notify.error(tgt_err)
