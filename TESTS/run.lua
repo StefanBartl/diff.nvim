@@ -95,6 +95,7 @@ local specs = {
   "render_edge_spec.lua",
   "git_spec.lua",
   "git_argv_spec.lua",
+  "history_spec.lua",
   "status_spec.lua",
   "scratch_spec.lua",
   "pickers_bridge_spec.lua",

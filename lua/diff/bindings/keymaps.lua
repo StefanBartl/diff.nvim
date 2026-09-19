@@ -136,6 +136,12 @@ local SHORTCUTS = {
     args = "",
     label = "Diff against the version on disk",
   },
+  diff_history = {
+    command = "diff_history",
+    feature = "diff_history",
+    args = "",
+    label = "Browse file history (pick a revision to diff)",
+  },
   diff_clear = {
     command = "diff_clear",
     feature = "diff",

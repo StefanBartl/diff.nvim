@@ -17,6 +17,7 @@
 local composer = require("lib.nvim.bindings.usercmd.composer")
 
 local core = require("diff.core")
+local history = require("diff.core.history")
 
 local M = {}
 
@@ -82,6 +83,22 @@ function M.register(cfg)
           kv = { kv("view"), kv("output") },
           run = function(ctx)
             core.run_buffers(ctx.raw.args or "")
+          end,
+        },
+      },
+    })
+  end
+
+  if cfg.features.diff_history then
+    composer.verb(names.diff_history, {
+      desc = "List commits touching a file and diff one against its parent (picker)  :DiffHistory [path] [view=…] [output=…]",
+      routes = {
+        {
+          path = {},
+          args = { { name = "path", type = "FILE", optional = true } },
+          kv = { kv("view"), kv("output") },
+          run = function(ctx)
+            history.run(ctx.raw.args or "")
           end,
         },
       },

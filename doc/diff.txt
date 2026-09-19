@@ -20,6 +20,7 @@ CONTENTS                                                       *diff-contents*
      5.3 :DiffBuffers .......... |:DiffBuffers|
      5.4 :DiffOrig ............. |:DiffOrig|
      5.5 :DiffExit ............. |:DiffExit|
+     5.6 :DiffHistory .......... |:DiffHistory|
   6. Tab completion ............ |diff-completion|
   7. Lua API ................... |diff-api|
   8. Health check .............. |diff-health|
@@ -53,7 +54,7 @@ dependency.
 lazy.nvim: >lua
   {
     "StefanBartl/diff.nvim",
-    cmd  = { "Diff", "DiffClear", "DiffBuffers", "DiffOrig", "DiffExit" },
+    cmd  = { "Diff", "DiffClear", "DiffBuffers", "DiffOrig", "DiffHistory", "DiffExit" },
     opts = {},
   }
 <
@@ -61,7 +62,7 @@ lazy.nvim: >lua
 packer.nvim: >lua
   use {
     "StefanBartl/diff.nvim",
-    cmd = { "Diff", "DiffClear", "DiffBuffers", "DiffOrig", "DiffExit" },
+    cmd = { "Diff", "DiffClear", "DiffBuffers", "DiffOrig", "DiffHistory", "DiffExit" },
     config = function()
       require("diff").setup({})
     end,
@@ -81,9 +82,10 @@ vim-plug: >vim
 >lua
   require("diff").setup({
     features = {
-      diff        = true,   -- register :Diff / :DiffClear / :DiffBuffers
-      diff_origin = true,   -- register :DiffOrig
-      diff_exit   = true,   -- register :DiffExit + exit keymap
+      diff         = true,   -- register :Diff / :DiffClear / :DiffBuffers
+      diff_origin  = true,   -- register :DiffOrig
+      diff_history = true,   -- register :DiffHistory
+      diff_exit    = true,   -- register :DiffExit + exit keymap
     },
     diff = {
       default_view      = "vsplit",    -- "vsplit"|"split"|"tab"|"inline"|"float"
@@ -106,6 +108,7 @@ vim-plug: >vim
       diff_clear   = "DiffClear",
       diff_buffers = "DiffBuffers",
       diff_orig    = "DiffOrig",
+      diff_history = "DiffHistory",
       diff_exit    = "DiffExit",
     },
     select_fn        = nil,         -- optional vim.ui.select replacement
@@ -119,6 +122,9 @@ features.diff ~
 
 features.diff_origin ~
   Register the |:DiffOrig| command. Default: `true`.
+
+features.diff_history ~
+  Register the |:DiffHistory| command. Default: `true`.
 
 features.diff_exit ~
   Register |:DiffExit| and the exit keymap. Default: `true`.
@@ -435,6 +441,29 @@ since the last save". The snapshot buffer is tracked and cleaned up by
 Leave diff mode from anywhere (`diffoff!`). Works regardless of the configured
 |diff-exit-scope|.
 
+------------------------------------------------------------------------------
+5.6 :DiffHistory                                               *:DiffHistory*
+
+>
+  :DiffHistory [path] [view=…] [output=…]
+<
+
+List the commits that touched a file (`git log --follow`, so a rename is
+tracked back through it), newest first, in a picker (uses the same picker as
+|:Diff|, see |diff-picker-resolution|). Picking one diffs that commit against
+its parent; `view=`/`output=` apply exactly as they do for |:Diff|. `path`
+defaults to the current buffer's file.
+
+Across a rename, the diff still compares the right two paths — the file's
+name at the picked commit against its name at the parent — via the
+`git:{rev}:{path}` form of a git source/target (an explicit path, relative
+to the repo root, instead of the current buffer's own path). Capped at
+`opts.diff.history_max_entries` commits (default 200). The very first commit
+of a file's history has no parent to diff against and reports an error
+rather than diffing against an empty tree.
+
+Requires the same `git`/`vim.system` availability as `git:{rev}` sources.
+
 ==============================================================================
 6. TAB COMPLETION                                            *diff-completion*
 
@@ -450,6 +479,7 @@ fixed set of modes: >
   :Diff source=<Tab>     source=current  source=clipboard  source=ask  source=git:HEAD
   :Diff target=<Tab>     target=clipboard  target=ask  target=git:HEAD
   :Diff base=<Tab>       base=clipboard  base=ask  base=git:HEAD
+  :DiffHistory <Tab>     a file path, then view=  output=
 <
 
 ==============================================================================

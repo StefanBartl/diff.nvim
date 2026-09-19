@@ -11,6 +11,7 @@ local DEFAULTS = {
     diff = true,
     diff_origin = true,
     diff_exit = true,
+    diff_history = true,
     diffopt_profile = true,
     gitsigns_peek = true,
   },
@@ -64,6 +65,12 @@ local DEFAULTS = {
     -- core/directory.lua. Caps the file count so pointing this at a huge
     -- tree by mistake errors instead of hanging.
     directory_max_files = 2000,
+    -- :DiffHistory walks `git log --follow --max-count=<this>` for the
+    -- current file. Caps how many commits are listed the same way
+    -- directory_max_files caps a directory diff -- a deep history on a
+    -- long-lived file is still bounded, rather than filling the picker (and
+    -- the terminal git spawned to produce it) with thousands of entries.
+    history_max_entries = 200,
   },
   -- Optional shortcuts for common invocations. All unset by default —
   -- diff.nvim imposes no mappings. Set any of these to an lhs:
@@ -72,6 +79,7 @@ local DEFAULTS = {
   --   diff_merge    → :Diff base=git:HEAD target=git:MERGE_HEAD
   --   diff_buffers  → :DiffBuffers
   --   diff_orig     → :DiffOrig
+  --   diff_history  → :DiffHistory
   --   diff_clear    → :DiffClear
   -- A shortcut whose command is switched off via `features` is refused
   -- rather than bound to something that would error when pressed.
@@ -95,6 +103,7 @@ local DEFAULTS = {
     diff_clear = "DiffClear",
     diff_buffers = "DiffBuffers",
     diff_orig = "DiffOrig",
+    diff_history = "DiffHistory",
     diff_exit = "DiffExit",
     diff_profile = "DiffProfile",
   },

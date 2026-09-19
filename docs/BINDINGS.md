@@ -38,6 +38,7 @@ invocation:
 | `diff_merge` | `:Diff base=git:HEAD target=git:MERGE_HEAD` |
 | `diff_buffers` | `:DiffBuffers` |
 | `diff_orig` | `:DiffOrig` |
+| `diff_history` | `:DiffHistory` |
 | `diff_clear` | `:DiffClear` |
 
 ```lua
@@ -66,6 +67,7 @@ invocations — for anything else, map `:Diff …` yourself.
 | `:DiffClear` | — | Close every scratch buffer and disable diffmode | `features.diff` |
 | `:DiffBuffers` | `[view=…] [output=…]` | Diff the current buffer against another open buffer (picker) | `features.diff` |
 | `:DiffOrig` | — | Diff current buffer against its on-disk saved version | `features.diff_origin` |
+| `:DiffHistory` | `[path] [view=…] [output=…]` | List commits touching a file (picker) and diff one against its parent | `features.diff_history` |
 | `:DiffExit` | — | Leave diff mode (`diffoff!`) from anywhere | `features.diff_exit` |
 
 Note: the command name column shows the default; every command is renameable via `config.commands`.

@@ -968,6 +968,14 @@ function M.clear()
   notify.info("Diff cleared")
 end
 
+---The effective picker function (explicit select_fn > pickers.nvim >
+---kit.select), exposed for `core/history.lua`'s dynamic-length revision list
+----- the same reasoning `run_buffers` above already needed this for.
+---@return fun(items: any[], opts: table, on_choice: fun(item: any, idx: integer|nil)): nil
+function M.select_fn()
+  return resolve_select_fn()
+end
+
 ---Expose validity lists for completion/health without re-declaring them.
 --- CDX: zero callers anywhere — health.lua and bindings/usrcmds.lua's
 --- VALUE_LISTS both re-declare these lists instead. Wire one to this, or drop it.
