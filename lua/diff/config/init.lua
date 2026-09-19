@@ -37,7 +37,16 @@ end
 ---A validated leaf: `value` merges only when `ok(value)` holds, else the
 ---issue names `expect` and the key is dropped so the default underneath
 ---applies (ERR-22).
----@alias DiffNvim.Config.Check { ok: fun(v: any): boolean, expect: string }
+---
+---A `@class`, not an `@alias ... { ok: fun(v): boolean, expect: string }`
+---(LLS-11): `fun(v: any): boolean` has an explicit return type, so an inline
+---table type reads everything up to the closing `}` as that `fun`'s return
+---list. LuaLS was resolving this as `fun(v: any): (boolean, expect: string)`
+----- a two-return function with no `expect` field at all -- which surfaced as
+---a real param-type-mismatch at every `KNOWN` leaf below.
+---@class DiffNvim.Config.Check
+---@field ok fun(v: any): boolean
+---@field expect string
 
 ---Schema for `setup()`'s top-level and one-level-nested keys.
 ---  - `true`                        accept any value at that leaf, unchecked
