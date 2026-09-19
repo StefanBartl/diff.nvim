@@ -20,6 +20,12 @@ it off with `vim.g.lib_nvim_deps_disable_first_run = true` (every plugin) or
 
 ## Package managers
 
+Every command and keymap the plugin registers under its *default* config
+needs its own trigger in a lazy spec — `cmd` alone only covers the five
+commands, not `gh` (bound by the default-on `features.gitsigns_peek`). Drop
+`"DiffProfile"` from `cmd` if you set `features.diffopt_profile = false`, and
+drop `keys = { "gh" }` if you set `features.gitsigns_peek = false`.
+
 <details open>
 <summary><b>lazy.nvim</b></summary>
 
@@ -27,7 +33,8 @@ it off with `vim.g.lib_nvim_deps_disable_first_run = true` (every plugin) or
 {
   "StefanBartl/diff.nvim",
   dependencies = { "StefanBartl/lib.nvim" },
-  cmd = { "Diff", "DiffClear", "DiffBuffers", "DiffOrig", "DiffExit" },
+  cmd = { "Diff", "DiffClear", "DiffBuffers", "DiffOrig", "DiffExit", "DiffProfile" },
+  keys = { "gh" }, -- features.gitsigns_peek's default-on hunk-peek keymap
   opts = {},
 }
 ```
@@ -37,7 +44,8 @@ Or via `config`:
 ```lua
 {
   "StefanBartl/diff.nvim",
-  cmd = { "Diff", "DiffClear", "DiffBuffers", "DiffOrig", "DiffExit" },
+  cmd = { "Diff", "DiffClear", "DiffBuffers", "DiffOrig", "DiffExit", "DiffProfile" },
+  keys = { "gh" }, -- features.gitsigns_peek's default-on hunk-peek keymap
   config = function()
     require("diff").setup({})
   end,
@@ -52,7 +60,8 @@ Or via `config`:
 use {
   "StefanBartl/diff.nvim",
   requires = { "StefanBartl/lib.nvim" },
-  cmd = { "Diff", "DiffClear", "DiffBuffers", "DiffOrig", "DiffExit" },
+  cmd = { "Diff", "DiffClear", "DiffBuffers", "DiffOrig", "DiffExit", "DiffProfile" },
+  keys = { "gh" }, -- features.gitsigns_peek's default-on hunk-peek keymap
   config = function()
     require("diff").setup({})
   end,
