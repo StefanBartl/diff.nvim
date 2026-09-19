@@ -57,10 +57,33 @@ local KNOWN = {
     gitsigns_peek = { ok = is_boolean, expect = "a boolean" },
   },
   diff = {
-    default_view = true,
-    default_output = true,
+    -- Kept in sync by hand with VALID_VIEWS/VALID_OUTPUTS in core/init.lua
+    -- (and usrcmds.lua's own VALUE_LISTS) -- core/init.lua requires
+    -- diff.config already, so requiring core back here to share the list
+    -- would be circular.
+    default_view = {
+      ok = function(v)
+        return v == "vsplit" or v == "split" or v == "inline" or v == "tab" or v == "float"
+      end,
+      expect = "one of vsplit, split, inline, tab, float",
+    },
+    default_output = {
+      ok = function(v)
+        return v == "buffer" or v == "prompt" or v == "file" or v == "clipboard" or v == "stat"
+      end,
+      expect = "one of buffer, prompt, file, clipboard, stat",
+    },
+    -- default_source is deliberately unchecked: it accepts "current",
+    -- "clipboard", "ask", "git:<rev>", "http(s)://…", a path, or a bufnr --
+    -- not a closed enum (see core/init.lua's run(), which only validates a
+    -- typed source= the same way, never this default).
     default_source = true,
-    default_orig_view = true,
+    default_orig_view = {
+      ok = function(v)
+        return v == "vsplit" or v == "split"
+      end,
+      expect = 'one of "vsplit", "split"',
+    },
     -- Applied through a guarded pcall at setup() (bindings/init.lua) and
     -- checked against the live profile registry there, with its own name in
     -- the error -- re-validating the name here would just duplicate that.

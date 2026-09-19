@@ -64,6 +64,26 @@ return function(H)
   local value_issues = config.issues()
   eq(#value_issues, 2, "both bad values are recorded as issues")
 
+  -- default_view/default_output/default_orig_view are closed enums too --
+  -- an invalid one must degrade instead of making every :Diff without an
+  -- explicit view=/output= fail via resolve_view_output() (ERR-22).
+  config.setup({
+    diff = {
+      default_view = "not-a-view",
+      default_output = "not-an-output",
+      default_orig_view = "nope",
+    },
+  })
+  local bad_enums = config.get()
+  eq(bad_enums.diff.default_view, "vsplit", "an invalid default_view degrades to the default")
+  eq(bad_enums.diff.default_output, "buffer", "an invalid default_output degrades to the default")
+  eq(
+    bad_enums.diff.default_orig_view,
+    "vsplit",
+    "an invalid default_orig_view degrades to the default"
+  )
+  eq(#config.issues(), 3, "all three bad enum values are recorded as issues")
+
   -- setup() never aborts over a validation issue (ERR-22) -- the rest of the
   -- config still merges normally alongside the degraded fields.
   config.setup({ diff = { algorithm = "bogus", ctxlen = 5 } })
