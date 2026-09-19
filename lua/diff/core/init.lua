@@ -6,6 +6,7 @@
 --- and finally dispatches to the right renderer via `execute()`.
 
 local api = vim.api
+local expand_path = require("lib.nvim.cross.fs.expand_path")
 
 local notify = require("diff.util.notify")
 local validate = require("diff.util.validate")
@@ -271,7 +272,9 @@ local function stat_list_target(spec)
   then
     return nil
   end
-  local path = vim.fn.expand(spec)
+  -- expand_path, not vim.fn.expand (SEC-34): `spec` is the raw `:Diff <spec>`
+  -- argument -- vim.fn.expand() would run a backtick span through &shell.
+  local path = expand_path(spec)
   if vim.fn.filereadable(path) == 1 then
     return { filename = vim.fs.normalize(vim.fn.fnamemodify(path, ":p")) }
   end

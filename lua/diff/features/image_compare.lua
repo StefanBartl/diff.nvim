@@ -22,6 +22,8 @@
 --- `:Image gallery` itself uses): no picker UI, no new API needed in either
 --- dependency. `diff.image_compare = false` turns this off entirely.
 
+local expand_path = require("lib.nvim.cross.fs.expand_path")
+
 local M = {}
 
 local IMAGE_EXTS = { png = 1, jpg = 1, jpeg = 1, gif = 1, webp = 1, bmp = 1 }
@@ -56,7 +58,9 @@ function M.is_image_file_spec(spec)
     return false, nil
   end
 
-  local path = vim.fn.expand(spec)
+  -- expand_path, not vim.fn.expand (SEC-34): `spec` is the raw diff-target
+  -- argument -- vim.fn.expand() would run a backtick span through &shell.
+  local path = expand_path(spec)
   if not has_image_ext(path) then
     return false, nil
   end
