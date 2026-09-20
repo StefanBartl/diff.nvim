@@ -130,6 +130,52 @@ return function(H)
     reset()
   end
 
+  -- A buffer name containing '$'-shaped text is used literally (SEC-34) ------
+  -- Regression for the fn.expand()->fn.fnamemodify(":p") switch in
+  -- M.run: fn.expand() doesn't just run a leading backtick span through
+  -- &shell, it also expands any $VAR-looking substring anywhere in the
+  -- string via its own env-var substitution -- confirmed live:
+  -- fn.expand(".../cash$HOME.txt") came back as ".../cashC:\Users\bartl.txt"
+  -- (that machine's $HOME spliced into the path), which then fails
+  -- filereadable() outright. fn.fnamemodify(name, ":p") does no such
+  -- substitution.
+  --
+  -- The buffer name is set directly via nvim_buf_set_name rather than
+  -- `:edit <path>` -- :edit's own Ex-command argument parsing does its own
+  -- expansion of a "$"-shaped argument before origin.lua ever sees it
+  -- (a separate, earlier layer this module has no control over), which
+  -- would corrupt the name before M.run's own fn.expand()-vs-fnamemodify
+  -- choice ever came into play and make this test pass or fail for the
+  -- wrong reason either way. Setting the name via the API is exactly the
+  -- shape a picker/fugitive/oil.nvim-style plugin hands :DiffOrig too --
+  -- the realistic "attacker-controlled filename from a cloned repo" path,
+  -- since browsing to a file rarely round-trips through `:edit`'s own
+  -- cmdline parsing.
+  do
+    reset()
+    local path = H.tmpdir() .. "cash$HOME.txt"
+    H.write_file(path, { "literal dollar sign in the name" })
+    local buf = vim.api.nvim_create_buf(true, false)
+    vim.api.nvim_buf_set_name(buf, path)
+    vim.api.nvim_set_current_buf(buf)
+    -- Load the file's content into the buffer, same as :edit would -- a
+    -- buffer set up via nvim_buf_set_name alone stays empty/unlisted-ish
+    -- until read, but M.run only reads the *name*, not the buffer's own
+    -- content, so this is just to keep the buffer in an ordinary state.
+    vim.cmd("silent! edit!")
+
+    local before = scratch.active_count()
+    local msgs = notices(origin.run)
+    ok(
+      table.concat(msgs, "\n"):find("not readable on disk", 1, true) == nil,
+      "a '$'-shaped buffer name is resolved literally, not corrupted by env-var expansion (got: "
+        .. table.concat(msgs, " | ")
+        .. ")"
+    )
+    eq(scratch.active_count(), before + 1, "the snapshot was created against the literal path")
+    reset()
+  end
+
   -- default_orig_view = "split" uses a horizontal split ----------------------
   -- Verified by the window's geometry rather than by the command string: a
   -- horizontal split keeps the full width and halves the height.
