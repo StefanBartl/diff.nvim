@@ -179,7 +179,7 @@ ever showing the latest notification (`opts.diff.stat_list_mode`, `"add"` by
 default; `"replace"` resets the list to just the latest diff each time). See
 [Configuration](configuration.md).
 
-**Examples**
+### Examples
 
 ```vim
 :Diff                                  " interactive target picker

@@ -31,7 +31,7 @@ a one-line stat summary.
 Start at [docs/README.md](docs/README.md) — what's where, and which question
 each page answers.
 
-**Getting it running**
+### Getting it running
 
 - [Requirements](docs/installation.md#requirements) — Neovim version, required plugins and CLI tools.
 - [Installation](docs/installation.md) — plugin managers and load-trigger variants.
@@ -39,7 +39,7 @@ each page answers.
 - [Configuration](docs/configuration.md) — every `setup()` option and its default.
 - [Testing and health check](docs/testing.md) — what `:checkhealth diff` reports, and how to run the spec suite.
 
-**Using it**
+### Using it
 
 - [Commands](docs/commands.md) — the full `:Diff` argument grammar, examples, and tab completion.
 - [Workflow](docs/WORKFLOW.md) — which shape of `:Diff` answers which everyday question.
@@ -48,7 +48,7 @@ each page answers.
 - [Lua API](docs/api.md) — the `require("diff")` module surface.
 - [Bindings cheatsheet](docs/BINDINGS.md) — every keymap, user command and autocommand.
 
-**The rest**
+### The rest
 
 - [Features](docs/FEATURES.md) — everything diff.nvim does, one section per capability.
 - [Around it](docs/around-it.md) — pickers.nvim and images.nvim, and what changes when they're installed.

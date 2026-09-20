@@ -51,7 +51,8 @@ explanatory error before anything opens.
 
 ## Examples
 
-**Classic merge-conflict resolution**
+### Classic merge-conflict resolution
+
 ```vim
 :Diff target=git:MERGE_HEAD base=git:HEAD
 ```
@@ -59,20 +60,23 @@ Your working copy (with conflict markers or your in-progress edits) on the
 left, the common ancestor in the middle, the incoming branch on the right.
 Use `:diffget`/`:diffput` between the panes to resolve.
 
-**Compare a rewrite against both its origin and a reference implementation**
+### Compare a rewrite against both its origin and a reference implementation
+
 ```vim
 :Diff target=https://raw.githubusercontent.com/user/repo/main/util.lua base=git:HEAD~5
 ```
 See what changed in your last 5 commits (`base`) *and* how far you've
 diverged from someone else's implementation (`target`) — both at once.
 
-**Resolve a conflicted file against two file-based versions**
+### Resolve a conflicted file against two file-based versions
+
 ```vim
 :Diff target=/tmp/theirs.lua base=/tmp/original.lua view=split
 ```
 Stacked horizontal layout instead of side-by-side.
 
-**Interactive picker for the ancestor**
+### Interactive picker for the ancestor
+
 ```vim
 :Diff target=git:HEAD base=ask
 ```

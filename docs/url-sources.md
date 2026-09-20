@@ -46,32 +46,37 @@ require("diff").setup({
 
 ## Examples
 
-**Local config vs. the canonical version in your dotfiles repo**
+### Local config vs. the canonical version in your dotfiles repo
+
 ```vim
 :Diff target=https://raw.githubusercontent.com/you/dotfiles/main/init.lua
 ```
 See what's changed locally without pulling or checking out the repo.
 
-**Vendored code vs. upstream**
+### Vendored code vs. upstream
+
 ```vim
 :Diff target=https://raw.githubusercontent.com/foo/bar/main/lua/util.lua output=stat
 ```
 You copied a file from another project into your own (vendoring) and want a
 quick `+N -M, K hunks` summary of how far it's drifted from the original.
 
-**A gist someone sent you**
+### A gist someone sent you
+
 ```vim
 :Diff target=https://gist.githubusercontent.com/user/id/raw/snippet.lua view=inline
 ```
 Diff directly against the raw gist URL instead of downloading it first.
 
-**Local notes vs. an upstream changelog**
+### Local notes vs. an upstream changelog
+
 ```vim
 :Diff target=https://raw.githubusercontent.com/plugin/repo/main/CHANGELOG.md source=~/notes/plugin-changelog.md
 ```
 See what's new since you last synced your notes.
 
-**Verify a downloaded script before running it**
+### Verify a downloaded script before running it
+
 ```vim
 :Diff target=https://example.com/install.sh source=/tmp/install.sh
 ```
@@ -79,7 +84,8 @@ Confirm a downloaded install script exactly matches what's currently
 published online before executing it — no unexpected tampering or cache
 drift.
 
-**API schema drift**
+### API schema drift
+
 ```vim
 :Diff target=https://api.example.com/openapi.json source=./schema/openapi.json output=stat
 ```
