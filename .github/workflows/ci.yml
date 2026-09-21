@@ -84,3 +84,33 @@ jobs:
           path: ${{ runner.temp }}/test-output.log
           if-no-files-found: ignore
           retention-days: 14
+
+  # gitsuite.nvim checks this repo out as a CI dependency. Pointing it at
+  # `main` means a broken commit here turns gitsuite red before anyone notices
+  # it is this repo's fault. Publishes the commit that just passed stylua,
+  # luacheck and the three-platform spec matrix as the `ci-verified` branch, so
+  # consumers pinning `ref: ci-verified` always test a known-good commit.
+  publish-ci-verified:
+    name: publish ci-verified branch
+    needs: [lint, tests]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v5
+      # Never move ci-verified backwards: two pushes can finish out of order,
+      # and the older run must not overwrite the newer verified commit.
+      - name: Publish ci-verified
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          SHA: ${{ github.sha }}
+        run: |
+          status=$(gh api "repos/$REPO/compare/ci-verified...$SHA" --jq .status 2>/dev/null) || status=new
+          if [ "$status" = "behind" ] || [ "$status" = "identical" ]; then
+            echo "compare ci-verified...$SHA is '$status' (published or superseded); leaving it alone"
+            exit 0
+          fi
+          git push origin HEAD:refs/heads/ci-verified --force
