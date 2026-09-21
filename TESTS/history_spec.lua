@@ -567,12 +567,16 @@ return function(H)
       end, 5)
 
       eq(#calls, 2, "no anchor: resolved exactly two sides")
-      -- nvim resolves symlinks when it stores a buffer name, so on macOS the
-      -- name reads `/private/var/...` for a `tempname()` under `/var/...`;
-      -- compare against the resolved root, not the path as written.
-      local resolved_root = vim.fs.normalize(vim.uv.fs_realpath(right_root) or right_root)
+      -- nvim rewrites the path when it stores a buffer name (macOS resolves
+      -- `/var` to `/private/var`, Windows keeps an 8.3 `RUNNER~1` segment), so
+      -- the root is taken from the name the buffer actually carries: it is the
+      -- buffer's own name minus the file's path below the root.
+      local rel = right_file:sub(#right_root + 2)
+      local bufname = vim.fs.normalize(vim.api.nvim_buf_get_name(buf))
+      ok(bufname:sub(-#rel) == rel, "no anchor: the buffer name still ends in the file's own path")
+      local buf_root = bufname:sub(1, #bufname - #rel - 1)
       for _, cmd in ipairs(calls) do
-        eq(cmd[3], resolved_root, "no anchor: falls back to source_bufnr's own name, as before")
+        eq(cmd[3], buf_root, "no anchor: falls back to source_bufnr's own name, as before")
       end
     end
 
