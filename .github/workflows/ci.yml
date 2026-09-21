@@ -77,9 +77,10 @@ jobs:
             -c "qa!" > out.log 2>&1
           cat out.log
           grep -q DIFF_NVIM_TESTS_OK out.log
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         if: failure()
         with:
           name: test-output-tests-${{ matrix.os }}
           path: ${{ runner.temp }}/test-output.log
           if-no-files-found: ignore
+          retention-days: 14
