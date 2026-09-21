@@ -71,14 +71,6 @@ return function(H)
 
   -- a 404 must surface a curl error, not a crash
   local lines4, err4 = await_fetch(live_url .. "-does-not-exist-xyz", { timeout_ms = 8000 })
-  eq(
-    lines4,
-    nil,
-    "live 404 resolves to nil"
-      .. (
-        lines4 and (" (got " .. #lines4 .. " lines: " .. vim.inspect(lines4):sub(1, 300) .. ")")
-        or ""
-      )
-  )
+  eq(lines4, nil, "live 404 resolves to nil")
   ok(err4 ~= nil, "live 404 reports an error")
 end
