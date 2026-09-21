@@ -9,6 +9,7 @@ jobs:
   lint:
     name: stylua + luacheck
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v5
 
@@ -30,6 +31,7 @@ jobs:
   tests:
     name: Headless spec suite (${{ matrix.os }})
     runs-on: ${{ matrix.os }}
+    timeout-minutes: 15
     strategy:
       # One platform failing must not cancel the others: which of the three
       # broke is the whole information content of this job.
@@ -67,10 +69,17 @@ jobs:
         env:
           LIB_NVIM_PATH: ${{ github.workspace }}/lib.nvim
         run: |
+          exec > >(tee -a "$RUNNER_TEMP/test-output.log") 2>&1
           set +e
-          nvim --headless -u NONE \
+          nvim -n -i NONE --headless -u NONE \
             -c "set rtp+=." \
             -c "luafile TESTS/run.lua" \
             -c "qa!" > out.log 2>&1
           cat out.log
           grep -q DIFF_NVIM_TESTS_OK out.log
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: test-output-tests-${{ matrix.os }}
+          path: ${{ runner.temp }}/test-output.log
+          if-no-files-found: ignore
