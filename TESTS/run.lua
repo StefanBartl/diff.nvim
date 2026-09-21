@@ -120,10 +120,44 @@ local specs = {
   "gitsigns_peek_spec.lua",
 }
 
+-- Functions the specs replace with stubs. A failing check throws, which skips
+-- the spec's own "put it back" line, so the stub would leak into the next spec
+-- and show up there as an unrelated failure (one broken assertion in
+-- history_spec once made url_spec's live fetch "succeed" with the output of
+-- the stubbed vim.system). Restored after every spec, pass or fail.
+local STUBBED = {
+  { vim, "notify" },
+  { vim, "system" },
+  { vim.ui, "select" },
+  { vim.fn, "executable" },
+  { vim.fn, "tempname" },
+  { vim.fn, "has" },
+  { vim.fn, "readfile" },
+  { vim.api, "nvim_echo" },
+}
+
+---@return table
+local function snapshot_stubbed()
+  local saved = {}
+  for i, entry in ipairs(STUBBED) do
+    saved[i] = entry[1][entry[2]]
+  end
+  return saved
+end
+
+---@param saved table  the result of `snapshot_stubbed`
+local function restore_stubbed(saved)
+  for i, entry in ipairs(STUBBED) do
+    entry[1][entry[2]] = saved[i]
+  end
+end
+
 local failed = 0
 for _, name in ipairs(specs) do
   local run = dofile(dir .. name)
+  local saved = snapshot_stubbed()
   local ok, err = pcall(run, H)
+  restore_stubbed(saved)
   if ok then
     print(("ok    %s"):format(name))
   else
