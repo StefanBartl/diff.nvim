@@ -8,6 +8,18 @@
 -- (non-zero exit with and without stderr, empty output, a throwing spawn, and
 -- each guard clause).
 --
+-- GS-14: the spawn itself now goes through `lib.nvim.git.show_async`, not a
+-- `vim.system` call this module builds by hand -- still one call, still
+-- caught by the same `vim.system` stub (lib.nvim calls it too), but the argv
+-- lib.nvim's `show_argv` builds differs in one detail: the object is
+-- `<rev>:./<path>` (resolved against `-C <dir>`), not the bare `<rev>:<path>`
+-- this module used to write itself -- both name the same file when `-C`
+-- already points at the repo root, which it always does here. Binary mode
+-- (`opts.text = false`) replaces text mode: `lib.nvim.git.show`/`_async` are
+-- byte-exact by contract. And lib.nvim's blocking/async runners capture only
+-- stdout, never stderr (even on failure), so a failed call's message is now
+-- always lib.nvim's own generic one, never git's stderr quoted verbatim.
+--
 -- The repository is a *fixture*: `repo_root` only looks for a `.git` entry, it
 -- never runs git, so a bare directory named `.git` is a complete stand-in and
 -- the whole spec stays deterministic and process-free.
@@ -103,7 +115,7 @@ return function(H)
     eq(argv[2], "-C", "argv[2] is -C (git is run in the repo, never via cd)")
     eq(argv[4], "show", "argv[4] is the show subcommand")
     eq(#argv, 5, "argv has exactly five elements -- nothing is concatenated")
-    eq(call.opts.text, true, "spawned with text=true so stdout arrives as a string")
+    eq(call.opts.text, false, "spawned with text=false -- lib.nvim.git.show_async is byte-exact")
 
     -- The two path-bearing elements are the ones a separator mismatch would
     -- silently corrupt: git only understands forward slashes inside a
@@ -112,7 +124,11 @@ return function(H)
     -- rather than as anything a user could act on.
     eq(argv[3]:find("\\", 1, true), nil, "the repo root passed to -C has no backslash")
     eq(argv[5]:find("\\", 1, true), nil, "the <rev>:<path> object has no backslash")
-    eq(argv[5], "HEAD~2:src/deep/file.lua", "object is <rev>:<path-relative-to-root>")
+    eq(
+      argv[5],
+      "HEAD~2:./src/deep/file.lua",
+      "object is <rev>:./<path-relative-to--C>, lib.nvim.git's own spelling"
+    )
     eq(argv[3], vim.fs.normalize(root), "-C gets the normalized repo root")
 
     eq(err, nil, "a clean exit reports no error")
@@ -134,7 +150,7 @@ return function(H)
 
     local argv = get().cmd
     eq(#argv, 5, "a path with spaces does not add argv elements")
-    eq(argv[5], "HEAD:my dir/my file.lua", "spaces are passed through unquoted and unsplit")
+    eq(argv[5], "HEAD:./my dir/my file.lua", "spaces are passed through unquoted and unsplit")
   end
 
   -- A revision name that itself contains a colon/slash ----------------------
@@ -145,7 +161,7 @@ return function(H)
     local get = stub_system({ code = 0, stdout = "y\n", stderr = "" })
     local git = fresh_git()
     await(git, "git:refs/heads/feature", file)
-    eq(get().cmd[5], "refs/heads/feature:src/deep/file.lua", "a full refspec survives the strip")
+    eq(get().cmd[5], "refs/heads/feature:./src/deep/file.lua", "a full refspec survives the strip")
   end
 
   -- Windows: a backslash-spelled buffer name must reach the same argv -------
@@ -160,7 +176,7 @@ return function(H)
     local _, err = await(git, "git:HEAD", backslashed)
     eq(err, nil, "a backslash-spelled buffer name still resolves inside the repo")
     local argv = get().cmd
-    eq(argv[5], "HEAD:src/deep/file.lua", "backslash spelling yields the same <rev>:<path>")
+    eq(argv[5], "HEAD:./src/deep/file.lua", "backslash spelling yields the same <rev>:./<path>")
     eq(argv[3], vim.fs.normalize(root), "backslash spelling yields the same repo root")
   end
 
@@ -182,10 +198,20 @@ return function(H)
   do
     stub_executable(true)
 
-    -- non-zero exit, stderr present: git's own message is surfaced, trimmed
+    -- non-zero exit, stderr present: lib.nvim's runners capture only stdout
+    -- (never stderr, even on failure -- see the header note), so git's own
+    -- message never reaches here; the generic message names the object
+    -- instead.
     stub_system({ code = 128, stdout = "", stderr = "fatal: invalid object name\n" })
     local _, err1 = await(fresh_git(), "git:nope", file, "source")
-    eq(err1, "source: fatal: invalid object name", "git's stderr is reported verbatim and trimmed")
+    ok(
+      err1 and err1:find("nope:src/deep/file.lua", 1, true) ~= nil,
+      "the generic message still names the object (got: " .. tostring(err1) .. ")"
+    )
+    ok(
+      not (err1 or ""):find("invalid object name", 1, true),
+      "...but does not carry git's stderr, which never reaches lib.nvim's runners"
+    )
 
     -- non-zero exit, no stderr: a synthesized message that still names the object
     stub_system({ code = 1, stdout = "", stderr = "" })
@@ -212,7 +238,11 @@ return function(H)
       "CRLF from git is stripped, like split_lines does"
     )
 
-    -- the spawn itself throwing (ENOENT) is reported, never propagated
+    -- the spawn itself throwing (ENOENT) is reported, never propagated --
+    -- lib.nvim.git's own run_async_captured pcall-guards the vim.system call
+    -- now, not this module, so the exact wording is lib.nvim's, not ours;
+    -- only the shape (labelled, non-nil, no lines, callback still fires) is
+    -- this module's contract.
     -- Test double over a typed surface; restored at the end of the spec.
     ---@diagnostic disable-next-line: duplicate-set-field
     vim.system = function()
@@ -221,7 +251,7 @@ return function(H)
     local lines5, err5, done5 = await(fresh_git(), "git:HEAD", file)
     ok(done5, "a throwing spawn still calls back")
     eq(lines5, nil, "a throwing spawn produces no lines")
-    eq(err5, "target: git invocation failed", "a throwing spawn is reported as our own error")
+    ok(err5 and err5:sub(1, 8) == "target: ", "a throwing spawn is reported, labelled")
   end
 
   -- Guard clauses, all of which must report *before* anything is spawned ----
@@ -260,11 +290,11 @@ return function(H)
     local _, e_exe = await(fresh_git(), "git:HEAD", file)
     ok(e_exe and e_exe:find("git executable", 1, true) ~= nil, "a missing git binary is refused")
 
-    -- vim.system missing entirely (Neovim < 0.10)
-    stub_executable(true)
-    vim.system = nil
-    local _, e_sys = await(fresh_git(), "git:HEAD", file)
-    ok(e_sys and e_sys:find("vim.system", 1, true) ~= nil, "no vim.system is refused by name")
+    -- No more explicit "vim.system missing" guard here (GS-14): that case now
+    -- goes through lib.nvim.cross.run_argv's own legacy fallback
+    -- (vim.fn.system, synchronous, wrapped in vim.schedule) instead of being
+    -- refused -- graceful degradation on Neovim < 0.10 rather than an error,
+    -- which is strictly better than the old hard failure.
 
     eq(spawned, false, "none of the guard clauses reached the spawn")
   end
