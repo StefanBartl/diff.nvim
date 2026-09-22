@@ -7,13 +7,15 @@
 --- `git:<rev>:<path>` instead resolves an explicit path (relative to the repo
 --- root), regardless of the buffer :Diff was invoked from -- `core/history.lua`
 --- is the one caller that needs this: a revision from before a rename tracked
---- a different path than the one the current buffer holds. `git show` is a
---- subprocess, so `M.resolve` runs `vim.system` with a callback (cross-platform,
---- no shell) and delivers the result through `cb`, like `core/url.lua`;
---- everything up to the spawn stays synchronous. Never notifies — hands back
---- `(lines, err)`.
+--- a different path than the one the current buffer holds. The actual `git
+--- show` runs through `lib.nvim.git.show_async` (GS-14): byte-exact, not
+--- text-mode, but `resolve.split_lines` below already strips a trailing `\r`
+--- per line itself, so a CRLF file still ends up LF-split either way. `M.resolve`
+--- delivers the result through `cb`, like `core/url.lua`; everything up to the
+--- spawn stays synchronous. Never notifies — hands back `(lines, err)`.
 
 local fn = vim.fn
+local git = require("lib.nvim.git")
 
 local M = {}
 
@@ -54,9 +56,6 @@ end
 function M.resolve(spec, bufname, label, cb)
   label = label or "target"
 
-  if type(vim.system) ~= "function" then
-    return cb(nil, label .. ": git revisions require Neovim 0.10+ (vim.system)")
-  end
   if fn.executable("git") ~= 1 then
     return cb(nil, label .. ": git executable not found on PATH")
   end
@@ -105,31 +104,24 @@ function M.resolve(spec, bufname, label, cb)
     rel = abspath:sub(#root + 2)
   end
 
-  local object = rev .. ":" .. rel
-  local ok = pcall(function()
-    vim.system({ "git", "-C", root, "show", object }, { text = true }, function(res)
-      -- vim.system callbacks run off the main loop; the caller creates scratch
-      -- buffers and renders windows.
-      vim.schedule(function()
-        if res.code ~= 0 then
-          local msg = (type(res.stderr) == "string" and res.stderr ~= "") and vim.trim(res.stderr)
-            or ("git show " .. object .. " failed")
-          return cb(nil, label .. ": " .. msg)
-        end
-
-        -- split_lines drops git's trailing newline and any CR a repository
-        -- with core.autocrlf=true hands back, so line counts and contents
-        -- match readfile()/buffer content -- see resolve.split_lines.
-        cb(require("diff.core.resolve").split_lines(res.stdout or ""), nil)
-      end)
-    end)
+  -- `dir = root`, `rel` already repo-root-relative: lib.nvim.git's `show_argv`
+  -- resolves a relative path against `-C <dir>` via `rev:./<path>`, which
+  -- names the same file `rev:<rel>` (the bare, repo-root form this used to
+  -- build by hand) does when `dir` is the repo root itself.
+  --
+  -- lib.nvim.git's error message on failure does not carry git's own stderr
+  -- (its blocking/async runners only capture stdout, which a failed `git
+  -- show` never writes to) -- generic ("unknown revision, path not in that
+  -- revision, or not a repository") rather than git's specific complaint.
+  git.show_async(rev, rel, { dir = root }, function(content, err)
+    -- callback already runs via vim.schedule (lib.nvim.git's own contract):
+    -- safe to touch buffers/windows here, same guarantee this module's
+    -- docstring makes about `cb`.
+    if not content then
+      return cb(nil, label .. ": " .. (err or ("git show " .. rev .. ":" .. rel .. " failed")))
+    end
+    cb(require("diff.core.resolve").split_lines(content), nil)
   end)
-
-  -- vim.system throws synchronously when the binary cannot be spawned at all
-  -- (ENOENT), rather than delivering a failed SystemCompleted.
-  if not ok then
-    cb(nil, label .. ": git invocation failed")
-  end
 end
 
 return M

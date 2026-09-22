@@ -297,7 +297,7 @@ return function(H)
     eq(err, nil, "git:<rev>:<path> resolves without error")
     eq(
       captured[#captured],
-      "abc123:old/name.lua",
+      "abc123:./old/name.lua",
       "the explicit path wins over the buffer's own path"
     )
     eq(table.concat(lines or {}, "|"), "content", "stdout still becomes content lines")
@@ -403,12 +403,12 @@ return function(H)
     )
     eq(#objects, 2, "diff_entry resolved exactly two sides")
     ok(
-      vim.tbl_contains(objects, "deadbeef:src/current/name.lua"),
-      "target is <sha>:<path-at-this-commit>"
+      vim.tbl_contains(objects, "deadbeef:./src/current/name.lua"),
+      "target is <sha>:./<path-at-this-commit>"
     )
     ok(
-      vim.tbl_contains(objects, "deadbeef^:src/old/name.lua"),
-      "source is <sha>^:<path-at-the-parent> -- the renamed name, not the current one"
+      vim.tbl_contains(objects, "deadbeef^:./src/old/name.lua"),
+      "source is <sha>^:./<path-at-the-parent> -- the renamed name, not the current one"
     )
 
     vim.system = saved_system
