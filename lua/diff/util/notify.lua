@@ -8,4 +8,4 @@
 --- dispatch. The module keeps its own `info`/`warn`/`error` surface so callers
 --- are unaffected.
 
-return require("lib.nvim.notify").create("[diff]")
+return require("lib.nvim.notify").create("[diff]", { popup = true, source = "diff" })
