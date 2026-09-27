@@ -171,7 +171,7 @@ function M.register_shortcuts(cfg)
     return
   end
 
-  local notify = require("lib.nvim.notify").create("[diff.keymaps]")
+  local notify = require("diff.util.notify")
   local keymap = require("lib.nvim.bindings.keymap")
 
   -- Sorted, so the "accepted" list in a warning reads the same every time
