@@ -15,4 +15,29 @@ return {
   -- (nothing leaks from one file into the next). "file" because health_spec.lua fails after
   -- public_api_spec.lua in a shared process: lib.nvim's deps/health.lua caches vim.health.
   isolated = "file",
+
+  -- Guards (docs/GUARDS.md of testing.nvim): every net is an error; the suite passes them with the
+  -- allowlist below, so nothing is left at warn.
+  guards = {
+    fs = "error",
+    state = "error", -- setup() state cannot leak: isolated = "file" gives each spec file its own editor
+    scheduled_error = "error",
+    prompt = "error",
+    deprecation = "error",
+    process_net = "error",
+  },
+  -- What the specs do on purpose (each entry is legitimate behavior, not a leak).
+  guard_allow = {
+    fs = {
+      -- on_done_spec points tempname() at an unwritable drive to make writefile fail for real
+      -- (a deliberate negative probe of output = "file").
+      "Z:/definitely/not/writable",
+    },
+    spawn = {
+      -- git_spec runs the real git against this repository (git show <rev>:<path>).
+      "git",
+      -- url_spec fetches a README over the network with curl on purpose (the real transport path).
+      "curl",
+    },
+  },
 }
