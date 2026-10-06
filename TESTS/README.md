@@ -8,17 +8,23 @@ is trivially testable without a UI.
 From the repo root:
 
 ```sh
-nvim --headless -u NONE -c "set rtp+=." -c "luafile TESTS/run.lua" -c "qa!"
+bash scripts/test.sh                  # every spec
+bash scripts/test.sh --file config    # only spec files whose name contains "config"
+bash scripts/test.sh --json ir.json   # also write the machine-readable result
 ```
 
-The runner prints one line per spec and exits non-zero on the first failure
-(`DIFF_NVIM_TESTS_OK` on success).
+The specs are run by [testing.nvim](https://github.com/StefanBartl/testing.nvim)
+(dialect `h`, on `TESTS/harness.lua`), one Neovim per spec file
+(`.testing.lua`: `isolated = "file"`). It prints one line per spec and exits
+non-zero when any fails (`DIFF_NVIM_TESTS_OK` on success).
 
-`TESTS/run.lua` puts lib.nvim (a runtime dependency) on the runtimepath: a
-sibling checkout wins over the plugin-manager copy, and `$LIB_NVIM_PATH`
-overrides both — that is what CI sets. It also installs an in-memory fake
-clipboard provider, so `"+"` behaves like a real register on a bare runner
-with no xclip/xsel/wl-clipboard/pbcopy.
+`scripts/test.sh` looks up testing.nvim and lib.nvim (a runtime dependency) in
+`$TESTING_NVIM_DIR` / `$LIB_NVIM_DIR`, `.deps/<name>`, a sibling checkout and
+`stdpath('data')/lazy/<name>`, and exits 1 naming all four places when one is
+missing. `TESTS/minimal_init.lua` puts them on the runtimepath of every spec
+process and installs an in-memory fake clipboard provider, so `"+"` behaves
+like a real register on a bare runner with no
+xclip/xsel/wl-clipboard/pbcopy.
 
 ## Layout
 
@@ -52,13 +58,13 @@ with no xclip/xsel/wl-clipboard/pbcopy.
 | `directory_edge_spec.lua` | Hidden segments excluded at *every* depth (not just the top), quickfix entries actually resolving to readable files — with a `D` entry pointing into the source tree, the only side that still has the file, `stat_list_mode = "add"` accumulating, an empty result being a result and not an error, `output=prompt` opening nothing, the end-to-end route through `core.run`, and the unreadable-file bug pinned below. |
 | `public_api_spec.lua` | `lua/diff/init.lua` and the last of `core.init`: `core.valid_lists`, the `view=`/`output=` rejection messages, `core.clear` (including twice), `features.exit.exit()` in all three states, `attach_buffer()` before `setup()`, `view=float` (a real floating window, ft=diff, reversible from the reported handles), what `output=stat` puts in the quickfix list for a file / a buffer number / a clipboard target, the five delegating wrappers, `status()`'s prefix edge cases, and `setup()`/`enable()`'s once-only latch. |
 | `health_spec.lua`  | `:checkhealth diff` against a recording `vim.health`, with each probe faked one at a time: a full machine, an unset `vim.g.loaded_diff`, no diff primitive, no `vim.ui.select`, no clipboard, Neovim < 0.9, git/curl off PATH, no `vim.system` at all (both checks must blame `vim.system`, not the binaries), and pickers.nvim present vs absent — plus the lib.nvim-missing bug pinned below. |
-| `run.lua`          | Runner: bootstraps lib.nvim and the fake clipboard, loads every spec, reports results, sets the exit code. |
+| `minimal_init.lua` | Runtimepath of every spec process (diff.nvim, testing.nvim, lib.nvim; fatal when a dependency is missing) and the fake clipboard provider. |
 
 ## Adding a spec
 
 Create `<name>_spec.lua` returning `function(H) … end` (use `H.eq` / `H.ok` /
-`H.scratch` / `H.tmpdir` / `H.write_file`) and add its filename to the
-`specs` list in `run.lua`.
+`H.scratch` / `H.tmpdir` / `H.write_file`). It is discovered automatically; there
+is no spec list to maintain.
 
 Comparing two paths needs `H.canonical` on **both** sides, never
 `vim.fs.normalize` alone. Normalizing rewrites separators but not symlinks,

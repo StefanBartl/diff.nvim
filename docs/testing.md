@@ -16,12 +16,13 @@ API, and `:checkhealth` itself — see [TESTS/README.md](../TESTS/README.md) for
 the per-file register, the deliberate omissions, and the bugs it pins.
 
 ```sh
-nvim --headless -u NONE -c "set rtp+=." -c "luafile TESTS/run.lua" -c "qa!"
+bash scripts/test.sh
 ```
 
-Nothing in the suite needs a fuzzy-picker backend, images.nvim, or pickers.nvim
-installed; only lib.nvim is required, and `$LIB_NVIM_PATH` points at it when it
-is not a sibling checkout. Two specs talk to the outside world on purpose —
+The suite is run by [testing.nvim](https://github.com/StefanBartl/testing.nvim).
+Nothing in it needs a fuzzy-picker backend, images.nvim, or pickers.nvim
+installed; only testing.nvim and lib.nvim are required, and `$TESTING_NVIM_DIR` /
+`$LIB_NVIM_DIR` point at them when they are not sibling checkouts. Two specs talk to the outside world on purpose —
 `git_spec.lua` runs a real `git show` against this repository, and
 `url_spec.lua` attempts one HTTPS round-trip — and both skip rather than fail
 when git or the network is unavailable.
