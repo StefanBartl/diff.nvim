@@ -1,5 +1,7 @@
 -- TESTS/url_spec.lua — core.url: is_url_spec + fetch() guard clauses and
--- a best-effort live round-trip. See docs/url-sources.md for the feature.
+-- (the transport itself -- argv, limits, timeout, exit codes -- is covered against a
+-- `vim.system` double in url_stub_spec.lua; nothing here touches the network).
+-- See docs/url-sources.md for the feature.
 
 return function(H)
   local eq, ok = H.eq, H.ok
@@ -54,23 +56,4 @@ return function(H)
   ok(done2, "fetch() calls back synchronously when curl is missing")
   eq(lines2, nil, "curl missing: no lines")
   ok(err2 and err2:find("curl", 1, true) ~= nil, "curl missing: error mentions curl")
-
-  -- live round-trip: best-effort, skipped (not failed) without network -----
-  if type(vim.system) ~= "function" or vim.fn.executable("curl") ~= 1 then
-    return
-  end
-  local live_url = "https://raw.githubusercontent.com/StefanBartl/diff.nvim/main/README.md"
-  local lines3, err3, done3 = await_fetch(live_url, { timeout_ms = 8000 })
-  if not done3 or (not lines3 and err3 and err3:lower():find("timed out", 1, true)) then
-    -- No network reachable within the timeout in this environment — skip the
-    -- live assertions rather than fail CI on an offline runner.
-    return
-  end
-  ok(err3 == nil, "live fetch has no error: " .. tostring(err3))
-  ok(type(lines3) == "table" and #lines3 > 0, "live fetch returns content lines")
-
-  -- a 404 must surface a curl error, not a crash
-  local lines4, err4 = await_fetch(live_url .. "-does-not-exist-xyz", { timeout_ms = 8000 })
-  eq(lines4, nil, "live 404 resolves to nil")
-  ok(err4 ~= nil, "live 404 reports an error")
 end

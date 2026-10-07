@@ -27,7 +27,15 @@ return function(H)
         end
       end,
     })
+    -- lib.nvim's deps/health.lua binds `vim.health` once, at load. Loaded earlier in the same
+    -- process (public_api_spec does), it would report into the real provider instead of this
+    -- recorder and fail outside :checkhealth. Load it fresh under the double, and put the
+    -- previous instance back so the double does not stay cached for the next file.
+    local deps_health = "lib.nvim.deps.health"
+    local saved_deps_health = package.loaded[deps_health]
+    package.loaded[deps_health] = nil
     local call_ok, err = pcall(require("diff.health").check)
+    package.loaded[deps_health] = saved_deps_health
     vim.health = saved
     return { calls = calls, text = table.concat(calls, "\n"), ok = call_ok, err = err }
   end
