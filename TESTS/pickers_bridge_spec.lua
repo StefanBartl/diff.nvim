@@ -17,6 +17,13 @@ return function(H)
   if vim.fn.isdirectory(candidate .. "/lua/pickers") ~= 1 then
     return
   end
+  -- Both are put back at the end: the sibling checkout must not stay on the search path for
+  -- whatever runs after this file in the same process.
+  local saved_rtp, saved_path = vim.o.runtimepath, package.path
+  local saved_loaded = {}
+  for name in pairs(package.loaded) do
+    saved_loaded[name] = true
+  end
   vim.opt.rtp:append(candidate)
   package.path = table.concat({
     candidate .. "/lua/?.lua",
@@ -40,4 +47,13 @@ return function(H)
     result == nil or type(result) == "function",
     "resolve() returns nil or a function, never anything else"
   )
+
+  -- Undo the search path additions and forget what was loaded through them.
+  vim.o.runtimepath = saved_rtp
+  package.path = saved_path
+  for name in pairs(package.loaded) do
+    if not saved_loaded[name] and (name == "pickers" or name:find("^pickers%.")) then
+      package.loaded[name] = nil
+    end
+  end
 end

@@ -12,8 +12,8 @@ return {
   -- stdpath('data')/lazy/<name>.
   deps = { "lib.nvim" },
   -- "none" = all specs in one nvim, "file" = one nvim per spec file
-  -- (nothing leaks from one file into the next). "file" because health_spec.lua fails after
-  -- public_api_spec.lua in a shared process: lib.nvim's deps/health.lua caches vim.health.
+  -- (nothing leaks from one file into the next). "file" because several specs leave buffers and
+  -- windows behind (the state guard reports them in a shared process).
   isolated = "file",
 
   -- Guards (docs/GUARDS.md of testing.nvim): every net is an error; the suite passes them with the
@@ -36,8 +36,6 @@ return {
     spawn = {
       -- git_spec runs the real git against this repository (git show <rev>:<path>).
       "git",
-      -- url_spec fetches a README over the network with curl on purpose (the real transport path).
-      "curl",
     },
   },
 }
