@@ -30,11 +30,67 @@ local VALUE_LISTS = {
   base = { "clipboard", "ask", "git:HEAD" },
 }
 
+---@type table<string, { desc: string, enum_desc: table<string, string> }>  Help-float text per key
+local KV_HELP = {
+  view = {
+    desc = "Window layout of the diff (output=buffer only)",
+    enum_desc = {
+      vsplit = "Side by side in a vertical split",
+      split = "Stacked in a horizontal split",
+      inline = "Unified diff in one scratch buffer",
+      tab = "Side by side in a new tab",
+      float = "Unified diff in a floating window",
+    },
+  },
+  output = {
+    desc = "Where the result is delivered",
+    enum_desc = {
+      buffer = "Interactive diff windows (see view)",
+      prompt = "Unified diff in the message area",
+      file = "Unified diff written to a temp file",
+      clipboard = "Unified diff copied to the clipboard",
+      stat = "Only a notification: +N -M, K hunks",
+    },
+  },
+  source = {
+    desc = "Left side: current buffer, file, buffer number, URL or git:<rev>",
+    enum_desc = {
+      current = "The buffer you are in (a range narrows it)",
+      clipboard = "The system clipboard",
+      ask = "Pick the source interactively",
+      ["git:HEAD"] = "The file as of the last commit",
+    },
+  },
+  target = {
+    desc = "Right side: file, buffer number, URL or git:<rev>",
+    enum_desc = {
+      clipboard = "The system clipboard",
+      ask = "Pick the target interactively",
+      ["git:HEAD"] = "The file as of the last commit",
+    },
+  },
+  base = {
+    desc = "Common ancestor, turns the diff into a three-way one",
+    enum_desc = {
+      clipboard = "The system clipboard",
+      ask = "Pick the base interactively",
+      ["git:HEAD"] = "The file as of the last commit",
+    },
+  },
+}
+
 ---@internal
 ---@param key string
 ---@return table  KvSpec
 local function kv(key)
-  return { key = key, type = "STRING", values = VALUE_LISTS[key] }
+  local help = KV_HELP[key]
+  return {
+    key = key,
+    type = "STRING",
+    values = VALUE_LISTS[key],
+    desc = help.desc,
+    enum_desc = help.enum_desc,
+  }
 end
 
 ---Register all commands. Idempotent at the nvim level (re-creates cleanly).
