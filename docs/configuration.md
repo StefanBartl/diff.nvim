@@ -61,7 +61,8 @@ require("diff").setup({
 
 `setup()` validates `opts` before merging it over the defaults above. An
 unknown key (`features.diff_orgin` instead of `diff_origin`) or a value that
-doesn't fit its option (a misspelled `diff.algorithm`, a negative `ctxlen`)
+doesn't fit its option (a misspelled `diff.algorithm`, a negative `ctxlen`, a
+number for `keymaps`, which takes a table or a boolean)
 is dropped rather than silently reaching the merge — the built-in default
 applies to that field instead, the rest of `opts` still merges normally, and
 every dropped entry is listed under `:checkhealth diff`
