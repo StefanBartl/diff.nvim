@@ -147,6 +147,7 @@
 ---Optional shortcuts for common invocations. All unset by default —
 ---diff.nvim imposes no mappings. Each value is the lhs to bind.
 ---@class DiffNvim.Config.Keymaps
+---@field enable?       boolean `false` binds no keymap at all (`keymaps = false` is the short form; the `gh` peek and the exit key included)
 ---@field diff?         string  `:Diff` (pick source and target)
 ---@field diff_head?    string  `:Diff target=git:HEAD`
 ---@field diff_merge?   string  `:Diff base=git:HEAD target=git:MERGE_HEAD`
@@ -191,7 +192,7 @@
 ---@field features?         DiffNvim.Opts.Features
 ---@field diff?             DiffNvim.Opts.Diff
 ---@field exit?             DiffNvim.Opts.Exit
----@field keymaps?          DiffNvim.Config.Keymaps  Optional shortcuts for common invocations (default: none)
+---@field keymaps?          DiffNvim.Config.Keymaps|boolean  Optional shortcuts for common invocations (default: none); `false` binds no keymap at all
 ---@field commands?         DiffNvim.Opts.Commands
 ---@field select_fn?        (fun(items: any[], opts: table, on_choice: fun(item: any, idx: integer|nil)): nil)|nil  Optional vim.ui.select replacement (dependency injection)
 ---@field use_pickers_nvim? boolean  Auto-detect pickers.nvim as the picker engine when select_fn is unset (default true)
