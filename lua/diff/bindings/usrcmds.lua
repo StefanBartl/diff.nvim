@@ -198,7 +198,21 @@ function M.register(cfg)
       routes = {
         {
           path = {},
-          args = { { name = "profile", type = "STRING", enum = diffopt_profile.names() } },
+          args = {
+            {
+              name = "profile",
+              type = "STRING",
+              enum = diffopt_profile.names(),
+              desc = "Profile to apply; it replaces 'diffopt' wholesale",
+              -- One line per profile in `diffopt_profile/profiles.lua` (what it sets, not a nickname).
+              enum_desc = {
+                minimal = "Histogram algorithm, whitespace ignored, linematch 60",
+                context = "Patience algorithm, 3 lines of context, whitespace ignored",
+                review = "Histogram algorithm, 8 lines of context, whitespace ignored",
+                strict = "Myers algorithm, whitespace changes shown, linematch 80",
+              },
+            },
+          },
           run = function(ctx)
             local ok, err = pcall(diffopt_profile.set, ctx.args.profile)
             if not ok then
