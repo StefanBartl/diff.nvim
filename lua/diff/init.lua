@@ -3,7 +3,9 @@
 ---
 --- Bootstraps the diff subsystem: merges config, registers commands, sets up the
 --- exit feature and the VimLeavePre cleanup autocmd. Idempotent — the first call
---- wins and later calls are no-ops.
+--- that completes wins and later calls are no-ops. A call that raises (from the
+--- config merge or from a binding) does not count: the error is re-raised and
+--- the next setup() runs again from the start.
 ---
 --- Two equivalent entry points are provided:
 ---   require("diff").setup({ ... })   -- conventional plugin style
@@ -17,22 +19,36 @@
 
 local M = {}
 
----@type boolean
+---@type boolean # set only once the config merge and the bindings have completed
 local _setup_done = false
 
+---@type boolean # a setup() is running: a re-entrant call (from a binding) is a no-op, not a loop
+local _setup_running = false
+
 ---Configure and activate diff.nvim.
+---
+---The latch is set after the work, not before it: a throw from `config.setup()`
+---or `bindings.register()` must not turn every later setup() into a silent
+---no-op. The error is re-raised unchanged, and a retry runs both steps again;
+---they are re-runnable (`bindings.register` re-creates its commands, keymaps
+---and augroup).
 ---@param user_opts? DiffNvim.Opts
 ---@return nil
 function M.setup(user_opts)
-  if _setup_done then
+  if _setup_done or _setup_running then
     return
   end
+  _setup_running = true
+
+  local done_ok, err = pcall(function()
+    local cfg = require("diff.config").setup(user_opts)
+    require("diff.bindings").register(cfg)
+  end)
+  _setup_running = false
+  if not done_ok then
+    error(err, 0)
+  end
   _setup_done = true
-
-  local config = require("diff.config")
-  local cfg = config.setup(user_opts)
-
-  require("diff.bindings").register(cfg)
 
   -- Report the declared external tools (docs/install.json) once, ever, on
   -- the first setup after installation. pcall'd because an older lib.nvim

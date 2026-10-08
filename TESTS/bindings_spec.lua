@@ -307,13 +307,11 @@ return function(H)
   end
 
   -- An unknown diff.diffopt_profile must not abort the rest of register() --
-  -- regression: M.setup() flips _setup_done=true BEFORE calling
-  -- bindings.register(), so an uncaught error from this one call used to
-  -- skip register_shortcuts()/autocmds.register() below it AND make every
-  -- later setup() call a silent no-op for the whole session (verified
-  -- against the pre-fix code: nvim_get_autocmds({group='diff_cleanup'})
-  -- raised "Invalid group" afterward, and a second, corrected setup() call
-  -- still did not create it).
+  -- regression: an uncaught error from this one call used to skip
+  -- register_shortcuts()/autocmds.register() below it (verified against the
+  -- pre-fix code: nvim_get_autocmds({group='diff_cleanup'}) raised "Invalid
+  -- group" afterward). A throw out of register() no longer latches setup()
+  -- either; setup_retry_spec.lua pins that.
   do
     clear_commands()
     pcall(vim.api.nvim_del_augroup_by_name, "diff_cleanup")

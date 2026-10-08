@@ -490,7 +490,9 @@ fixed set of modes: >
 <
 
 setup({opts})                                                *diff.setup()*
-  Configure and activate. Idempotent.
+  Configure and activate. Idempotent: the first call that completes wins,
+  later calls are no-ops. A call that raises does not count; the next
+  setup() runs again from the start.
 
 enable({opts})                                              *diff.enable()*
   Alias for setup() — matches the legacy `custom.diff` signature.
