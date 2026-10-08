@@ -14,6 +14,11 @@ diff.exit()                   -- equivalent to :DiffExit
 diff.status()                 -- statusline string: "diff:N" while active, "" otherwise
 ```
 
+`diff.setup` runs once: the first call that completes wins, and later calls
+(and `diff.enable`) are no-ops. A call that raises does not count — the error
+reaches the caller, and the next `diff.setup` starts again from the config
+merge, so a failed setup does not leave the plugin dead for the session.
+
 `diff.run`, `diff.diff_buffers` and `diff.diff_history` take the same
 `key=value` argument string as their commands (see [Commands](commands.md)),
 plus an optional table of caller-side options — currently just `on_done`.
