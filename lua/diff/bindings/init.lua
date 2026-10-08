@@ -20,7 +20,10 @@ function M.register(cfg)
     require("diff.features.native_diffthis").register(cfg.exit)
   end
 
-  if cfg.features.gitsigns_peek and cfg.keymaps.enable ~= false then
+  -- Same shape test as register_shortcuts(): a non-table `keymaps` is not an
+  -- "off" switch, so it never turns the gh peek off (and never gets indexed).
+  local keymaps_off = type(cfg.keymaps) == "table" and cfg.keymaps.enable == false
+  if cfg.features.gitsigns_peek and not keymaps_off then
     require("diff.features.gitsigns_peek").register()
   end
 

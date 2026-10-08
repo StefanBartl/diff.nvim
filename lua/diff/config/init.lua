@@ -23,6 +23,13 @@ end
 ---@internal
 ---@param v any
 ---@return boolean
+local function is_table(v)
+  return type(v) == "table"
+end
+
+---@internal
+---@param v any
+---@return boolean
 local function is_nonneg_int(v)
   return type(v) == "number" and v >= 0 and v == math.floor(v)
 end
@@ -55,6 +62,9 @@ end
 ---`keymaps` and `commands` are dynamic name->value maps checked by their own
 ---consumers (`bindings/keymaps.lua`'s "Unknown keymaps.*" warning; commands
 ---are free-form user command names), so both accept any sub-key here.
+---`keymaps` itself must be a table: `setup()` turns a boolean into one before
+---validating, and a scalar left over (a number, a function, a string) would
+---replace the whole default group in the deep merge and break every reader.
 ---@alias DiffNvim.Config.Schema true|DiffNvim.Config.Check|table<string, DiffNvim.Config.Schema>
 ---@type table<string, DiffNvim.Config.Schema>
 local KNOWN = {
@@ -124,7 +134,7 @@ local KNOWN = {
     directory_max_files = { ok = is_pos_int, expect = "a positive integer" },
     history_max_entries = { ok = is_pos_int, expect = "a positive integer" },
   },
-  keymaps = true,
+  keymaps = { ok = is_table, expect = "a table or boolean" },
   exit = {
     key = true,
     scope = {
@@ -258,7 +268,7 @@ function M.setup(user_opts)
 
   -- Keymaps off means off: the exit key is a keymap too, so it is not bound
   -- either (`:DiffExit` keeps working).
-  if _active.keymaps.enable == false then
+  if type(_active.keymaps) == "table" and _active.keymaps.enable == false then
     _active.exit.scope = false
   end
   return _active
