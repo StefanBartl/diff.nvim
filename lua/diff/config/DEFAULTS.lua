@@ -81,9 +81,11 @@ local DEFAULTS = {
   --   diff_orig     → :DiffOrig
   --   diff_history  → :DiffHistory
   --   diff_clear    → :DiffClear
+  -- `keymaps = false` (or `{ enable = false }`) binds no keymap at all: no
+  -- shortcut, no `gh` hunk peek, no exit key (`:DiffExit` still works).
   -- A shortcut whose command is switched off via `features` is refused
   -- rather than bound to something that would error when pressed.
-  keymaps = {},
+  keymaps = { enable = true },
 
   exit = {
     -- A string, or a list of strings to bind several. <Esc><Esc> is a

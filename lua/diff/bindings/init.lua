@@ -20,7 +20,7 @@ function M.register(cfg)
     require("diff.features.native_diffthis").register(cfg.exit)
   end
 
-  if cfg.features.gitsigns_peek then
+  if cfg.features.gitsigns_peek and cfg.keymaps.enable ~= false then
     require("diff.features.gitsigns_peek").register()
   end
 

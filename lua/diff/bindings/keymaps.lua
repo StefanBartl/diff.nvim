@@ -167,7 +167,7 @@ local SHORTCUTS = {
 ---@return Lib.Keymap.Registered[]|nil
 function M.register_shortcuts(cfg)
   local keymaps = cfg.keymaps
-  if type(keymaps) ~= "table" then
+  if type(keymaps) ~= "table" or keymaps.enable == false then
     return
   end
 
@@ -196,7 +196,7 @@ function M.register_shortcuts(cfg)
   ---@type table<string, string|false>
   local user = {}
   for name, lhs in pairs(keymaps) do
-    if lhs and lhs ~= "" then
+    if name ~= "enable" and lhs and lhs ~= "" then
       local spec = SHORTCUTS[name]
       if not spec then
         notify.warn(

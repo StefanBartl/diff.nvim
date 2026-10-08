@@ -57,6 +57,10 @@ switched off via `features` is refused with a warning rather than bound to
 something that would error on the first press. These are *fixed*
 invocations — for anything else, map `:Diff …` yourself.
 
+`keymaps = false` (or `keymaps = { enable = false }`) switches every keymap off: the
+shortcuts, the `gh` hunk peek and the `<Esc><Esc>` exit key. The commands, including
+`:DiffExit`, keep working.
+
 ---
 
 ## User Commands

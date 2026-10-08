@@ -242,11 +242,25 @@ function M.setup(user_opts)
     user_opts = {} --[[@as table]]
   end
 
+  -- REL-20: `keymaps = false` is the agreed spelling of `{ enable = false }`
+  -- (`true` -> `{}`); the shared helper owns the shape.
+  if type(user_opts.keymaps) == "boolean" then
+    user_opts = vim.tbl_extend("force", user_opts, {
+      keymaps = require("lib.nvim.normalize").normalize_switch_group(user_opts.keymaps),
+    })
+  end
+
   local clean, found_issues = sanitize(user_opts, KNOWN, "")
   table.sort(found_issues)
   _issues = found_issues
 
   _active = vim.tbl_deep_extend("force", vim.deepcopy(DEFAULTS), clean)
+
+  -- Keymaps off means off: the exit key is a keymap too, so it is not bound
+  -- either (`:DiffExit` keeps working).
+  if _active.keymaps.enable == false then
+    _active.exit.scope = false
+  end
   return _active
 end
 

@@ -34,7 +34,7 @@ require("diff").setup({
     scope           = "buffer",     -- "buffer"|"global"|false
     native_diffthis = false,        -- also mirror the key onto native :diffthis buffers
   },
-  keymaps = {                       -- optional shortcuts, none bound by default
+  keymaps = {                       -- optional shortcuts, none bound by default; `keymaps = false` binds nothing at all (also no `gh`, no exit key)
     -- diff         = "<leader>dd", -- :Diff (pick source and target)
     -- diff_head    = "<leader>dh", -- :Diff target=git:HEAD
     -- diff_merge   = "<leader>dm", -- :Diff base=git:HEAD target=git:MERGE_HEAD
