@@ -74,7 +74,7 @@ shortcuts, the `gh` hunk peek and the `<Esc><Esc>` exit key. The commands, inclu
 | `:DiffHistory` | `[path] [view=…] [output=…]` | List commits touching a file (picker) and diff one against its parent | `features.diff_history` |
 | `:DiffExit` | — | Leave diff mode (`diffoff!`) from anywhere | `features.diff_exit` |
 
-Note: the command name column shows the default; every command is renameable via `config.commands`.
+Note: the command name column shows the default; every command is renameable via `config.commands`. A new name has to be one Neovim accepts for a user command (a capital letter, then letters and digits); anything else is listed under `:checkhealth diff` and the default name stays.
 
 ---
 
