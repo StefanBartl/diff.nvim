@@ -41,6 +41,19 @@ local function is_pos_int(v)
   return type(v) == "number" and v > 0 and v == math.floor(v)
 end
 
+---@internal
+---A user-command name nvim accepts: an ASCII capital, then ASCII letters and
+---digits (no underscore, no dash, no space). Anything else makes
+---`nvim_create_user_command` raise (E182), and the name is read during
+---`bindings.register()`, long after `diff.setup()` latched its once-only
+---guard -- so a bad one would leave the plugin without commands for the rest
+---of the session.
+---@param v any
+---@return boolean
+local function is_command_name(v)
+  return type(v) == "string" and v:match("^[A-Z][A-Za-z0-9]*$") ~= nil
+end
+
 ---A validated leaf: `value` merges only when `ok(value)` holds, else the
 ---issue names `expect` and the key is dropped so the default underneath
 ---applies (ERR-22).
@@ -59,13 +72,23 @@ end
 ---  - `true`                        accept any value at that leaf, unchecked
 ---  - `DiffNvim.Config.Check`       accept only a value `ok()` approves
 ---  - `table<string, ...>`          nested table, validated recursively
----`keymaps` and `commands` are dynamic name->value maps checked by their own
----consumers (`bindings/keymaps.lua`'s "Unknown keymaps.*" warning; commands
----are free-form user command names), so both accept any sub-key here.
----`keymaps` itself must be a table: `setup()` turns a boolean into one before
+---`keymaps` is a dynamic name->value map checked by its own consumer
+---(`bindings/keymaps.lua`'s "Unknown keymaps.*" warning), so it accepts any
+---sub-key here. It must be a table: `setup()` turns a boolean into one before
 ---validating, and a scalar left over (a number, a function, a string) would
 ---replace the whole default group in the deep merge and break every reader.
+---`commands` is the opposite: a fixed set of seven names, each of which must
+---be a name nvim accepts for a user command (see `is_command_name`), so a
+---typo in a key is reported like any other unknown option and a scalar given
+---for the whole group is dropped for the same reason as above.
 ---@alias DiffNvim.Config.Schema true|DiffNvim.Config.Check|table<string, DiffNvim.Config.Schema>
+
+---@type DiffNvim.Config.Check
+local COMMAND_NAME = {
+  ok = is_command_name,
+  expect = "a command name (a capital letter, then letters and digits)",
+}
+
 ---@type table<string, DiffNvim.Config.Schema>
 local KNOWN = {
   features = {
@@ -145,7 +168,15 @@ local KNOWN = {
     },
     native_diffthis = { ok = is_boolean, expect = "a boolean" },
   },
-  commands = true,
+  commands = {
+    diff = COMMAND_NAME,
+    diff_clear = COMMAND_NAME,
+    diff_buffers = COMMAND_NAME,
+    diff_orig = COMMAND_NAME,
+    diff_history = COMMAND_NAME,
+    diff_exit = COMMAND_NAME,
+    diff_profile = COMMAND_NAME,
+  },
   select_fn = true,
   use_pickers_nvim = { ok = is_boolean, expect = "a boolean" },
 }

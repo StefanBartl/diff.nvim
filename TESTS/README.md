@@ -32,6 +32,7 @@ xclip/xsel/wl-clipboard/pbcopy.
 | ------------------ | ---------------------------------------------------------------- |
 | `harness.lua`      | Shared `eq`/`ok` assertions, a `scratch(ft)` buffer helper, `tmpdir()`/`write_file()`, and `canonical()` for comparing paths across platforms. |
 | `config_spec.lua`  | Config defaults + deep-merge of user options.                    |
+| `commands_config_spec.lua` | `commands` validated like every other leaf: a scalar for the whole group, and each of the seven names that nvim would refuse (non-string, empty, lowercase, `_`/`-`/space, a leading digit, a non-ASCII capital), degrade to the default name with an issue instead of raising from `bindings.register()`; a valid sibling rename still applies, a mistyped key is reported with the nearest name, and `setup({ commands = 1 })` on a fresh `diff` module runs to its end and registers the commands. |
 | `resolve_spec.lua` | `parse_args` grammar, `resolve_lines` for clipboard/buffer/file, `split_git_range`, `split_lines`. |
 | `validate_spec.lua`| `is_one_of` / `buf_valid` / `win_valid`.                          |
 | `render_spec.lua`  | `compute_stats`/`format_stats` (`output=stat`), UTF-8 codepoint-aware word-diff highlighting, `compute_hunks`/`push_stat_list` (qf/loc). |
