@@ -10,9 +10,6 @@ local DEFAULTS = require("diff.config.DEFAULTS")
 
 local M = {}
 
----@type DiffNvim.Config|nil
-local _active = nil
-
 ---@internal
 ---@param v any
 ---@return boolean
@@ -258,61 +255,75 @@ local function sanitize(opts, schema, prefix)
   return clean, found_issues
 end
 
----@type string[]
-local _issues = {}
+--- To the schema that `lib.lua.config` infers from `DEFAULTS`, the sections and
+--- values `KNOWN` checks with its own predicates are open: it does not second-guess
+--- a value `KNOWN` has already accepted (`select_fn` is nil by default, `keymaps`
+--- takes a table or a boolean). Unknown top-level keys are still caught there.
+local ANY = "boolean|number|string|table|function"
+---@type table<string, string|table>
+local SCHEMA = {}
+for key, spec in pairs(KNOWN) do
+  if type(spec) == "table" and spec.ok == nil then
+    SCHEMA[key] = { "table" }
+  else
+    SCHEMA[key] = ANY
+  end
+end
+
+local cfg = require("lib.lua.config").new(DEFAULTS, {
+  name = "diff",
+  schema = SCHEMA,
+  normalize = function(opts, issues)
+    -- REL-20: `keymaps = false` is the agreed spelling of `{ enable = false }`
+    -- (`true` -> `{}`); the shared helper owns the shape.
+    if type(opts.keymaps) == "boolean" then
+      opts.keymaps = require("lib.nvim.normalize").normalize_switch_group(opts.keymaps)
+    end
+    -- The checks of KNOWN, before the merge: a wrong value is dropped so the built-in
+    -- default underneath applies. `opts` is a private copy, so it is rewritten in place.
+    local clean, found_issues = sanitize(opts, KNOWN, "")
+    for key in pairs(opts) do
+      opts[key] = nil
+    end
+    for key, value in pairs(clean) do
+      opts[key] = value
+    end
+    vim.list_extend(issues, found_issues)
+  end,
+  resolve = function(current)
+    -- Keymaps off means off: the exit key is a keymap too, so it is not bound
+    -- either (`:DiffExit` keeps working).
+    if type(current.keymaps) == "table" and current.keymaps.enable == false then
+      current.exit.scope = false
+    end
+  end,
+})
 
 ---Whatever the last `setup()` call rejected (unknown option, wrong type,
 ---invalid value) — one message per issue, empty when everything validated.
 ---For `:checkhealth diff`.
 ---@return string[]
 function M.issues()
-  return vim.deepcopy(_issues)
+  return cfg.issues()
 end
 
----Merge user options over the defaults and store the result.
----`opts` is validated first (ERR-50, ERR-22): an unknown key or an
----invalid-for-its-kind value is dropped so the built-in default is what
+---Set the options over the defaults and store the result. Every call starts
+---from `DEFAULTS`. `opts` is validated first (ERR-50, ERR-22): an unknown key or
+---an invalid-for-its-kind value is dropped so the built-in default is what
 ---actually takes effect, and every issue is kept for `:checkhealth` (see
 ---`M.issues()`).
 ---@param user_opts? DiffNvim.Opts
 ---@return DiffNvim.Config
 function M.setup(user_opts)
-  if type(user_opts) ~= "table" then
-    -- Partial/absent user opts are valid here; DEFAULTS (merged below) is
-    -- what actually guarantees a complete DiffNvim.Config.
-    user_opts = {} --[[@as table]]
-  end
-
-  -- REL-20: `keymaps = false` is the agreed spelling of `{ enable = false }`
-  -- (`true` -> `{}`); the shared helper owns the shape.
-  if type(user_opts.keymaps) == "boolean" then
-    user_opts = vim.tbl_extend("force", user_opts, {
-      keymaps = require("lib.nvim.normalize").normalize_switch_group(user_opts.keymaps),
-    })
-  end
-
-  local clean, found_issues = sanitize(user_opts, KNOWN, "")
-  table.sort(found_issues)
-  _issues = found_issues
-
-  _active = vim.tbl_deep_extend("force", vim.deepcopy(DEFAULTS), clean)
-
-  -- Keymaps off means off: the exit key is a keymap too, so it is not bound
-  -- either (`:DiffExit` keeps working).
-  if type(_active.keymaps) == "table" and _active.keymaps.enable == false then
-    _active.exit.scope = false
-  end
-  return _active
+  cfg.setup(type(user_opts) == "table" and user_opts or nil)
+  return cfg.get()
 end
 
 ---Return the active configuration, falling back to defaults if `setup` was
 ---never called.
 ---@return DiffNvim.Config
 function M.get()
-  if _active == nil then
-    _active = vim.deepcopy(DEFAULTS)
-  end
-  return _active
+  return cfg.get()
 end
 
 return M
