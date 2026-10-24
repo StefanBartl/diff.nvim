@@ -25,7 +25,7 @@ doesn't need a split opened and closed again, and a 2000-line rewrite is
 worth knowing about before committing to a `vsplit` that's mostly noise.
 `:Diff target=git:HEAD~1 output=stat` as a pre-commit gut check on "how
 big is this diff really" is the same idea `:DocMap check` in
-documentation.nvim applies to findings — a fast, disposable signal before
+docmap.nvim applies to findings — a fast, disposable signal before
 the expensive interactive step.
 
 ## `git:{rev}` vs. actually checking out — the trap this exists to prevent

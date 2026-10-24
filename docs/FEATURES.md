@@ -3,8 +3,8 @@
 Everything `diff.nvim` does, in one file — a small, single-purpose plugin
 (one core command plus three thin wrappers around it), so a theme split
 would only add navigation for its own sake. See
-[`docs/FEATURES_FORMAT.md`](https://github.com/StefanBartl/documentation.nvim/blob/main/docs/FEATURES_FORMAT.md)
-(in `documentation.nvim`) for the format this file follows.
+[`docs/FEATURES_FORMAT.md`](https://github.com/StefanBartl/docmap.nvim/blob/main/docs/FEATURES_FORMAT.md)
+(in `docmap.nvim`) for the format this file follows.
 
 Neovim's own `:diffthis` compares two windows. Everything else you actually
 want to compare — what is on the clipboard, what is in the last commit, what
