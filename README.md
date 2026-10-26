@@ -18,9 +18,9 @@
 [![Neovim](https://img.shields.io/badge/Neovim-0.9%2B-57A143?logo=neovim&logoColor=white)](https://neovim.io)
 [![Lua](https://img.shields.io/badge/Lua-5.1%2FLuaJIT-2C2D72?logo=lua&logoColor=white)](https://www.lua.org)
 ![Status](https://img.shields.io/badge/status-beta-orange)
-[![wkd](https://img.shields.io/badge/wkd-family-c6ff3d)](https://stefanbartl.github.io/wkd/p/diff/)
+[![wkd](https://img.shields.io/badge/wkd-family-c6ff3d)](https://wkdsteve.github.io/wkd/p/diff/)
 
-> Part of the [wkd](https://stefanbartl.github.io/wkd/) family — see this plugin's [page](https://stefanbartl.github.io/wkd/p/diff/) on the site.
+> Part of the [wkd](https://wkdsteve.github.io/wkd/) family — see this plugin's [page](https://wkdsteve.github.io/wkd/p/diff/) on the site.
 
 Flexible diffing for Neovim: one `:Diff` command compares arbitrary sources —
 buffers, files, git revisions, URLs, whole directories — against each other and
@@ -57,7 +57,7 @@ each page answers.
 - [Around it](docs/around-it.md) — pickers.nvim and images.nvim, and what changes when they're installed.
 - [Architecture](docs/architecture.md) — module layout and load order.
 - [Contributing](docs/CONTRIBUTING.md) — ground rules, project layout, and how to add a source.
-- [Feedback](https://github.com/StefanBartl/diff.nvim/issues) — bugs, features, questions; broader discussion in [Discussions](https://github.com/StefanBartl/diff.nvim/discussions).
+- [Feedback](https://github.com/WKDSteve/diff.nvim/issues) — bugs, features, questions; broader discussion in [Discussions](https://github.com/WKDSteve/diff.nvim/discussions).
 
 `:help diff.nvim` is the same reference inside the editor.
 

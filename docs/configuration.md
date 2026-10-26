@@ -90,7 +90,7 @@ picture (requirements, how the async fetch works, and usage examples).
 `diff.image_compare` (default `true`): when both `source` and `target` are
 readable raster-image file paths (`.png`/`.jpg`/`.jpeg`/`.gif`/`.webp`/
 `.bmp` — not `.svg`, which is text and diffs fine as text), `:Diff` shows
-them side by side via [images.nvim](https://github.com/StefanBartl/images.nvim)
+them side by side via [images.nvim](https://github.com/WKDSteve/images.nvim)
 (`images.gallery`) instead of text-diffing raw bytes, which produces
 meaningless output. Without images.nvim installed, a clear warning is shown
 instead of silently falling through to that meaningless text diff. Set to
@@ -165,7 +165,7 @@ The target/source picker (shown when `target=`/`source=` is omitted or set to
 `ask`) resolves in this order:
 
 1. `select_fn`, if set — an explicit override always wins.
-2. [pickers.nvim](https://github.com/StefanBartl/pickers.nvim), if installed
+2. [pickers.nvim](https://github.com/WKDSteve/pickers.nvim), if installed
    and `use_pickers_nvim` isn't `false` — its fuzzy engine (telescope.nvim,
    fzf-lua, or snacks.nvim, whichever pickers.nvim already resolved) is used
    automatically. No configuration needed on diff.nvim's side.

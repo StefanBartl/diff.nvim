@@ -96,7 +96,7 @@ function M.maybe_compare(source, target)
     notify.warn(
       "Both sides look like image files, but images.nvim is not installed "
         .. "-- install it to compare them visually "
-        .. "(https://github.com/StefanBartl/images.nvim), or set "
+        .. "(https://github.com/WKDSteve/images.nvim), or set "
         .. "diff.image_compare = false to force a (meaningless) text diff."
     )
     return true

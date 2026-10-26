@@ -53,7 +53,7 @@ dependency.
 
 lazy.nvim: >lua
   {
-    "StefanBartl/diff.nvim",
+    "WKDSteve/diff.nvim",
     cmd  = { "Diff", "DiffClear", "DiffBuffers", "DiffOrig", "DiffHistory", "DiffExit" },
     opts = {},
   }
@@ -61,7 +61,7 @@ lazy.nvim: >lua
 
 packer.nvim: >lua
   use {
-    "StefanBartl/diff.nvim",
+    "WKDSteve/diff.nvim",
     cmd = { "Diff", "DiffClear", "DiffBuffers", "DiffOrig", "DiffHistory", "DiffExit" },
     config = function()
       require("diff").setup({})
@@ -70,7 +70,7 @@ packer.nvim: >lua
 <
 
 vim-plug: >vim
-  Plug 'StefanBartl/diff.nvim'
+  Plug 'WKDSteve/diff.nvim'
 <
   Then, in an `init.lua` sourced later: >lua
   require("diff").setup({})
@@ -167,7 +167,7 @@ diff.image_compare ~
   When both `source=` and `target=` are readable raster-image file paths
   (png/jpg/jpeg/gif/webp/bmp — not svg, which is text and diffs fine as
   text), show them side by side via images.nvim
-  (https://github.com/StefanBartl/images.nvim, `images.gallery`) instead of
+  (https://github.com/WKDSteve/images.nvim, `images.gallery`) instead of
   text-diffing raw bytes, which produces meaningless output. Every
   `view=`/`output=` value is ignored in this case. Without images.nvim
   installed, a clear warning is shown instead of silently falling through
@@ -183,7 +183,7 @@ select_fn ~
   |diff-picker-resolution| for what actually gets used.
 
 use_pickers_nvim ~
-  Auto-detect pickers.nvim (https://github.com/StefanBartl/pickers.nvim) as
+  Auto-detect pickers.nvim (https://github.com/WKDSteve/pickers.nvim) as
   the picker engine when `select_fn` is unset. Set `false` to always use the
   ui.kit chooser instead (which still honors a real `vim.ui.select`
   override), even if pickers.nvim is installed. Default: `true`.

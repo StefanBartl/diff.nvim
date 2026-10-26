@@ -110,7 +110,7 @@ local DEFAULTS = {
     diff_profile = "DiffProfile",
   },
   select_fn = nil,
-  -- Auto-detect pickers.nvim (StefanBartl/pickers.nvim) and use its fuzzy
+  -- Auto-detect pickers.nvim (WKDSteve/pickers.nvim) and use its fuzzy
   -- engine for the target/source picker when select_fn is unset. Set false
   -- to always use the ui.kit chooser instead (which still honors a
   -- real vim.ui.select override), even if pickers.nvim is installed.

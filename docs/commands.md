@@ -106,7 +106,7 @@ treated as unchanged.
 **Image files** — when both `source=` and `target=` are readable
 raster-image paths (`.png`/`.jpg`/`.jpeg`/`.gif`/`.webp`/`.bmp`; `.svg` is
 excluded, it's text and diffs fine as text), `:Diff` shows them side by
-side via [images.nvim](https://github.com/StefanBartl/images.nvim) instead
+side via [images.nvim](https://github.com/WKDSteve/images.nvim) instead
 of text-diffing raw bytes — every `view=`/`output=` value is ignored in
 this case, since none of them mean anything for a pair of binary images.
 Without images.nvim installed, a clear warning is shown instead of

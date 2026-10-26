@@ -19,7 +19,7 @@ the per-file register, the deliberate omissions, and the bugs it pins.
 bash scripts/test.sh
 ```
 
-The suite is run by [testing.nvim](https://github.com/StefanBartl/testing.nvim).
+The suite is run by [testing.nvim](https://github.com/WKDSteve/testing.nvim).
 Nothing in it needs a fuzzy-picker backend, images.nvim, or pickers.nvim
 installed; only testing.nvim and lib.nvim are required, and `$TESTING_NVIM_DIR` /
 `$LIB_NVIM_DIR` point at them when they are not sibling checkouts. Two specs talk to the outside world on purpose —

@@ -1,5 +1,5 @@
 ---@module 'diff.core.pickers_bridge'
---- Optional select_fn bridge to pickers.nvim (StefanBartl/pickers.nvim).
+--- Optional select_fn bridge to pickers.nvim (WKDSteve/pickers.nvim).
 ---
 --- pickers.nvim already resolves which fuzzy-picker engine (telescope.nvim,
 --- fzf-lua, snacks.nvim) is installed on the system and normalizes it behind

@@ -1,7 +1,7 @@
 # Contributing to diff.nvim
 
 Thank you for your interest! Bugs, ideas and questions are welcome in the
-[issue tracker](https://github.com/StefanBartl/diff.nvim/issues); pull requests
+[issue tracker](https://github.com/WKDSteve/diff.nvim/issues); pull requests
 very welcome.
 
 ## Getting the repository into a session

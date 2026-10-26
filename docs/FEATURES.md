@@ -3,7 +3,7 @@
 Everything `diff.nvim` does, in one file — a small, single-purpose plugin
 (one core command plus three thin wrappers around it), so a theme split
 would only add navigation for its own sake. See
-[`docs/FEATURES_FORMAT.md`](https://github.com/StefanBartl/docmap.nvim/blob/main/docs/FEATURES_FORMAT.md)
+[`docs/FEATURES_FORMAT.md`](https://github.com/WKDSteve/docmap.nvim/blob/main/docs/FEATURES_FORMAT.md)
 (in `docmap.nvim`) for the format this file follows.
 
 Neovim's own `:diffthis` compares two windows. Everything else you actually
@@ -183,7 +183,7 @@ diffed as error-page content.
 When both `source=` and `target=` are readable raster-image paths
 (`.png`/`.jpg`/`.jpeg`/`.gif`/`.webp`/`.bmp` — `.svg` is excluded, it's
 text and diffs fine as text), `:Diff` shows them side by side via
-[images.nvim](https://github.com/StefanBartl/images.nvim) instead of
+[images.nvim](https://github.com/WKDSteve/images.nvim) instead of
 text-diffing raw bytes. Every `view=`/`output=` value is ignored in this
 case, since none of them mean anything for a pair of binary images.
 Without images.nvim installed, a clear warning is shown instead of
@@ -336,7 +336,7 @@ native `:diffthis` buffers.
 
 The target/source/base picker (shown when a specifier is omitted or set to
 `ask`) resolves in order: an explicit `select_fn` override, then
-[pickers.nvim](https://github.com/StefanBartl/pickers.nvim) if installed
+[pickers.nvim](https://github.com/WKDSteve/pickers.nvim) if installed
 and `use_pickers_nvim` isn't `false` (its fuzzy engine — telescope.nvim,
 fzf-lua, or snacks.nvim, whichever pickers.nvim resolved — used
 automatically, no config needed), then `ui.kit`'s own chooser as

@@ -13,7 +13,7 @@ bash scripts/test.sh --file config    # only spec files whose name contains "con
 bash scripts/test.sh --json ir.json   # also write the machine-readable result
 ```
 
-The specs are run by [testing.nvim](https://github.com/StefanBartl/testing.nvim)
+The specs are run by [testing.nvim](https://github.com/WKDSteve/testing.nvim)
 (dialect `h`, on `TESTS/harness.lua`), one Neovim per spec file
 (`.testing.lua`: `isolated = "file"`). It prints one line per spec and exits
 non-zero when any fails (`DIFF_NVIM_TESTS_OK` on success).
