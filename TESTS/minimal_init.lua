@@ -83,31 +83,8 @@ for _, name in ipairs(DEPS) do
   vim.opt.rtp:append(found[name])
 end
 
--- Carried over from the old TESTS/run.lua. resolve_spec.lua exercises the "+" register
--- (target=clipboard). A bare headless runner (no xclip/xsel/wl-clipboard/pbcopy, e.g. CI's ubuntu
--- image) has no clipboard provider, so getreg/setreg("+") would silently no-op. An in-memory fake
--- provider (the pattern from `:h g:clipboard`) makes "+" behave like a register everywhere.
-do
-  local fake_reg = { "" }
-  vim.g.clipboard = {
-    name = "FakeClipboardForTests",
-    copy = {
-      ["+"] = function(lines)
-        fake_reg = lines
-      end,
-      ["*"] = function(lines)
-        fake_reg = lines
-      end,
-    },
-    paste = {
-      ["+"] = function()
-        return fake_reg
-      end,
-      ["*"] = function()
-        return fake_reg
-      end,
-    },
-  }
-end
+-- No clipboard provider here: testing.nvim installs an in-memory `+`/`*` (`testing.child.clipboard`)
+-- before this file runs, so resolve_spec's target=clipboard works on a bare CI runner and never
+-- touches the developer's clipboard.
 
 return { root = root, deps = found }

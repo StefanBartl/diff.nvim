@@ -8,6 +8,13 @@ return function(H)
   local eq, ok = H.eq, H.ok
   local resolve = require("diff.core.resolve")
 
+  -- target=clipboard writes "+": that is testing.nvim's in-memory provider, never the system clipboard
+  eq(
+    vim.g.clipboard and vim.g.clipboard.name,
+    "testing-fake-clipboard",
+    "+ is testing.nvim's fake clipboard"
+  )
+
   -- parse_args -----------------------------------------------------------
   local kv = resolve.parse_args("target=clipboard view=inline output=prompt")
   eq(kv.target, "clipboard", "parse target")

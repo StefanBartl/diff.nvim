@@ -22,9 +22,9 @@ non-zero when any fails (`DIFF_NVIM_TESTS_OK` on success).
 `$TESTING_NVIM_DIR` / `$LIB_NVIM_DIR`, `.deps/<name>`, a sibling checkout and
 `stdpath('data')/lazy/<name>`, and exits 1 naming all four places when one is
 missing. `TESTS/minimal_init.lua` puts them on the runtimepath of every spec
-process and installs an in-memory fake clipboard provider, so `"+"` behaves
-like a real register on a bare runner with no
-xclip/xsel/wl-clipboard/pbcopy.
+process. The in-memory clipboard comes from testing.nvim (installed before the
+minit), so `"+"` behaves like a real register on a bare runner with no
+xclip/xsel/wl-clipboard/pbcopy and never touches your clipboard.
 
 ## Layout
 
@@ -61,7 +61,7 @@ xclip/xsel/wl-clipboard/pbcopy.
 | `directory_edge_spec.lua` | Hidden segments excluded at *every* depth (not just the top), quickfix entries actually resolving to readable files — with a `D` entry pointing into the source tree, the only side that still has the file, `stat_list_mode = "add"` accumulating, an empty result being a result and not an error, `output=prompt` opening nothing, the end-to-end route through `core.run`, and the unreadable-file bug pinned below. |
 | `public_api_spec.lua` | `lua/diff/init.lua` and the last of `core.init`: `core.valid_lists`, the `view=`/`output=` rejection messages, `core.clear` (including twice), `features.exit.exit()` in all three states, `attach_buffer()` before `setup()`, `view=float` (a real floating window, ft=diff, reversible from the reported handles), what `output=stat` puts in the quickfix list for a file / a buffer number / a clipboard target, the five delegating wrappers, `status()`'s prefix edge cases, and `setup()`/`enable()`'s once-only latch. |
 | `health_spec.lua`  | `:checkhealth diff` against a recording `vim.health`, with each probe faked one at a time: a full machine, an unset `vim.g.loaded_diff`, no diff primitive, no `vim.ui.select`, no clipboard, Neovim < 0.9, git/curl off PATH, no `vim.system` at all (both checks must blame `vim.system`, not the binaries), and pickers.nvim present vs absent — plus the lib.nvim-missing bug pinned below. |
-| `minimal_init.lua` | Runtimepath of every spec process (diff.nvim, testing.nvim, lib.nvim; fatal when a dependency is missing) and the fake clipboard provider. |
+| `minimal_init.lua` | Runtimepath of every spec process (diff.nvim, testing.nvim, lib.nvim; fatal when a dependency is missing); the fake clipboard comes from testing.nvim. |
 
 ## Adding a spec
 
